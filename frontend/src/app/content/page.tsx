@@ -62,6 +62,7 @@ function ContentPageContent() {
     setProduct(prod);
     setIsLoading(true);
     setError(null);
+    setMarketResearch({ insights: [], trends: [], competitors: [] }); // Clear previous research
     setProgress(10);
 
     try {
