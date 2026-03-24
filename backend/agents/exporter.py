@@ -332,6 +332,79 @@ class Exporter:
         """删除模板"""
         return _template_storage.delete_template(platform, template_id)
 
+    def convert_format(
+        self,
+        content: str,
+        from_platform: str,
+        to_platform: str,
+    ) -> Dict[str, str]:
+        """
+        将内容从一种平台格式转换到另一种平台格式
+
+        Args:
+            content: 原内容
+            from_platform: 原平台
+            to_platform: 目标平台
+
+        Returns:
+            dict: 包含转换后的内容和调整说明
+        """
+        import re
+
+        # 移除原平台的标签格式
+        if from_platform == "xiaohongshu":
+            content = re.sub(r"#[^\s#]+", "", content)
+        elif from_platform == "tiktok":
+            content = re.sub(r"#\S+", "", content)
+
+        # 根据目标平台调整
+        if to_platform == "xiaohongshu":
+            # 转换为小红书风格
+            lines = content.split("\n")
+            if lines and not lines[0].startswith("#"):
+                content = f"## {lines[0]}\n" + "\n".join(lines[1:])
+            # 添加标签占位符
+            content = content.strip() + "\n\n#标签1 #标签2 #标签3"
+
+        elif to_platform == "tiktok":
+            # 转换为抖音风格
+            lines = content.split("\n")
+            if len(lines) > 3:
+                content = lines[0] + "\n" + "\n".join(lines[1:4]) + "\n...\n" + lines[-1]
+            # 精简内容
+            if len(content) > 150:
+                content = content[:147] + "..."
+
+        elif to_platform == "official":
+            # 转换为公众号风格
+            lines = content.split("\n")
+            if lines and not lines[0].startswith("#"):
+                content = "**" + lines[0] + "**\n\n" + "\n".join(lines[1:])
+            # 添加段落分隔
+            content = re.sub(r"\n\n+", "\n\n", content)
+
+        elif to_platform == "friend_circle":
+            # 转换为朋友圈风格
+            # 移除所有标签
+            content = re.sub(r"#[^\s#]+", "", content)
+            # 精简内容
+            if len(content) > 200:
+                content = content[:197] + "..."
+
+        adjustments = []
+        if from_platform != to_platform:
+            adjustments.append(f"从{from_platform}格式转换为{to_platform}格式")
+        if from_platform == "xiaohongshu" and to_platform != "xiaohongshu":
+            adjustments.append("已移除原标签")
+        if to_platform == "friend_circle":
+            adjustments.append("已精简为朋友圈风格")
+
+        return {
+            "original": content,
+            "converted": content,
+            "adjustments": adjustments,
+        }
+
 
 if __name__ == "__main__":
     exporter = Exporter()

@@ -710,6 +710,33 @@ async def get_content_analytics(body: AnalyticsRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class ConvertFormatRequest(BaseModel):
+    """格式转换请求"""
+    content: str
+    from_platform: str
+    to_platform: str
+
+
+@app.post("/api/v1/content/convert")
+async def convert_content_format(body: ConvertFormatRequest):
+    """
+    将内容从一种平台格式转换到另一种平台格式
+
+    自动调整内容结构、长度和格式以适应目标平台
+    """
+    try:
+        exporter = get_exporter()
+        result = exporter.convert_format(
+            content=body.content,
+            from_platform=body.from_platform,
+            to_platform=body.to_platform,
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Convert content format error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 class DuplicateCheckRequest(BaseModel):
     """重复检测请求"""
     content: str
