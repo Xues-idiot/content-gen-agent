@@ -169,6 +169,13 @@ class StatsResponse(BaseModel):
     supported_platforms: List[str]
 
 
+class RegenerateRequest(BaseModel):
+    """重新生成请求"""
+    product: ProductInput
+    platform: str = Field(..., description="目标平台")
+    enable_research: bool = Field(default=False, description="是否启用市场调研")
+
+
 # Initialize agents (延迟初始化避免循环导入)
 _planner: Optional["ContentPlanner"] = None
 _copywriter: Optional["Copywriter"] = None
@@ -434,3 +441,85 @@ async def get_stats():
         total_platforms=4,
         supported_platforms=["xiaohongshu", "tiktok", "official", "friend_circle"],
     )
+
+
+@app.post("/api/v1/content/regenerate")
+async def regenerate_content(body: RegenerateRequest):
+    """
+    重新生成单个平台的内容
+
+    比 generate 更轻量，只生成指定平台的内容
+    """
+    global _request_count
+    _request_count += 1
+
+    try:
+        planner = get_planner()
+        copywriter = get_copywriter()
+        reviewer = get_reviewer()
+
+        # 验证平台
+        valid_platforms = {"xiaohongshu", "tiktok", "official", "friend_circle"}
+        if body.platform not in valid_platforms:
+            raise ValueError(f"Invalid platform: {body.platform}")
+
+        # 创建产品对象
+        product_obj = ProductInfo(
+            name=body.product.name,
+            description=body.product.description,
+            selling_points=body.product.selling_points,
+            target_users=body.product.target_users,
+            category=body.product.category,
+            price_range=body.product.price_range,
+        )
+
+        # 规划内容
+        plan = planner.plan_content(
+            product_obj,
+            [body.platform],
+            enable_research=body.enable_research,
+        )
+
+        # 生成单个平台的文案
+        from backend.agents.copywriter import Platform as CopyPlatform
+        result = copywriter.regenerate(
+            product_obj,
+            plan,
+            CopyPlatform(body.platform)
+        )
+
+        # 审核文案
+        review_result = None
+        if result.content:
+            review = reviewer.review_quality(result.content)
+            review_result = ReviewResultModel(
+                passed=review.passed,
+                violations=[ViolationModel(**asdict(v)) for v in review.violations],
+                quality_score=review.quality_score,
+                suggestions=review.suggestions,
+            )
+
+        return {
+            "success": result.success,
+            "platform": body.platform,
+            "result": CopyResultModel(
+                platform=body.platform,
+                title=result.title,
+                content=result.content,
+                script=result.script,
+                tags=result.tags,
+                image_suggestions=result.image_suggestions,
+                cta=result.cta,
+                review=review_result,
+                success=result.success,
+                error=result.error,
+            ),
+            "error": result.error if not result.success else None,
+        }
+
+    except ValueError as e:
+        logger.warning(f"Validation error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Regenerate content error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -106,6 +106,24 @@ class Copywriter:
                 )
         return results
 
+    def regenerate(
+        self,
+        product: ProductInfo,
+        plan: ContentPlan,
+        platform: Platform,
+    ) -> CopyResult:
+        """重新生成指定平台的文案（保留其他平台结果）"""
+        logger.info(f"Regenerating copy for platform: {platform}")
+        try:
+            return self.generate(product, plan, platform)
+        except Exception as e:
+            logger.error(f"Failed to regenerate copy for {platform}: {e}")
+            return CopyResult(
+                platform=str(platform),
+                success=False,
+                error=str(e)
+            )
+
     def write_xiaohongshu(
         self,
         product: ProductInfo,
