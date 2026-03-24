@@ -573,6 +573,115 @@ class Reviewer:
             "confidence": "medium",  # 简化版本，始终返回中等置信度
         }
 
+    def suggest_ab_tests(self, content: str, platform: str) -> Dict[str, Any]:
+        """
+        生成 A/B 测试建议
+
+        根据内容特征建议可以测试的变量
+        """
+        analysis = self.analyze_structure(content)
+
+        # 分析可测试的变量
+        testable_variables = []
+
+        # 标题测试
+        testable_variables.append({
+            "variable": "title",
+            "description": "标题",
+            "current_value": "使用感叹句或疑问句" if "！" in content or "？" in content else "使用陈述句",
+            "suggested_alternatives": [
+                "使用数字：加入具体数据或统计",
+                "使用疑问：引发用户好奇心",
+                "使用感叹：增强情感共鸣",
+            ],
+        })
+
+        # 开头测试
+        testable_variables.append({
+            "variable": "opening",
+            "description": "开头方式",
+            "current_value": "直接陈述",
+            "suggested_alternatives": [
+                "以故事/经历开头",
+                "以问题开头",
+                "以惊人事实开头",
+            ],
+        })
+
+        # CTA 测试
+        has_cta = bool(re.search(r"点击|关注|评论|分享|购买|立即", content))
+        testable_variables.append({
+            "variable": "cta",
+            "description": "行动号召",
+            "current_value": "有CTA" if has_cta else "无CTA",
+            "suggested_alternatives": [
+                "增强紧迫感：限时、限量",
+                "强调价值：具体收益描述",
+                "降低门槛：简单直接的指令",
+            ],
+        })
+
+        # 长度测试
+        length = len(content)
+        testable_variables.append({
+            "variable": "length",
+            "description": "内容长度",
+            "current_value": f"{length}字（{'适中' if 100 <= length <= 500 else '较长' if length > 500 else '较短'}）",
+            "suggested_alternatives": [
+                "缩短20%：精简要点",
+                "延长50%：增加细节",
+                "对比：完整版 vs 精简版",
+            ],
+        })
+
+        # 标签测试
+        has_hashtags = analysis["has_hashtags"]
+        testable_variables.append({
+            "variable": "hashtags",
+            "description": "话题标签",
+            "current_value": "有标签" if has_hashtags else "无标签",
+            "suggested_alternatives": [
+                "使用热门标签",
+                "使用长尾标签",
+                "不使用标签",
+            ],
+        })
+
+        # emoji 测试
+        has_emoji = analysis["has_emoji"]
+        testable_variables.append({
+            "variable": "emoji",
+            "description": "表情符号",
+            "current_value": "有表情" if has_emoji else "无表情",
+            "suggested_alternatives": [
+                "增加emoji密度",
+                "减少emoji使用",
+                "使用平台特有表情",
+            ],
+        })
+
+        return {
+            "platform": platform,
+            "testable_variables": testable_variables,
+            "recommended_tests": [
+                {
+                    "name": "标题测试",
+                    "hypothesis": "不同标题风格会影响点击率",
+                    "priority": "high",
+                },
+                {
+                    "name": "CTA测试",
+                    "hypothesis": "不同行动号召方式会影响转化率",
+                    "priority": "high",
+                },
+                {
+                    "name": "开头测试",
+                    "hypothesis": "不同开头方式会影响留存率",
+                    "priority": "medium",
+                },
+            ],
+        }
+
 
 if __name__ == "__main__":
     reviewer = Reviewer()

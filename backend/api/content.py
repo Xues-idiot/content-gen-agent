@@ -634,6 +634,22 @@ async def regenerate_content(body: RegenerateRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/v1/content/ab-suggestions")
+async def get_ab_test_suggestions(body: PerformanceRequest):
+    """
+    获取 A/B 测试建议
+
+    根据内容特征建议可以测试的变量
+    """
+    try:
+        reviewer = get_reviewer()
+        suggestions = reviewer.suggest_ab_tests(body.content, body.platform)
+        return suggestions
+    except Exception as e:
+        logger.error(f"A/B test suggestions error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/v1/suggestions/{platform}")
 async def get_platform_suggestions(platform: str, content: str):
     """
