@@ -49,6 +49,7 @@ interface HistoryEntry {
   platforms: string[];
   results: CopyResult[];
   suggestions: Record<string, ImageSuggestion[]>;
+  marketResearch?: MarketResearch;
 }
 
 interface ContentState {
@@ -139,6 +140,7 @@ export const useContentStore = create<ContentState>()(
           platforms: state.selectedPlatforms,
           results: state.copyResults,
           suggestions: state.imageSuggestions,
+          marketResearch: state.marketResearch,
         };
 
         set((s) => ({
