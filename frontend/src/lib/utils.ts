@@ -134,3 +134,27 @@ export function validateProductDescription(desc: string): string | null {
   if (desc.length > 2000) return "产品描述不能超过2000个字符";
   return null;
 }
+
+// 验证 URL
+export function isValidUrl(url: string): boolean {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// CTA 类型映射
+export const CTA_PLATFORM_HINTS: Record<string, string[]> = {
+  xiaohongshu: ["评论区见", "点赞关注", "收藏笔记", "私信咨询", "点击链接"],
+  tiktok: ["评论区扣1", "点击链接", "分享给朋友", "关注账号", "进直播间"],
+  official: ["关注公众号", "点击在看", "分享朋友圈", "私信回复"],
+  friend_circle: ["评论区见", "私信咨询", "点赞支持"],
+};
+
+// 获取 CTA 提示
+export function getCtaHint(platform: string): string {
+  const hints = CTA_PLATFORM_HINTS[platform] || [];
+  return hints.length > 0 ? `如：${hints[0]}` : "";
+}
