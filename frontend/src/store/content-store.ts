@@ -28,6 +28,8 @@ export interface CopyResult {
   };
   success: boolean;
   error?: string;
+  version?: number;
+  updatedAt?: number;
 }
 
 export interface ImageSuggestion {
@@ -67,6 +69,9 @@ interface ContentState {
   history: HistoryEntry[];
   currentHistoryIndex: number;
 
+  // 版本历史
+  versions: Record<string, CopyResult[]>;
+
   // UI 状态
   sidebarOpen: boolean;
 
@@ -102,6 +107,7 @@ const initialState = {
   progress: 0,
   history: [] as HistoryEntry[],
   currentHistoryIndex: -1,
+  versions: {} as Record<string, CopyResult[]>,
   sidebarOpen: true,
 };
 
@@ -159,9 +165,28 @@ export const useContentStore = create<ContentState>()(
         }));
       },
 
-      clearHistory: () => set({ history: [], currentHistoryIndex: -1 }),
+      clearHistory: () => set({ history: [], currentHistoryIndex: -1, versions: {} }),
 
       reset: () => set(initialState),
+
+      // 版本管理
+      saveVersion: (platform: string) => {
+        const state = get();
+        const currentResults = state.copyResults.filter((r) => r.platform === platform);
+        if (currentResults.length === 0) return;
+
+        set((s) => ({
+          versions: {
+            ...s.versions,
+            [platform]: [...(s.versions[platform] || []), ...currentResults].slice(-5),
+          },
+        }));
+      },
+
+      getVersions: (platform: string) => {
+        return get().versions[platform] || [];
+      },
+
     }),
     {
       name: "vox-content-storage",
