@@ -759,3 +759,20 @@ content-gen-agent/
 - 添加内容模板管理功能 (07c6a5c)
 - 添加批量内容生成功能 (2ce017d)
 - 添加 A/B 测试建议功能 (5d817ef)
+
+## 第271-280轮 (2026-03-24)
+
+### 完成
+- **内容分析摘要** (backend/agents/reviewer.py)
+  - generate_analytics_summary 方法
+  - 汇总多平台内容质量分数
+  - 识别常见违规词
+  - POST /api/v1/content/analytics 端点
+- **内容格式转换** (backend/agents/exporter.py)
+  - convert_format 方法
+  - 支持平台格式互转
+  - API POST /api/v1/content/convert 端点
+
+### 提交
+- 添加内容分析摘要功能 (03a1232)
+- 添加内容格式转换功能 (0572eb0)
