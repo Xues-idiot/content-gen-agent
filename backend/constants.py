@@ -125,4 +125,4 @@ class ColorScheme:
 # 版本信息
 VERSION = "0.1.0"
 APP_NAME = "Vox"
-APP_DESCRIPTION = "内容生成 Agent"
+APP_DESCRIPTION = "多平台内容生成 Agent"

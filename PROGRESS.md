@@ -590,3 +590,8 @@ content-gen-agent/
   - 虚假夸大词汇扩展：+8 个新词
   - 新增迷信欺诈类别：+10 个新词
   - 替换建议映射扩展：+20 个新建议
+- **README 更新**
+  - 新增核心功能：市场调研、CTA生成
+  - 更新环境变量配置：Tavily API
+- **constants.py 更新**
+  - APP_DESCRIPTION 更精确描述

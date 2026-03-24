@@ -8,9 +8,11 @@
 
 - **多平台文案生成**：小红书、抖音、公众号、朋友圈
 - **智能内容规划**：基于产品特点自动分析目标用户
+- **市场调研集成**：Tavily API 搜索趋势、竞品分析
 - **AI 配图建议**：生成适合各平台的配图提示词
 - **违规词检测**：自动检测并提示广告法违规词（含分类和替换建议）
 - **文案质量评估**：结构分析、评分、改进建议
+- **行动号召生成**：TikTok CTA 行动号召自动提取
 - **多格式导出**：JSON、Markdown、HTML、纯文本
 
 ## 配色方案
@@ -37,9 +39,13 @@ cd frontend && npm install
 复制 `.env.example` 为 `.env` 并填入你的 API Key：
 
 ```bash
+# MiniMax API (LLM)
 MINIMAX_API_KEY=your_api_key
 MINIMAX_BASE_URL=https://api.minimaxi.com/anthropic
 MINIMAX_MODEL=MiniMax-M2.2
+
+# Tavily API (市场调研)
+TAVILY_API_KEY=your_tavily_api_key
 ```
 
 ### 3. 启动服务
