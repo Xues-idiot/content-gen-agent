@@ -1001,7 +1001,7 @@ async def schedule_content(
     platform: str,
     title: str,
     content: str,
-    tags: List[str] = [],
+    tags: Optional[List[str]] = None,
     scheduled_time: str = "",
 ):
     """
@@ -1019,7 +1019,7 @@ async def schedule_content(
             platform=platform,
             title=title,
             content=content,
-            tags=tags,
+            tags=tags or [],
             scheduled_time=scheduled_time or datetime.now().isoformat(),
             status="pending",
             created_at=datetime.now().isoformat(),

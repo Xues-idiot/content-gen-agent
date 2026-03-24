@@ -46,6 +46,13 @@ AD_VIOLATION_WORDS = {
 # 展平为列表
 ALL_VIOLATION_WORDS = [word for words in AD_VIOLATION_WORDS.values() for word in words]
 
+# 构建词到分类和严重程度的映射 (用于O(1)查找)
+WORD_TO_CATEGORY = {}
+for category, words in AD_VIOLATION_WORDS.items():
+    severity = "error" if category in ["最高级", "绝对化", "虚假夸大"] else "warning"
+    for word in words:
+        WORD_TO_CATEGORY[word] = {"category": category, "severity": severity}
+
 
 @dataclass
 class Violation:
@@ -123,27 +130,27 @@ class Reviewer:
     def check_ad_words(self, copy: str) -> List[Violation]:
         """检测广告法违规词"""
         violations = []
+        seen_words = set()  # 避免重复报告同一个词
+
         for word in ALL_VIOLATION_WORDS:
             # 使用正则匹配，考虑标点符号分隔
             pattern = rf'(?<![\u4e00-\u9fa5])({re.escape(word)})(?![\u4e00-\u9fa5])'
             for match in re.finditer(pattern, copy):
-                # 确定违规分类
-                category = ""
-                for cat, words in AD_VIOLATION_WORDS.items():
-                    if word in words:
-                        category = cat
-                        break
+                # 使用预计算的映射进行O(1)查找
+                word_info = WORD_TO_CATEGORY.get(word, {})
+                category = word_info.get("category", "")
+                severity = word_info.get("severity", "warning")
 
-                # 确定严重程度
-                severity = "error" if category in ["最高级", "绝对化", "虚假夸大"] else "warning"
-
-                violations.append(Violation(
-                    word=word,
-                    position=match.start(),
-                    suggestion=self._get_suggestion(word),
-                    severity=severity,
-                    category=category,
-                ))
+                # 避免重复报告同一个词
+                if word not in seen_words:
+                    seen_words.add(word)
+                    violations.append(Violation(
+                        word=word,
+                        position=match.start(),
+                        suggestion=self._get_suggestion(word),
+                        severity=severity,
+                        category=category,
+                    ))
         return violations
 
     def analyze_structure(self, copy: str) -> Dict[str, Any]:
