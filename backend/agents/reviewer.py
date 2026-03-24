@@ -343,6 +343,38 @@ class Reviewer:
         """批量审核文案"""
         return [self.review_quality(copy) for copy in copies]
 
+    def suggest_scheduling(self, platform: str, content_type: str = "general") -> Dict[str, Any]:
+        """生成发布时段建议"""
+        scheduling = {
+            "best_times": [],
+            "avoid_times": [],
+            "frequency": "",
+            "reasoning": "",
+        }
+
+        if platform == "xiaohongshu":
+            scheduling["best_times"] = ["19:00-21:00", "12:00-13:00", "22:00-23:00"]
+            scheduling["avoid_times"] = ["6:00-9:00", "14:00-17:00"]
+            scheduling["frequency"] = "每周3-5篇，保持活跃度"
+            scheduling["reasoning"] = "小红书用户活跃时间集中在午休和晚间，与生活方式类内容契合"
+        elif platform == "tiktok":
+            scheduling["best_times"] = ["12:00-14:00", "18:00-21:00"]
+            scheduling["avoid_times"] = ["23:00-次日7:00"]
+            scheduling["frequency"] = "每天1-2条，保持更新节奏"
+            scheduling["reasoning"] = "抖音流量高峰期在中午和晚间，短视频需要持续更新"
+        elif platform == "official":
+            scheduling["best_times"] = ["12:00-13:00", "20:00-22:00"]
+            scheduling["avoid_times"] = ["周末"]
+            scheduling["frequency"] = "每周1-2篇，注重内容深度"
+            scheduling["reasoning"] = "公众号用户多在通勤和睡前阅读，适合深度内容"
+        elif platform == "friend_circle":
+            scheduling["best_times"] = ["20:00-22:00", "12:00-13:00"]
+            scheduling["avoid_times"] = ["工作时间"]
+            scheduling["frequency"] = "每周2-3次，避免刷屏"
+            scheduling["reasoning"] = "朋友圈内容在晚间浏览量最高，要注意频率避免被屏蔽"
+
+        return scheduling
+
 
 if __name__ == "__main__":
     reviewer = Reviewer()

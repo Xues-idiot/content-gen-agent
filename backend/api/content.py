@@ -542,3 +542,23 @@ async def get_platform_suggestions(platform: str, content: str):
     except Exception as e:
         logger.error(f"Get platform suggestions error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/scheduling/{platform}")
+async def get_scheduling_suggestions(platform: str, content_type: str = "general"):
+    """
+    获取指定平台的发布时段建议
+
+    根据平台特性和内容类型返回最佳发布时段
+    """
+    try:
+        reviewer = get_reviewer()
+        scheduling = reviewer.suggest_scheduling(platform, content_type)
+        return {
+            "platform": platform,
+            "content_type": content_type,
+            "scheduling": scheduling,
+        }
+    except Exception as e:
+        logger.error(f"Get scheduling suggestions error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
