@@ -759,6 +759,28 @@ async def check_content_duplicate(body: DuplicateCheckRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class SeoKeywordsRequest(BaseModel):
+    """SEO关键词请求"""
+    content: str
+    platform: str = "general"
+
+
+@app.post("/api/v1/seo/keywords")
+async def get_seo_keywords(body: SeoKeywordsRequest):
+    """
+    提取 SEO 关键词
+
+    使用分词和词频统计提取核心关键词和长尾关键词
+    """
+    try:
+        reviewer = get_reviewer()
+        keywords = reviewer.extract_seo_keywords(body.content, body.platform)
+        return keywords
+    except Exception as e:
+        logger.error(f"Get SEO keywords error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 class HashtagRequest(BaseModel):
     """标签建议请求"""
     content: str

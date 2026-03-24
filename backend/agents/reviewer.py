@@ -767,6 +767,76 @@ class Reviewer:
             "recommendations": recommendations,
         }
 
+    def extract_seo_keywords(self, content: str, platform: str = "general") -> Dict[str, Any]:
+        """
+        提取 SEO 关键词
+
+        Args:
+            content: 内容文本
+            platform: 目标平台
+
+        Returns:
+            dict: 包含关键词和建议
+        """
+        import jieba
+        import re
+
+        # 分词
+        words = jieba.cut(content)
+        words = [w.strip() for w in words if len(w.strip()) >= 2]
+
+        # 停用词
+        stop_words = {
+            "一个", "这个", "那个", "什么", "怎么", "如何",
+            "可以", "就是", "而且", "但是", "所以", "因为",
+            "已经", "非常", "特别", "比较", "真的", "其实",
+        }
+        words = [w for w in words if w not in stop_words and not re.match(r"^\d+$", w)]
+
+        # 词频统计
+        word_freq = {}
+        for word in words:
+            word_freq[word] = word_freq.get(word, 0) + 1
+
+        # 按频率排序
+        sorted_words = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
+
+        # 提取核心关键词（Top 10）
+        core_keywords = [w for w, c in sorted_words[:10]]
+
+        # 提取长尾关键词（2-3个词的组合）
+        bigrams = []
+        for i in range(len(words) - 1):
+            bigram = f"{words[i]}{words[i+1]}"
+            if len(bigram) >= 4:
+                bigrams.append(bigram)
+
+        # 长尾词频统计
+        bigram_freq = {}
+        for bg in bigrams:
+            bigram_freq[bg] = bigram_freq.get(bg, 0) + 1
+
+        sorted_bigrams = sorted(bigram_freq.items(), key=lambda x: x[1], reverse=True)
+        long_tail_keywords = [w for w, c in sorted_bigrams[:5]]
+
+        # 平台特定的关键词建议
+        platform_keywords = {
+            "xiaohongshu": ["种草", "好物", "分享", "测评", "推荐"],
+            "tiktok": ["热门", "技巧", "教程", "揭秘", "推荐"],
+            "official": ["解读", "分析", "行业", "趋势", "观点"],
+            "friend_circle": ["日常", "分享", "生活"],
+        }
+
+        suggested = platform_keywords.get(platform, [])
+
+        return {
+            "core_keywords": core_keywords,
+            "long_tail_keywords": long_tail_keywords,
+            "suggested_keywords": suggested,
+            "total_unique_words": len(word_freq),
+            "keyword_density": round(len(words) / len(content) * 100, 2) if content else 0,
+        }
+
 
 if __name__ == "__main__":
     reviewer = Reviewer()
