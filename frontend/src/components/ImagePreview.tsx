@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { copyToClipboard } from "@/lib/utils";
 
@@ -23,9 +23,14 @@ const PLATFORM_INFO: Record<string, { name: string; icon: string; color: string 
 
 export default function ImagePreview({ suggestions }: ImagePreviewProps) {
   const hasSuggestions = Object.keys(suggestions).length > 0;
+  const [copiedIdx, setCopiedIdx] = useState<string | null>(null);
 
-  const copyPrompt = async (prompt: string) => {
-    await copyToClipboard(prompt);
+  const copyPrompt = async (prompt: string, idx: string) => {
+    const success = await copyToClipboard(prompt);
+    if (success) {
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx(null), 2000);
+    }
   };
 
   if (!hasSuggestions) {
@@ -140,12 +145,17 @@ export default function ImagePreview({ suggestions }: ImagePreviewProps) {
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               transition={{ delay: platformIndex * 0.1 + idx * 0.05 + 0.2 }}
-                              onClick={() => copyPrompt(img.prompt)}
+                              onClick={() => copyPrompt(img.prompt, `${platform}-${idx}`)}
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
-                              className="text-xs px-2 py-1 rounded bg-white border border-gray-200 text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-1"
+                              className={`text-xs px-2 py-1 rounded border text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-1 ${
+                                copiedIdx === `${platform}-${idx}`
+                                  ? "bg-green-50 border-green-200 text-green-600"
+                                  : "bg-white border-gray-200"
+                              }`}
                             >
-                              <span>📋</span> 复制提示词
+                              <span>{copiedIdx === `${platform}-${idx}` ? "✓" : "📋"}</span>
+                              {copiedIdx === `${platform}-${idx}` ? "已复制" : "复制提示词"}
                             </motion.button>
                           </div>
                         </div>
