@@ -5,11 +5,12 @@ Vox Planner 模块 - 内容规划
 集成 Tavily 搜索用于市场调研和内容灵感
 """
 
-import asyncio
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 
-from backend.tools.web_search import web_search_tool, SearchResponse
+from loguru import logger
+
+from backend.tools.web_search import web_search_tool
 
 
 @dataclass
@@ -185,11 +186,7 @@ class ContentPlanner:
 
         except Exception as e:
             # 静默处理调研错误，不影响主流程
-            import sys
-            sys.modules[__name__].__dict__.get('logger', type('logger', (), {
-                'warning': lambda x: None,
-                'error': lambda x: None,
-            })()).warning(f"Market research skipped: {e}")
+            logger.warning(f"Market research skipped: {e}")
 
         return market_insights, trend_topics, competitor_content
     
