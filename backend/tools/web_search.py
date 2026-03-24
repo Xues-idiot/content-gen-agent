@@ -211,6 +211,77 @@ class WebSearchTool:
 
         return self.search(query, max_results=max_results, search_depth="medium")
 
+    def search_trending_topics(
+        self,
+        category: str,
+        platform: str,
+        max_results: int = 10,
+    ) -> SearchResponse:
+        """
+        搜索热门话题
+
+        Args:
+            category: 产品类别
+            platform: 目标平台
+            max_results: 最大结果数
+
+        Returns:
+            SearchResponse: 搜索响应
+        """
+        platform_trends = {
+            "xiaohongshu": "小红书 热门话题 热搜 趋势",
+            "tiktok": "抖音 热门话题 热搜 挑战",
+            "official": "公众号 热门话题 热搜 阅读量",
+            "friend_circle": "朋友圈 热门转发 话题",
+        }
+
+        keyword = platform_trends.get(platform, "")
+        query = f"{category} {keyword} 本周 热点"
+
+        return self.search(query, max_results=max_results, search_depth="medium")
+
+    def get_hot_keywords(self, category: str, max_results: int = 10) -> Dict[str, Any]:
+        """
+        获取热门关键词
+
+        Args:
+            category: 产品类别
+            max_results: 最大结果数
+
+        Returns:
+            dict: 热门关键词分析
+        """
+        # 搜索多个相关查询
+        queries = [
+            f"{category} 热门关键词",
+            f"{category} 搜索热词",
+            f"{category} 热搜词",
+        ]
+
+        all_keywords = []
+        for query in queries:
+            response = self.search(query, max_results=5)
+            if response.success:
+                for result in response.results:
+                    # 提取可能的关键词
+                    words = result.content.split()
+                    all_keywords.extend([w for w in words if len(w) >= 2])
+
+        # 简单去重和计数
+        keyword_counts = {}
+        for kw in all_keywords:
+            if len(kw) >= 2:
+                keyword_counts[kw] = keyword_counts.get(kw, 0) + 1
+
+        # 按频率排序
+        sorted_keywords = sorted(keyword_counts.items(), key=lambda x: x[1], reverse=True)
+
+        return {
+            "category": category,
+            "hot_keywords": [kw for kw, count in sorted_keywords[:max_results]],
+            "timestamp": "now",
+        }
+
 
 # 全局 WebSearchTool 实例
 web_search_tool = WebSearchTool()

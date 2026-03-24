@@ -919,3 +919,44 @@ async def delete_template(platform: str, template_id: str):
     except Exception as e:
         logger.error(f"Delete template error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/trending/{platform}")
+async def get_trending_topics(platform: str, category: str = "general"):
+    """
+    获取热门话题
+
+    搜索平台热门话题和趋势
+    """
+    try:
+        from backend.tools.web_search import web_search_tool
+        result = web_search_tool.search_trending_topics(category, platform, max_results=10)
+        return {
+            "platform": platform,
+            "category": category,
+            "success": result.success,
+            "results": [
+                {"title": r.title, "url": r.url, "content": r.content[:200], "score": r.score}
+                for r in result.results
+            ] if result.success else [],
+            "error": result.error,
+        }
+    except Exception as e:
+        logger.error(f"Get trending topics error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/hot-keywords")
+async def get_hot_keywords(category: str = "general"):
+    """
+    获取热门关键词
+
+    搜索类别的热门关键词
+    """
+    try:
+        from backend.tools.web_search import web_search_tool
+        result = web_search_tool.get_hot_keywords(category, max_results=10)
+        return result
+    except Exception as e:
+        logger.error(f"Get hot keywords error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
