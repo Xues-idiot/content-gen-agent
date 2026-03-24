@@ -34,6 +34,30 @@ function ContentPageContent() {
 
   const { showToast } = useToast();
 
+  // Fetch health status on mount
+  const [backendStatus, setBackendStatus] = React.useState<{
+    api: boolean;
+    tavily: boolean;
+  }>({ api: false, tavily: false });
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const response = await fetch("http://localhost:8003/health");
+        if (response.ok) {
+          const data = await response.json();
+          setBackendStatus({
+            api: data.api_key_configured || false,
+            tavily: data.tavily_api_configured || false,
+          });
+        }
+      } catch {
+        // Backend not available
+      }
+    };
+    checkHealth();
+  }, []);
+
   const handleGenerate = async (prod: ProductData) => {
     setProduct(prod);
     setIsLoading(true);
@@ -157,12 +181,19 @@ function ContentPageContent() {
               </p>
             </div>
             {/* Status Indicator */}
-            <div className="flex items-center gap-2">
-              <span
-                className="w-2 h-2 rounded-full bg-green-500"
-                title="后端服务正常"
-              />
-              <span className="text-xs text-gray-500">就绪</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5" title="MiniMax API">
+                <span
+                  className={`w-2 h-2 rounded-full ${backendStatus.api ? "bg-green-500" : "bg-red-500"}`}
+                />
+                <span className="text-xs text-gray-500">API</span>
+              </div>
+              <div className="flex items-center gap-1.5" title="Tavily API">
+                <span
+                  className={`w-2 h-2 rounded-full ${backendStatus.tavily ? "bg-green-500" : "bg-yellow-500"}`}
+                />
+                <span className="text-xs text-gray-500">调研</span>
+              </div>
             </div>
           </div>
         </div>
