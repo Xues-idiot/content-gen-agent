@@ -584,3 +584,29 @@ async def check_content_duplicate(body: DuplicateCheckRequest):
     except Exception as e:
         logger.error(f"Check duplicate error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class HashtagRequest(BaseModel):
+    """标签建议请求"""
+    content: str
+    platform: str = "xiaohongshu"
+    max_tags: int = Field(default=5, ge=1, le=10)
+
+
+@app.post("/api/v1/hashtags/suggest")
+async def suggest_hashtags(body: HashtagRequest):
+    """
+    根据内容推荐话题标签
+
+    使用关键词提取和平台特性生成推荐标签
+    """
+    try:
+        reviewer = get_reviewer()
+        tags = reviewer.suggest_hashtags(body.content, body.platform, body.max_tags)
+        return {
+            "platform": body.platform,
+            "hashtags": tags,
+        }
+    except Exception as e:
+        logger.error(f"Suggest hashtags error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

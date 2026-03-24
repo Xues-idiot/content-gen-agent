@@ -422,6 +422,59 @@ class Reviewer:
             "warnings": warnings,
         }
 
+    def suggest_hashtags(self, content: str, platform: str, max_tags: int = 5) -> List[str]:
+        """
+        根据内容推荐话题标签
+
+        Args:
+            content: 文案内容
+            platform: 目标平台
+            max_tags: 最大标签数量
+
+        Returns:
+            List[str]: 推荐的话题标签列表
+        """
+        import jieba
+        import re
+
+        # 提取关键词
+        words = jieba.cut(content)
+        keywords = [w for w in words if len(w) >= 2 and not re.match(r'^[\d\W]+$', w)]
+
+        # 统计词频
+        word_freq = {}
+        for word in keywords:
+            word_freq[word] = word_freq.get(word, 0) + 1
+
+        # 按频率排序
+        sorted_words = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
+
+        # 平台特定的标签规则
+        platform_tags = {
+            "xiaohongshu": ["种草", "好物推荐", "分享", "测评", "护肤", "美妆", "生活"],
+            "tiktok": ["热门", "推荐", "技巧", "教程", "分享"],
+            "official": ["深度", "解读", "分析", "行业", "观点"],
+            "friend_circle": ["日常", "分享", "生活"],
+        }
+
+        base_tags = platform_tags.get(platform, ["推荐"])
+
+        # 组合推荐标签
+        suggested = []
+        for word, freq in sorted_words[:max_tags * 2]:
+            if word not in ["一个", "这个", "那个", "什么", "怎么"]:
+                suggested.append(f"#{word}")
+
+        # 添加平台通用标签
+        for tag in base_tags:
+            if len(suggested) >= max_tags:
+                break
+            full_tag = f"#{tag}"
+            if full_tag not in suggested:
+                suggested.append(full_tag)
+
+        return suggested[:max_tags]
+
 
 if __name__ == "__main__":
     reviewer = Reviewer()
