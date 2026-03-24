@@ -2543,3 +2543,298 @@ async def generate_comparison_report(
     except Exception as e:
         logger.error(f"Generate comparison report error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Campaign Management =====
+
+@app.post("/api/v1/campaigns")
+async def create_campaign(
+    name: str,
+    description: str,
+    campaign_type: str = "product_launch",
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    tags: Optional[List[str]] = None,
+):
+    """
+    创建营销活动
+
+    创建新的营销活动
+    """
+    try:
+        from backend.services.campaign import campaign_manager
+
+        campaign = campaign_manager.create_campaign(
+            name=name,
+            description=description,
+            campaign_type=campaign_type,
+            start_date=start_date,
+            end_date=end_date,
+            tags=tags,
+        )
+
+        return {
+            "success": True,
+            "campaign": {
+                "id": campaign.id,
+                "name": campaign.name,
+                "description": campaign.description,
+                "campaign_type": campaign.campaign_type,
+                "status": campaign.status,
+                "created_at": campaign.created_at,
+            },
+        }
+    except Exception as e:
+        logger.error(f"Create campaign error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/campaigns")
+async def get_campaigns(
+    status: Optional[str] = None,
+    campaign_type: Optional[str] = None,
+):
+    """
+    获取营销活动列表
+
+    获取所有营销活动
+    """
+    try:
+        from backend.services.campaign import campaign_manager
+
+        campaigns = campaign_manager.get_campaigns(status, campaign_type)
+
+        return {
+            "success": True,
+            "campaigns": [
+                {
+                    "id": c.id,
+                    "name": c.name,
+                    "description": c.description,
+                    "campaign_type": c.campaign_type,
+                    "status": c.status,
+                    "start_date": c.start_date,
+                    "end_date": c.end_date,
+                    "created_at": c.created_at,
+                }
+                for c in campaigns
+            ],
+            "total": len(campaigns),
+        }
+    except Exception as e:
+        logger.error(f"Get campaigns error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/campaigns/{campaign_id}")
+async def get_campaign(campaign_id: str):
+    """
+    获取活动详情
+
+    获取指定活动的详细信息
+    """
+    try:
+        from backend.services.campaign import campaign_manager
+
+        campaign = campaign_manager.get_campaign(campaign_id)
+        if not campaign:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+
+        contents = campaign_manager.get_campaign_contents(campaign_id)
+
+        return {
+            "success": True,
+            "campaign": {
+                "id": campaign.id,
+                "name": campaign.name,
+                "description": campaign.description,
+                "campaign_type": campaign.campaign_type,
+                "status": campaign.status,
+                "start_date": campaign.start_date,
+                "end_date": campaign.end_date,
+                "tags": campaign.tags,
+                "notes": campaign.notes,
+                "created_at": campaign.created_at,
+                "updated_at": campaign.updated_at,
+            },
+            "contents": [
+                {
+                    "id": c.id,
+                    "platform": c.platform,
+                    "title": c.title,
+                    "content": c.content,
+                    "scheduled_time": c.scheduled_time,
+                    "status": c.status,
+                }
+                for c in contents
+            ],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get campaign error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/v1/campaigns/{campaign_id}")
+async def update_campaign(
+    campaign_id: str,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    status: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    tags: Optional[List[str]] = None,
+    notes: Optional[str] = None,
+):
+    """
+    更新活动信息
+
+    更新指定活动的信息
+    """
+    try:
+        from backend.services.campaign import campaign_manager
+
+        update_data = {}
+        if name is not None:
+            update_data["name"] = name
+        if description is not None:
+            update_data["description"] = description
+        if status is not None:
+            update_data["status"] = status
+        if start_date is not None:
+            update_data["start_date"] = start_date
+        if end_date is not None:
+            update_data["end_date"] = end_date
+        if tags is not None:
+            update_data["tags"] = tags
+        if notes is not None:
+            update_data["notes"] = notes
+
+        campaign = campaign_manager.update_campaign(campaign_id, **update_data)
+        if not campaign:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+
+        return {
+            "success": True,
+            "campaign": {
+                "id": campaign.id,
+                "name": campaign.name,
+                "status": campaign.status,
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Update campaign error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/v1/campaigns/{campaign_id}")
+async def delete_campaign(campaign_id: str):
+    """
+    删除活动
+
+    删除指定的营销活动
+    """
+    try:
+        from backend.services.campaign import campaign_manager
+
+        success = campaign_manager.delete_campaign(campaign_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+
+        return {"success": True, "message": "Campaign deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Delete campaign error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/campaigns/{campaign_id}/contents")
+async def add_campaign_content(
+    campaign_id: str,
+    platform: str,
+    title: str,
+    content: str,
+    scheduled_time: Optional[str] = None,
+):
+    """
+    向活动添加内容
+
+    向指定活动添加内容项
+    """
+    try:
+        from backend.services.campaign import campaign_manager
+
+        campaign_content = campaign_manager.add_content_to_campaign(
+            campaign_id=campaign_id,
+            platform=platform,
+            title=title,
+            content=content,
+            scheduled_time=scheduled_time,
+        )
+
+        if not campaign_content:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+
+        return {
+            "success": True,
+            "content": {
+                "id": campaign_content.id,
+                "platform": campaign_content.platform,
+                "title": campaign_content.title,
+                "scheduled_time": campaign_content.scheduled_time,
+                "status": campaign_content.status,
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Add campaign content error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/campaigns/{campaign_id}/timeline")
+async def get_campaign_timeline(campaign_id: str):
+    """
+    获取活动时间线
+
+    获取指定活动的时间线信息
+    """
+    try:
+        from backend.services.campaign import campaign_manager
+
+        timeline = campaign_manager.get_campaign_timeline(campaign_id)
+        if not timeline:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+
+        return {"success": True, **timeline}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get campaign timeline error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/campaigns/{campaign_id}/summary")
+async def get_campaign_summary(campaign_id: str):
+    """
+    获取活动摘要
+
+    获取指定活动的统计摘要
+    """
+    try:
+        from backend.services.campaign import campaign_manager
+
+        summary = campaign_manager.get_campaign_summary(campaign_id)
+        if not summary:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+
+        return {"success": True, **summary}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get campaign summary error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -937,3 +937,32 @@ content-gen-agent/
 
 ### 提交
 - 添加报告生成模块 (4fba467)
+
+## 第361-370轮 (2026-03-24)
+
+### 完成
+- **风格变体生成** (backend/agents/copywriter.py)
+  - generate_style_variations 方法
+  - 支持 formal/casual/humorous/professional/emotional/storytelling
+- **A/B文案生成** (backend/agents/copywriter.py)
+  - generate_ab_copies 方法
+  - 多角度：痛点解决、产品测评、好物推荐、场景化、对比
+- **反馈改进** (backend/agents/copywriter.py)
+  - regenerate_with_feedback 方法
+  - 根据反馈迭代改进文案
+- **季节性文案** (backend/agents/copywriter.py)
+  - SeasonalCopywriter 类
+  - SEASONAL_TEMPLATES：春夏秋冬+节日
+  - generate_seasonal_copy, adapt_to_season 方法
+- **风格变体 API** (backend/api/content.py)
+  - POST /api/v1/copy/variations - 生成风格变体
+  - POST /api/v1/copy/ab-test - 生成A/B测试文案
+  - POST /api/v1/copy/regenerate-with-feedback - 反馈改进
+  - POST /api/v1/copy/seasonal - 季节性文案
+  - GET /api/v1/seasons - 获取可选季节
+- **报告生成 API** (backend/api/content.py)
+  - POST /api/v1/reports/summary - 综合报告
+  - POST /api/v1/reports/comparison - 对比报告
+
+### 提交
+- 添加风格变体和季节性文案 (9c26513)
