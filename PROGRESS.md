@@ -662,3 +662,48 @@ content-gen-agent/
 - ProductInput 增强 (b8720cf)
 - 历史记录增强 (9255091)
 - API 客户端 (fee1d84)
+
+## 第241-250轮 (2026-03-24)
+
+### 完成
+- **CTA 字段修复** (backend/api/content.py)
+  - CopyResultModel 添加 cta 字段
+  - API 端点传递 cta 到响应
+- **后端错误处理增强**
+  - 区分验证/超时/连接错误
+  - 返回结构化错误信息
+- **前端加载状态增强** (frontend/src/components/LoadingSpinner.tsx)
+  - 添加 steps 和 currentStep 属性
+  - 步骤进度指示器
+- **内容页加载步骤** (frontend/src/app/content/page.tsx)
+  - 7步详细加载进度显示
+- **平台预览功能** (frontend/src/components/CopyOutput.tsx)
+  - 小红书、抖音、公众号、朋友圈预览组件
+  - 预览/编辑模式切换
+- **Zustand Store 修复** (frontend/src/store/content-store.ts)
+  - 功能更新类型支持
+- **组件导出修复** (frontend/src/components/index.ts)
+- **单平台重新生成** (backend/agents/copywriter.py)
+  - regenerate 方法
+- **重新生成 API** (backend/api/content.py)
+  - /api/v1/content/regenerate 端点
+- **键盘快捷键增强** (frontend/src/hooks/useKeyboardShortcuts.ts)
+  - CONTENT_PAGE_SHORTCUTS 常量
+- **内容审核增强** (backend/agents/reviewer.py)
+  - 添加医疗虚假、食品违规词类别
+  - suggest_platform_optimization 方法
+- **平台优化建议 API** (backend/api/content.py)
+  - /api/v1/suggestions/{platform} 端点
+- **内容状态管理增强** (frontend/src/store/content-store.ts)
+  - updateCopyResult 方法
+- **内容版本历史**
+  - versions 状态
+  - saveVersion、getVersions 方法
+
+### 提交
+- 增强 CTA 支持和平台预览功能 (093174d)
+- 添加单平台重新生成功能和键盘快捷键 (dc9049c)
+- 增强内容审核模块 (2db9f25)
+- 添加平台特定优化建议 API (399ad31)
+- 增强内容状态管理 (ab356bd)
+- 添加内容版本历史管理 (970401f)
