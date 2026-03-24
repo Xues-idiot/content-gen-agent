@@ -781,6 +781,28 @@ async def get_seo_keywords(body: SeoKeywordsRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class CompareRequest(BaseModel):
+    """内容对比请求"""
+    content1: str
+    content2: str
+
+
+@app.post("/api/v1/content/compare")
+async def compare_contents(body: CompareRequest):
+    """
+    对比两个内容的差异
+
+    比较长度、质量、违规词、结构等方面
+    """
+    try:
+        reviewer = get_reviewer()
+        comparison = reviewer.compare_contents(body.content1, body.content2)
+        return comparison
+    except Exception as e:
+        logger.error(f"Compare contents error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 class HashtagRequest(BaseModel):
     """标签建议请求"""
     content: str

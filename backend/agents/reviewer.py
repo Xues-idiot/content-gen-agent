@@ -837,6 +837,79 @@ class Reviewer:
             "keyword_density": round(len(words) / len(content) * 100, 2) if content else 0,
         }
 
+    def compare_contents(self, content1: str, content2: str) -> Dict[str, Any]:
+        """
+        对比两个内容的差异
+
+        Returns:
+            dict: 包含对比分析结果
+        """
+        analysis1 = self.analyze_structure(content1)
+        analysis2 = self.analyze_structure(content2)
+
+        violations1 = self.check_ad_words(content1)
+        violations2 = self.check_ad_words(content2)
+
+        review1 = self.review_quality(content1)
+        review2 = self.review_quality(content2)
+
+        # 长度对比
+        len_diff = len(content2) - len(content1)
+        len_diff_pct = round((len_diff / len(content1) * 100), 1) if content1 else 0
+
+        # 结构对比
+        structure_diff = {
+            "emoji": analysis1["has_emoji"] != analysis2["has_emoji"],
+            "numbers": analysis1["has_numbers"] != analysis2["has_numbers"],
+            "hashtags": analysis1["has_hashtags"] != analysis2["has_hashtags"],
+            "paragraphs": analysis1["paragraph_count"] != analysis2["paragraph_count"],
+        }
+
+        # 质量对比
+        quality_diff = review2.quality_score - review1.quality_score
+
+        # 违规词对比
+        violations_diff = len(violations2) - len(violations1)
+
+        # 建议
+        suggestions = []
+
+        if len_diff_pct > 30:
+            suggestions.append(f"内容2比内容1长 {len_diff_pct}%，可能需要精简")
+        elif len_diff_pct < -30:
+            suggestions.append(f"内容2比内容1短 {abs(len_diff_pct)}%，可能需要补充")
+
+        if quality_diff > 1:
+            suggestions.append("内容2质量分数更高（+{:.1f}）".format(quality_diff))
+        elif quality_diff < -1:
+            suggestions.append("内容1质量分数更高（+{:.1f}）".format(abs(quality_diff)))
+
+        if violations_diff > 0:
+            suggestions.append(f"内容2有 {violations_diff} 个额外违规词")
+        elif violations_diff < 0:
+            suggestions.append(f"内容1有 {abs(violations_diff)} 个额外违规词")
+
+        return {
+            "length": {
+                "content1": len(content1),
+                "content2": len(content2),
+                "difference": len_diff,
+                "difference_percent": len_diff_pct,
+            },
+            "quality": {
+                "content1": review1.quality_score,
+                "content2": review2.quality_score,
+                "difference": quality_diff,
+            },
+            "violations": {
+                "content1": len(violations1),
+                "content2": len(violations2),
+                "difference": violations_diff,
+            },
+            "structure_differences": {k: v for k, v in structure_diff.items() if v},
+            "suggestions": suggestions,
+        }
+
 
 if __name__ == "__main__":
     reviewer = Reviewer()
