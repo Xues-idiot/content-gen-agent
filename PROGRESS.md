@@ -776,3 +776,19 @@ content-gen-agent/
 ### 提交
 - 添加内容分析摘要功能 (03a1232)
 - 添加内容格式转换功能 (0572eb0)
+
+## 第281-290轮 (2026-03-24)
+
+### 完成
+- **SEO 关键词提取** (backend/agents/reviewer.py)
+  - extract_seo_keywords 方法
+  - 使用 jieba 分词提取核心/长尾关键词
+  - POST /api/v1/seo/keywords 端点
+- **内容对比** (backend/agents/reviewer.py)
+  - compare_contents 方法
+  - 对比长度、质量、违规词、结构差异
+  - POST /api/v1/content/compare 端点
+
+### 提交
+- 添加 SEO 关键词提取功能 (c847559)
+- 添加内容对比功能 (02743a1)
