@@ -235,6 +235,11 @@ class Copywriter:
             if content_match:
                 result.content = content_match.group(1).strip()
 
+        # 尝试提取 CTA（小红书也有行动号召）
+        cta_match = re.search(r"【?(?:行动号召|结尾|引导)[】]?\s*\n?([\s\S]+?)$", response)
+        if cta_match and not result.cta:
+            result.cta = cta_match.group(1).strip()
+
         return result
 
     def _parse_tiktok_response(self, response: str) -> CopyResult:
@@ -242,14 +247,17 @@ class Copywriter:
         import re
         result = CopyResult(platform="tiktok", raw_output=response)
 
+        # 提取开头钩子
         hook_match = re.search(r"【开头钩子】[^\n]*\n([\s\S]+?)(?:\n【|完整脚本|$)", response)
         if hook_match:
             result.title = hook_match.group(1).strip()
 
+        # 提取内容主体
         script_match = re.search(r"【内容主体】([\s\S]+?)(?:【结尾|$)", response)
         if script_match:
             result.script = script_match.group(1).strip()
 
+        # 提取 CTA（行动号召）
         cta_match = re.search(r"【结尾行动号召】\s*\n?([\s\S]+?)$", response)
         if cta_match:
             result.cta = cta_match.group(1).strip()
@@ -306,6 +314,11 @@ class Copywriter:
         time_match = re.search(r"发布时间建议：(.+)", response)
         if time_match:
             result.analysis["posting_time"] = time_match.group(1).strip()
+
+        # 尝试提取 CTA（朋友圈也有行动号召）
+        cta_match = re.search(r"【?(?:行动号召|结尾|引导)[】]?\s*\n?([\s\S]+?)$", response)
+        if cta_match:
+            result.cta = cta_match.group(1).strip()
 
         return result
 
