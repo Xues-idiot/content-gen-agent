@@ -595,3 +595,23 @@ content-gen-agent/
   - 更新环境变量配置：Tavily API
 - **constants.py 更新**
   - APP_DESCRIPTION 更精确描述
+
+## 第216-220轮 (2026-03-24)
+
+### 完成
+- **健康检查增强** (backend/api/content.py)
+  - HealthResponse 新增 tavily_api_configured 字段
+  - /health 端点返回 Tavily API 配置状态
+- **前端 API 类型更新** (frontend/src/lib/api.ts)
+  - HealthStatus 接口同步更新
+- **WORKFLOW.md 更新**
+  - 项目进展表格更新
+
+### 提交
+- 初始版本 (4192e79)
+- MarketInsights (298f16a)
+- 违规词库 (19f85e5)
+- README 更新 (8f3b675)
+- Planner 修复 (81d08c6)
+- WORKFLOW 更新 (53b3a19)
+- 健康检查增强 (7ada571)
