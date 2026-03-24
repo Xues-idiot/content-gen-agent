@@ -2286,3 +2286,260 @@ async def extract_hashtags(
     except Exception as e:
         logger.error(f"Extract hashtags error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Style Variations & A/B Testing =====
+
+@app.post("/api/v1/copy/variations")
+async def generate_style_variations(
+    product_name: str,
+    product_description: str,
+    selling_points: str,
+    platform: str,
+    base_content: str,
+    styles: Optional[List[str]] = None,
+):
+    """
+    生成多种风格的文案变体
+
+    将基础文案改写为不同风格
+    """
+    try:
+        from backend.agents.copywriter import Copywriter
+        from backend.agents.planner import ProductInfo
+
+        product = ProductInfo(
+            name=product_name,
+            description=product_description,
+            selling_points=[s.strip() for s in selling_points.split(",") if s.strip()],
+        )
+
+        copywriter = get_copywriter()
+        variations = copywriter.generate_style_variations(product, platform, base_content, styles)
+
+        return {
+            "success": True,
+            "platform": platform,
+            "variations": variations,
+        }
+    except Exception as e:
+        logger.error(f"Generate variations error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/copy/ab-test")
+async def generate_ab_copies(
+    product_name: str,
+    product_description: str,
+    selling_points: str,
+    platform: str,
+    num_variants: int = 3,
+):
+    """
+    生成A/B测试用的多个文案版本
+
+    生成不同角度的文案用于A/B测试
+    """
+    try:
+        from backend.agents.copywriter import Copywriter
+        from backend.agents.planner import ProductInfo
+
+        product = ProductInfo(
+            name=product_name,
+            description=product_description,
+            selling_points=[s.strip() for s in selling_points.split(",") if s.strip()],
+        )
+
+        copywriter = get_copywriter()
+        results = copywriter.generate_ab_copies(product, platform, num_variants)
+
+        return {
+            "success": True,
+            "platform": platform,
+            "copies": [
+                {
+                    "title": r.title,
+                    "content": r.content,
+                    "tags": r.tags,
+                    "angle": r.analysis.get("angle", ""),
+                    "success": r.success,
+                }
+                for r in results
+            ],
+        }
+    except Exception as e:
+        logger.error(f"Generate A/B copies error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/copy/regenerate-with-feedback")
+async def regenerate_with_feedback(
+    original_title: str,
+    original_content: str,
+    feedback: str,
+    product_name: str,
+    product_description: str,
+    selling_points: str,
+    platform: str,
+):
+    """
+    根据反馈重新生成文案
+
+    改进不满意的部分生成新文案
+    """
+    try:
+        from backend.agents.copywriter import Copywriter, CopyResult
+        from backend.agents.planner import ProductInfo
+
+        product = ProductInfo(
+            name=product_name,
+            description=product_description,
+            selling_points=[s.strip() for s in selling_points.split(",") if s.strip()],
+        )
+
+        original = CopyResult(
+            platform=platform,
+            title=original_title,
+            content=original_content,
+        )
+
+        copywriter = get_copywriter()
+        result = copywriter.regenerate_with_feedback(original, feedback, product)
+
+        return {
+            "success": True,
+            "result": {
+                "title": result.title,
+                "content": result.content,
+                "tags": result.tags,
+                "analysis": result.analysis,
+            },
+        }
+    except Exception as e:
+        logger.error(f"Regenerate with feedback error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Seasonal Copy =====
+
+@app.post("/api/v1/copy/seasonal")
+async def generate_seasonal_copy(
+    product_name: str,
+    product_description: str,
+    selling_points: str,
+    platform: str,
+    season: str = "spring",
+    festival: str = "",
+):
+    """
+    生成季节性文案
+
+    根据季节或节日生成应景的营销文案
+    """
+    try:
+        from backend.agents.copywriter import SeasonalCopywriter
+        from backend.agents.planner import ProductInfo
+
+        product = ProductInfo(
+            name=product_name,
+            description=product_description,
+            selling_points=[s.strip() for s in selling_points.split(",") if s.strip()],
+        )
+
+        seasonal_writer = SeasonalCopywriter()
+        result = seasonal_writer.generate_seasonal_copy(product, platform, season, festival)
+
+        return {
+            "success": True,
+            "seasonal_copy": {
+                "season": result.season,
+                "theme": result.theme,
+                "title": result.title,
+                "content": result.content,
+                "hashtags": result.hashtags,
+            },
+        }
+    except Exception as e:
+        logger.error(f"Generate seasonal copy error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/seasons")
+async def get_available_seasons():
+    """
+    获取可选的季节列表
+
+    返回支持的季节和节日
+    """
+    from backend.agents.copywriter import SEASONAL_TEMPLATES
+
+    return {
+        "success": True,
+        "seasons": [
+            {"id": key, "name": value["name"], "keywords": value["keywords"]}
+            for key, value in SEASONAL_TEMPLATES.items()
+        ],
+    }
+
+
+# ===== Report Generation =====
+
+@app.post("/api/v1/reports/summary")
+async def generate_summary_report(
+    content_data: List[Dict[str, Any]],
+    title: str = "内容报告",
+    include_sections: Optional[List[str]] = None,
+):
+    """
+    生成综合报告
+
+    根据内容数据生成统计报告
+    """
+    try:
+        from backend.services.reporting import ContentReporter, ReportConfig
+
+        if include_sections is None:
+            include_sections = ["overview", "platform_breakdown", "quality_analysis", "violation_report"]
+
+        config = ReportConfig(
+            title=title,
+            include_sections=include_sections,
+        )
+
+        reporter = ContentReporter()
+        report = reporter.generate_summary_report(content_data, config)
+
+        return {
+            "success": True,
+            "report": report.report,
+            "generated_at": report.generated_at,
+        }
+    except Exception as e:
+        logger.error(f"Generate summary report error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/reports/comparison")
+async def generate_comparison_report(
+    content1: Dict[str, Any],
+    content2: Dict[str, Any],
+):
+    """
+    生成内容对比报告
+
+    对比两个内容的质量和效果
+    """
+    try:
+        from backend.services.reporting import ContentReporter
+
+        reporter = ContentReporter()
+        report = reporter.generate_comparison_report(content1, content2)
+
+        return {
+            "success": True,
+            "report": report.report,
+            "generated_at": report.generated_at,
+        }
+    except Exception as e:
+        logger.error(f"Generate comparison report error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

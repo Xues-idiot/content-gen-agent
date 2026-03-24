@@ -340,6 +340,308 @@ class Copywriter:
 
         return result
 
+    def generate_style_variations(
+        self,
+        product: ProductInfo,
+        platform: str,
+        base_content: str,
+        styles: List[str] = None,
+    ) -> List[Dict[str, str]]:
+        """
+        生成多种风格的文案变体
+
+        Args:
+            product: 产品信息
+            platform: 目标平台
+            base_content: 基础文案
+            styles: 风格列表
+
+        Returns:
+            list: 文案变体列表
+        """
+        if styles is None:
+            styles = ["formal", "casual", "humorous", "professional"]
+
+        variations = []
+
+        style_prompts = {
+            "formal": f"将以下文案改写为正式风格：\n{base_content}",
+            "casual": f"将以下文案改写为轻松随意风格：\n{base_content}",
+            "humorous": f"将以下文案改写为幽默风趣风格：\n{base_content}",
+            "professional": f"将以下文案改写为专业严谨风格：\n{base_content}",
+            "emotional": f"将以下文案改写为情感化风格：\n{base_content}",
+            "storytelling": f"将以下文案改写为故事叙述风格：\n{base_content}",
+        }
+
+        for style in styles:
+            if style in style_prompts:
+                response = self.llm.generate(style_prompts[style])
+                variations.append({
+                    "style": style,
+                    "content": response if not response.startswith("Error:") else base_content,
+                })
+
+        return variations
+
+    def generate_ab_copies(
+        self,
+        product: ProductInfo,
+        platform: str,
+        num_variants: int = 3,
+    ) -> List[CopyResult]:
+        """
+        生成A/B测试用的多个文案版本
+
+        Args:
+            product: 产品信息
+            platform: 目标平台
+            num_variants: 变体数量
+
+        Returns:
+            list: 多个文案结果
+        """
+        results = []
+
+        # 生成多个不同角度的文案
+        angles = [
+            ("痛点解决", "从用户痛点出发，强调产品如何解决问题"),
+            ("产品测评", "客观介绍产品特点和使用体验"),
+            ("好物推荐", "以推荐角度分享产品亮点"),
+            ("场景化", "描述具体使用场景，让用户产生代入感"),
+            ("对比", "通过对比突显产品优势"),
+        ]
+
+        for i in range(min(num_variants, len(angles))):
+            angle_name, angle_desc = angles[i]
+
+            prompt = f"""为{platform}平台生成一款{product.name}的文案。
+
+产品信息：
+- 名称：{product.name}
+- 描述：{product.description}
+- 卖点：{', '.join(product.selling_points)}
+
+内容角度：{angle_desc}
+
+请生成包含标题、正文、标签的完整文案。"""
+
+            response = self.llm.generate(prompt)
+
+            if response.startswith("Error:"):
+                results.append(CopyResult(
+                    platform=platform,
+                    success=False,
+                    error=response,
+                    analysis={"angle": angle_name},
+                ))
+            else:
+                result = self._parse_friend_circle_response(response) if platform == "friend_circle" else \
+                         self._parse_xiaohongshu_response(response) if platform == "xiaohongshu" else \
+                         self._parse_official_response(response)
+                result.analysis["angle"] = angle_name
+                results.append(result)
+
+        return results
+
+    def regenerate_with_feedback(
+        self,
+        original: CopyResult,
+        feedback: str,
+        product: ProductInfo,
+    ) -> CopyResult:
+        """
+        根据反馈重新生成文案
+
+        Args:
+            original: 原始文案结果
+            feedback: 改进反馈
+            product: 产品信息
+
+        Returns:
+            CopyResult: 重新生成的文案
+        """
+        prompt = f"""请根据以下反馈改进文案。
+
+原始文案：
+标题：{original.title}
+正文：{original.content}
+标签：{', '.join(original.tags)}
+
+改进反馈：
+{feedback}
+
+产品信息：
+- 名称：{product.name}
+- 描述：{product.description}
+- 卖点：{', '.join(product.selling_points)}
+
+请生成改进后的完整文案，包含标题、正文、标签。"""
+
+        response = self.llm.generate(prompt)
+
+        if response.startswith("Error:"):
+            return CopyResult(
+                platform=original.platform,
+                success=False,
+                error=response,
+            )
+
+        result = self._parse_friend_circle_response(response) if original.platform == "friend_circle" else \
+                 self._parse_xiaohongshu_response(response) if original.platform == "xiaohongshu" else \
+                 self._parse_official_response(response)
+
+        result.analysis["regenerated_from"] = original.raw_output[:100] if original.raw_output else ""
+        result.analysis["feedback"] = feedback
+
+        return result
+
+
+# 季节性文案模板
+SEASONAL_TEMPLATES = {
+    "spring": {
+        "name": "春季",
+        "keywords": ["春暖花开", "踏青", "春日", "新品"],
+        "themes": ["焕新", "清新", "活力", "生长"],
+    },
+    "summer": {
+        "name": "夏季",
+        "keywords": ["清凉", "防晒", "海边", "暑假"],
+        "themes": ["解暑", "清爽", "热情", "活力"],
+    },
+    "autumn": {
+        "name": "秋季",
+        "keywords": ["秋风", "落叶", "丰收", "中秋"],
+        "themes": ["温暖", "收获", "舒适", "慵懒"],
+    },
+    "winter": {
+        "name": "冬季",
+        "keywords": ["寒冷", "保暖", "年终", "圣诞", "新年"],
+        "themes": ["温暖", "温馨", "年终", "团圆"],
+    },
+    "festival": {
+        "name": "节日通用",
+        "keywords": ["优惠", "送礼", "庆祝", "限时"],
+        "themes": ["送礼", "优惠", "限定", "庆典"],
+    },
+}
+
+
+@dataclass
+class SeasonalCopy:
+    """季节性文案"""
+    season: str
+    theme: str
+    title: str
+    content: str
+    hashtags: List[str]
+
+
+class SeasonalCopywriter:
+    """
+    季节性文案生成器
+
+    根据不同季节和节日生成应景的营销文案
+    """
+
+    def __init__(self):
+        self.templates = SEASONAL_TEMPLATES
+
+    def generate_seasonal_copy(
+        self,
+        product: ProductInfo,
+        platform: str,
+        season: str = "spring",
+        festival: str = "",
+    ) -> SeasonalCopy:
+        """
+        生成季节性文案
+
+        Args:
+            product: 产品信息
+            platform: 目标平台
+            season: 季节 (spring/summer/autumn/winter)
+            festival: 节日名称 (可选)
+
+        Returns:
+            SeasonalCopy: 季节性文案
+        """
+        template = self.templates.get(season, self.templates["spring"])
+
+        # 构建季节性提示
+        seasonal_context = f"""
+现在是{template['name']}，推荐使用以下季节性元素：
+- 关键词：{', '.join(template['keywords'])}
+- 主题：{', '.join(template['themes'])}
+{f'- 节日：{festival}' if festival else ''}
+"""
+
+        prompt = f"""为{platform}平台生成一款{product.name}的{template['name']}季节性文案。
+
+产品信息：
+- 名称：{product.name}
+- 描述：{product.description}
+- 卖点：{', '.join(product.selling_points)}
+
+{seasonal_context}
+
+请生成包含标题、正文、标签的完整文案，体现季节感。"""
+
+        llm = LLMClient()
+        response = llm.generate(prompt)
+
+        # 简单解析
+        import re
+        title_match = re.search(r"标题：(.+)", response)
+        title = title_match.group(1).strip() if title_match else f"{product.name} - {template['name']}推荐"
+
+        tags_match = re.search(r"标签：([\s\S]+?)(?:配图|$)", response)
+        tags = re.findall(r"#\w+", tags_match.group(1)) if tags_match else []
+
+        content_match = re.search(r"正文：([\s\S]+?)(?:标签|$)", response)
+        content = content_match.group(1).strip() if content_match else response
+
+        return SeasonalCopy(
+            season=season,
+            theme=festival or template["name"],
+            title=title,
+            content=content,
+            hashtags=tags,
+        )
+
+    def adapt_to_season(
+        self,
+        original_content: str,
+        original_platform: str,
+        target_season: str,
+    ) -> str:
+        """
+        将现有文案适配到不同季节
+
+        Args:
+            original_content: 原始文案
+            original_platform: 原始平台
+            target_season: 目标季节
+
+        Returns:
+            str: 适配后的文案
+        """
+        template = self.templates.get(target_season, self.templates["spring"])
+
+        prompt = f"""将以下{template['name']}文案进行季节性改编：
+
+原始文案：
+{original_content}
+
+目标季节：{template['name']}
+季节关键词：{', '.join(template['keywords'])}
+
+请保持文案核心信息不变，只调整季节性表达。"""
+
+        llm = LLMClient()
+        response = llm.generate(prompt)
+
+        return response if not response.startswith("Error:") else original_content
+
 
 if __name__ == "__main__":
     from backend.agents.planner import ContentPlanner
