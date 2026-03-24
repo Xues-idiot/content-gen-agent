@@ -792,3 +792,18 @@ content-gen-agent/
 ### 提交
 - 添加 SEO 关键词提取功能 (c847559)
 - 添加内容对比功能 (02743a1)
+
+## 第291-300轮 (2026-03-24)
+
+### 完成
+- **热门话题搜索** (backend/tools/web_search.py)
+  - search_trending_topics 方法
+  - 支持小红书/抖音/公众号/朋友圈平台
+  - GET /api/v1/trending/{platform} 端点
+- **热门关键词提取** (backend/tools/web_search.py)
+  - get_hot_keywords 方法
+  - 多查询聚合+频率统计
+  - GET /api/v1/hot-keywords 端点
+
+### 提交
+- 添加热门话题和关键词 API (c428d11)

@@ -5,7 +5,7 @@ Vox Content API
 支持 CORS、请求验证和错误处理
 """
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 from dataclasses import asdict
 from contextlib import asynccontextmanager
 
@@ -960,3 +960,340 @@ async def get_hot_keywords(category: str = "general"):
     except Exception as e:
         logger.error(f"Get hot keywords error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Content Calendar & Scheduling =====
+
+class ScheduledContent(BaseModel):
+    """计划发布的内容"""
+    id: str
+    product_name: str
+    platform: str
+    title: str
+    content: str
+    tags: List[str] = []
+    scheduled_time: str
+    status: str = "pending"  # pending, published, failed
+    created_at: str
+
+
+class ContentCalendarRequest(BaseModel):
+    """内容日历请求"""
+    start_date: str
+    end_date: str
+    platforms: Optional[List[str]] = None
+
+
+class CalendarResponse(BaseModel):
+    """日历响应"""
+    success: bool
+    scheduled_content: List[ScheduledContent]
+    total: int
+
+
+# In-memory storage for scheduled content (替换为数据库)
+_scheduled_content_store: List[ScheduledContent] = []
+
+
+@app.post("/api/v1/schedule", response_model=CalendarResponse)
+async def schedule_content(
+    product_name: str,
+    platform: str,
+    title: str,
+    content: str,
+    tags: List[str] = [],
+    scheduled_time: str = "",
+):
+    """
+    添加计划发布的内容
+
+    将内容添加到发布日历
+    """
+    try:
+        import uuid
+        from datetime import datetime
+
+        scheduled = ScheduledContent(
+            id=str(uuid.uuid4())[:8],
+            product_name=product_name,
+            platform=platform,
+            title=title,
+            content=content,
+            tags=tags,
+            scheduled_time=scheduled_time or datetime.now().isoformat(),
+            status="pending",
+            created_at=datetime.now().isoformat(),
+        )
+        _scheduled_content_store.append(scheduled)
+
+        return CalendarResponse(
+            success=True,
+            scheduled_content=[scheduled],
+            total=len(_scheduled_content_store),
+        )
+    except Exception as e:
+        logger.error(f"Schedule content error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/calendar", response_model=CalendarResponse)
+async def get_content_calendar(
+    start_date: str = "",
+    end_date: str = "",
+    platform: Optional[str] = None,
+):
+    """
+    获取内容日历
+
+    获取指定日期范围和平台的内容计划
+    """
+    try:
+        filtered = _scheduled_content_store
+
+        if platform:
+            filtered = [c for c in filtered if c.platform == platform]
+
+        return CalendarResponse(
+            success=True,
+            scheduled_content=filtered,
+            total=len(filtered),
+        )
+    except Exception as e:
+        logger.error(f"Get calendar error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/v1/schedule/{schedule_id}")
+async def delete_scheduled_content(schedule_id: str):
+    """
+    删除计划的内容
+
+    从日历中移除计划发布的内容
+    """
+    try:
+        global _scheduled_content_store
+        original_count = len(_scheduled_content_store)
+        _scheduled_content_store = [
+            c for c in _scheduled_content_store if c.id != schedule_id
+        ]
+
+        if len(_scheduled_content_store) == original_count:
+            raise HTTPException(status_code=404, detail="Schedule not found")
+
+        return {"success": True, "message": "Schedule deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Delete schedule error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/v1/schedule/{schedule_id}/publish")
+async def mark_as_published(schedule_id: str):
+    """
+    标记内容为已发布
+
+    更新内容状态为 published
+    """
+    try:
+        for content in _scheduled_content_store:
+            if content.id == schedule_id:
+                content.status = "published"
+                return {"success": True, "content": content}
+
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Mark published error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Content Version Management =====
+
+class ContentVersion(BaseModel):
+    """内容版本"""
+    id: str
+    content_id: str
+    version_number: int
+    title: str
+    content: str
+    platform: str
+    created_at: str
+    change_summary: str = ""
+
+
+_content_versions_store: Dict[str, List[ContentVersion]] = {}
+
+
+@app.post("/api/v1/versions")
+async def save_content_version(
+    content_id: str,
+    version_number: int,
+    title: str,
+    content: str,
+    platform: str,
+    change_summary: str = "",
+):
+    """
+    保存内容版本
+
+    创建新的内容版本快照
+    """
+    try:
+        from datetime import datetime
+        import uuid
+
+        version = ContentVersion(
+            id=str(uuid.uuid4())[:8],
+            content_id=content_id,
+            version_number=version_number,
+            title=title,
+            content=content,
+            platform=platform,
+            created_at=datetime.now().isoformat(),
+            change_summary=change_summary,
+        )
+
+        if content_id not in _content_versions_store:
+            _content_versions_store[content_id] = []
+
+        _content_versions_store[content_id].append(version)
+
+        return {"success": True, "version": version}
+    except Exception as e:
+        logger.error(f"Save version error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/versions/{content_id}")
+async def get_content_versions(content_id: str):
+    """
+    获取内容版本历史
+
+    获取指定内容的版本列表
+    """
+    try:
+        versions = _content_versions_store.get(content_id, [])
+        return {
+            "success": True,
+            "content_id": content_id,
+            "versions": versions,
+            "total": len(versions),
+        }
+    except Exception as e:
+        logger.error(f"Get versions error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/versions/{content_id}/v/{version_number}")
+async def get_specific_version(content_id: str, version_number: int):
+    """
+    获取特定版本
+
+    获取指定内容ID和版本号的内容
+    """
+    try:
+        versions = _content_versions_store.get(content_id, [])
+        for v in versions:
+            if v.version_number == version_number:
+                return {"success": True, "version": v}
+
+        raise HTTPException(status_code=404, detail="Version not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get specific version error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Platform Best Practices =====
+
+PLATFORM_BEST_PRATICES = {
+    "xiaohongshu": {
+        "name": "小红书",
+        "optimal_length": "300-800字",
+        "hashtag_format": "#话题#",
+        "emoji_usage": "适中",
+        "best_posting_times": ["12:00-13:00", "18:00-20:00", "21:00-22:00"],
+        "tips": [
+            "标题要吸引人，有悬念感",
+            "开头3行要抓眼球",
+            "多用emoji增加可读性",
+            "添加高质量图片",
+            "结尾引导互动（评论、收藏）",
+        ],
+    },
+    "tiktok": {
+        "name": "抖音",
+        "optimal_length": "15-60秒视频文案",
+        "hashtag_format": "#话题",
+        "emoji_usage": "少",
+        "best_posting_times": ["12:00-14:00", "18:00-20:00", "21:00-23:00"],
+        "tips": [
+            "开头3秒要抓住注意力",
+            "文案要口语化",
+            "使用热门音乐",
+            "添加字幕",
+            "结尾引导关注",
+        ],
+    },
+    "official": {
+        "name": "公众号",
+        "optimal_length": "800-2000字",
+        "hashtag_format": "",
+        "emoji_usage": "少",
+        "best_posting_times": ["08:00-09:00", "12:00-13:00", "20:00-21:00"],
+        "tips": [
+            "标题要专业有吸引力",
+            "开头要有价值铺垫",
+            "段落清晰，排版美观",
+            "添加相关图片",
+            "结尾引导关注和点在看",
+        ],
+    },
+    "friend_circle": {
+        "name": "朋友圈",
+        "optimal_length": "50-200字",
+        "hashtag_format": "#话题#",
+        "emoji_usage": "多",
+        "best_posting_times": ["08:00-09:00", "12:00-13:00", "17:30-18:30", "21:00-22:00"],
+        "tips": [
+            "文案要生活化、真实",
+            "配图3-9张最佳",
+            "避免过度营销感",
+            "使用当地emoji",
+            "发布时间要合适",
+        ],
+    },
+}
+
+
+@app.get("/api/v1/best-practices/{platform}")
+async def get_platform_best_practices(platform: str):
+    """
+    获取平台最佳实践
+
+    获取指定平台的最佳发布时间、内容长度等建议
+    """
+    if platform not in PLATFORM_BEST_PRATICES:
+        raise HTTPException(status_code=404, detail="Platform not found")
+
+    return {
+        "success": True,
+        "platform": platform,
+        "practices": PLATFORM_BEST_PRATICES[platform],
+    }
+
+
+@app.get("/api/v1/best-practices")
+async def get_all_best_practices():
+    """
+    获取所有平台最佳实践
+
+    返回所有平台的最佳实践
+    """
+    return {
+        "success": True,
+        "platforms": PLATFORM_BEST_PRATICES,
+    }

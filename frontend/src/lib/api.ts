@@ -166,6 +166,123 @@ class ApiClient {
     );
     return this.handleResponse(response);
   }
+
+  async getTrendingTopics(platform: string, category: string = "general"): Promise<{
+    platform: string;
+    category: string;
+    success: boolean;
+    results: { title: string; url: string; content: string; score: number }[];
+    error?: string;
+  }> {
+    const response = await fetch(
+      `${this.baseUrl}/api/v1/trending/${platform}?category=${encodeURIComponent(category)}`
+    );
+    return this.handleResponse(response);
+  }
+
+  async getHotKeywords(category: string = "general"): Promise<{
+    category: string;
+    hot_keywords: string[];
+    timestamp: string;
+  }> {
+    const response = await fetch(
+      `${this.baseUrl}/api/v1/hot-keywords?category=${encodeURIComponent(category)}`
+    );
+    return this.handleResponse(response);
+  }
+
+  async getBestPractices(platform: string): Promise<{
+    success: boolean;
+    platform: string;
+    practices: {
+      name: string;
+      optimal_length: string;
+      hashtag_format: string;
+      emoji_usage: string;
+      best_posting_times: string[];
+      tips: string[];
+    };
+  }> {
+    const response = await fetch(`${this.baseUrl}/api/v1/best-practices/${platform}`);
+    return this.handleResponse(response);
+  }
+
+  async getContentCalendar(platform?: string): Promise<{
+    success: boolean;
+    scheduled_content: {
+      id: string;
+      product_name: string;
+      platform: string;
+      title: string;
+      content: string;
+      tags: string[];
+      scheduled_time: string;
+      status: string;
+      created_at: string;
+    }[];
+    total: number;
+  }> {
+    const params = platform ? `?platform=${encodeURIComponent(platform)}` : "";
+    const response = await fetch(`${this.baseUrl}/api/v1/calendar${params}`);
+    return this.handleResponse(response);
+  }
+
+  async scheduleContent(
+    productName: string,
+    platform: string,
+    title: string,
+    content: string,
+    tags: string[] = [],
+    scheduledTime?: string
+  ): Promise<{
+    success: boolean;
+    scheduled_content: {
+      id: string;
+      product_name: string;
+      platform: string;
+      title: string;
+      content: string;
+      tags: string[];
+      scheduled_time: string;
+      status: string;
+      created_at: string;
+    }[];
+    total: number;
+  }> {
+    const params = new URLSearchParams({
+      product_name: productName,
+      platform,
+      title,
+      content,
+      tags: tags.join(","),
+    });
+    if (scheduledTime) params.append("scheduled_time", scheduledTime);
+
+    const response = await fetch(`${this.baseUrl}/api/v1/schedule?${params}`, {
+      method: "POST",
+    });
+    return this.handleResponse(response);
+  }
+
+  async deleteScheduledContent(scheduleId: string): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`${this.baseUrl}/api/v1/schedule/${scheduleId}`, {
+      method: "DELETE",
+    });
+    return this.handleResponse(response);
+  }
+
+  async markContentPublished(scheduleId: string): Promise<{
+    success: boolean;
+    content: {
+      id: string;
+      status: string;
+    };
+  }> {
+    const response = await fetch(`${this.baseUrl}/api/v1/schedule/${scheduleId}/publish`, {
+      method: "PUT",
+    });
+    return this.handleResponse(response);
+  }
 }
 
 // 导出单例
