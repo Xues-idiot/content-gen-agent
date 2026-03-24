@@ -44,6 +44,7 @@ class TestCopywriter:
         assert result.title == ""
         assert result.content == ""
         assert result.script == ""
+        assert result.cta == ""
         assert result.tags == []
         assert result.image_suggestions == []
         assert result.analysis == {}
@@ -57,6 +58,7 @@ class TestCopywriter:
             title="测试标题",
             content="测试内容",
             script="脚本",
+            cta="行动号召",
             tags=["#标签1", "#标签2"],
             image_suggestions=["图片1", "图片2"],
             analysis={"word_count": 100},
@@ -66,6 +68,7 @@ class TestCopywriter:
 
         assert result.title == "测试标题"
         assert result.content == "测试内容"
+        assert result.cta == "行动号召"
         assert len(result.tags) == 2
         assert len(result.image_suggestions) == 2
 
@@ -94,6 +97,8 @@ class TestCopywriterGeneration:
 
     def test_generate_with_invalid_platform(self):
         """测试无效平台"""
+        from backend.agents.planner import ContentPlan, UserProfile
+
         product = ProductInfo(
             name="测试",
             description="描述",
@@ -101,10 +106,17 @@ class TestCopywriterGeneration:
             target_users=[],
         )
 
-        plan = self.planner.plan_content(product, [])
+        plan = ContentPlan(
+            product=product,
+            target_users=[],
+            content_direction="",
+            key_themes=[],
+            tone_of_voice="",
+            recommended_platforms=[],
+        )
 
         # 使用不存在的平台
-        result = self.copywriter.generate(product, plan, "invalid_platform")
+        result = self.copywriter.generate(product, plan, "invalid_platform" as any)
 
         assert result.success == False
         assert "Unknown platform" in result.error
@@ -154,6 +166,24 @@ class TestCopyResultParsing:
 
         assert result.platform == "tiktok"
         assert result.script != "" or result.title != ""
+        assert result.cta != "" or result.cta == "喜欢的话记得点赞关注哦！"
+
+    def test_parse_tiktok_cta_extraction(self):
+        """测试解析抖音 CTA"""
+        response = """
+        【开头钩子】
+        震惊！这个枕头太神奇了
+
+        【内容主体】
+        用了之后睡眠质量翻倍
+
+        【结尾行动号召】
+        评论区扣1获取同款链接！
+        """
+
+        result = self.copywriter._parse_tiktok_response(response)
+
+        assert result.cta == "评论区扣1获取同款链接！"
 
     def test_parse_official_response(self):
         """测试解析公众号响应"""
