@@ -147,15 +147,20 @@ export default function ProductInput({ onGenerate, isLoading }: ProductInputProp
             required
             whileFocus={{ scale: 1.01 }}
           />
-          {descError && (
-            <motion.p
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-red-500 text-xs mt-1"
-            >
-              {descError}
-            </motion.p>
-          )}
+          <div className="flex justify-between items-center mt-1">
+            {descError ? (
+              <motion.p
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-red-500 text-xs"
+              >
+                {descError}
+              </motion.p>
+            ) : (
+              <span />
+            )}
+            <span className="text-xs text-gray-400">{description.length}/2000</span>
+          </div>
         </motion.div>
 
         <motion.div
