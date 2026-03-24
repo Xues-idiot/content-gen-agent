@@ -1026,3 +1026,24 @@ content-gen-agent/
 
 ### 提交
 - 添加视频生成前端组件 (08d648f)
+
+## 第396-400轮 (2026-03-24)
+
+### 完成
+- **视频素材收集模块** (backend/tools/video_material.py)
+  - 参考 MoneyPrinterTurbo 的素材收集逻辑
+  - VideoMaterialCollector 类
+  - Pexels API 集成 (search_pexels)
+  - Pixabay API 集成 (search_pixabay)
+  - 视频下载功能 (download_video)
+  - 批量收集功能 (collect_videos)
+  - 搜索关键词生成 (generate_search_terms)
+  - VideoAspect 枚举 (PORTRAIT/LANDSCAPE/SQUARE)
+
+### 学习
+- MoneyPrinterTurbo 素材收集管道实现
+- Pexels/Pixabay API 搜索视频逻辑
+- 视频素材存储和去重策略
+
+### 提交
+- 添加视频素材收集模块
