@@ -32,6 +32,15 @@ AD_VIOLATION_WORDS = {
         "发财", "致富", "日赚", "月入", "稳赚", "保本", "回报", "收益",
         "神效", "神奇", "秘方", "祖传", "宫廷", "御用",
     ],
+    "医疗虚假": [
+        "治愈", "治疗", "医治", "疗法", "疗程", "药到病除",
+        "延年益寿", "长生不老", "返老还童", "增强免疫力",
+        "抗衰老", "抗氧化", "降血压", "降血糖", "降血脂",
+    ],
+    "食品违规": [
+        "有机", "绿色", "无添加", "零添加", "纯天然",
+        "抗癌", "防癌", "延寿", "保健", "养生",
+    ],
 }
 
 # 展平为列表
@@ -288,6 +297,47 @@ class Reviewer:
                 unique_suggestions.append(s)
 
         return unique_suggestions[:5]
+
+    def suggest_platform_optimization(self, copy: str, platform: str) -> List[str]:
+        """生成平台特定的优化建议"""
+        suggestions = []
+        analysis = self.analyze_structure(copy)
+
+        if platform == "xiaohongshu":
+            if not analysis["has_emoji"]:
+                suggestions.append("小红书用户偏好活泼风格，建议多使用emoji")
+            if not analysis["has_hashtags"]:
+                suggestions.append("建议添加3-5个小红书话题标签")
+            if len(copy) < 200:
+                suggestions.append("小红书笔记建议300-500字效果更好")
+            if analysis["avg_paragraph_length"] > 100:
+                suggestions.append("建议增加段落分隔，每段控制在100字以内")
+
+        elif platform == "tiktok":
+            if analysis["has_hashtags"]:
+                suggestions.append("抖音视频描述建议精简标签，1-2个即可")
+            if len(copy) > 150:
+                suggestions.append("抖音开场白建议简洁有力，前3秒抓住用户")
+            if not analysis["has_numbers"]:
+                suggestions.append("建议添加具体数据或时间节点增强代入感")
+
+        elif platform == "official":
+            if analysis["paragraph_count"] < 5:
+                suggestions.append("公众号文章建议多段落增强可读性")
+            if not analysis["has_numbers"]:
+                suggestions.append("建议添加数据支撑或案例分析增强说服力")
+            if len(copy) < 500:
+                suggestions.append("公众号深度文章建议800-1500字")
+
+        elif platform == "friend_circle":
+            if analysis["has_hashtags"]:
+                suggestions.append("朋友圈文案不建议添加标签")
+            if len(copy) > 200:
+                suggestions.append("朋友圈文案建议控制在200字以内")
+            if not analysis["has_emoji"]:
+                suggestions.append("朋友圈内容建议添加1-3个表情符号")
+
+        return suggestions
 
     def batch_review(self, copies: List[str]) -> List[ReviewResult]:
         """批量审核文案"""
