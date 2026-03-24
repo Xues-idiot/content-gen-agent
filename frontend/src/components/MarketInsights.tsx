@@ -70,7 +70,7 @@ export default function MarketInsights() {
                   transition={{ delay: 0.5 + idx * 0.1 }}
                   className="text-sm text-gray-700 flex items-start gap-2 bg-gray-50 p-2 rounded"
                 >
-                  <span className="text-FF6B35">•</span>
+                  <span style={{ color: "#FF6B35" }}>•</span>
                   <span>
                     {insight.length > 100 ? insight.substring(0, 100) + "..." : insight}
                   </span>
