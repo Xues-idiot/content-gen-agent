@@ -2838,3 +2838,117 @@ async def get_campaign_summary(campaign_id: str):
     except Exception as e:
         logger.error(f"Get campaign summary error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Performance Prediction =====
+
+@app.post("/api/v1/predict/performance")
+async def predict_performance(
+    content: str,
+    platform: str,
+    title: str = "",
+    tags: Optional[List[str]] = None,
+    posting_time: Optional[str] = None,
+    category: Optional[str] = None,
+):
+    """
+    预测内容表现
+
+    基于内容特征和平台数据预测内容表现
+    """
+    try:
+        from backend.services.predictor import performance_predictor
+
+        prediction = performance_predictor.predict(
+            content=content,
+            platform=platform,
+            title=title,
+            tags=tags,
+            posting_time=posting_time,
+            category=category,
+        )
+
+        return {
+            "success": True,
+            "prediction": {
+                "predicted_views": prediction.predicted_views,
+                "predicted_likes": prediction.predicted_likes,
+                "predicted_comments": prediction.predicted_comments,
+                "predicted_shares": prediction.predicted_shares,
+                "engagement_rate": round(prediction.engagement_rate, 4),
+                "reach_score": round(prediction.reach_score, 1),
+                "confidence": prediction.confidence,
+                "factors": prediction.factors,
+                "recommendations": prediction.recommendations,
+            },
+        }
+    except Exception as e:
+        logger.error(f"Predict performance error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/predict/platform/{platform}")
+async def get_platform_recommendations(platform: str):
+    """
+    获取平台发布建议
+
+    获取指定平台的发布建议和基准数据
+    """
+    try:
+        from backend.services.predictor import performance_predictor
+
+        recommendations = performance_predictor.get_platform_recommendations(platform)
+
+        return {"success": True, **recommendations}
+    except Exception as e:
+        logger.error(f"Get platform recommendations error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/predict/compare")
+async def compare_predictions(
+    content1: Dict[str, Any],
+    content2: Dict[str, Any],
+    platform: str,
+):
+    """
+    对比内容预测
+
+    对比两个内容的预测表现
+    """
+    try:
+        from backend.services.predictor import performance_predictor
+
+        # 预测两个内容
+        pred1 = performance_predictor.predict(
+            content=content1.get("content", ""),
+            platform=platform,
+            title=content1.get("title", ""),
+            tags=content1.get("tags"),
+        )
+
+        pred2 = performance_predictor.predict(
+            content=content2.get("content", ""),
+            platform=platform,
+            title=content2.get("title", ""),
+            tags=content2.get("tags"),
+        )
+
+        # 对比
+        comparison = performance_predictor.compare_predictions(pred1, pred2)
+
+        return {
+            "success": True,
+            "prediction1": {
+                "predicted_views": pred1.predicted_views,
+                "reach_score": pred1.reach_score,
+            },
+            "prediction2": {
+                "predicted_views": pred2.predicted_views,
+                "reach_score": pred2.reach_score,
+            },
+            "comparison": comparison,
+        }
+    except Exception as e:
+        logger.error(f"Compare predictions error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

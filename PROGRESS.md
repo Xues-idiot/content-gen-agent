@@ -966,3 +966,26 @@ content-gen-agent/
 
 ### 提交
 - 添加风格变体和季节性文案 (9c26513)
+
+## 第371-380轮 (2026-03-24)
+
+### 完成
+- **营销活动管理** (backend/services/campaign.py)
+  - CampaignManager 类
+  - Campaign, CampaignContent 数据类
+  - CampaignStatus, CampaignType 枚举
+  - create_campaign, get_campaign, update_campaign
+  - add_content_to_campaign, update_content_status
+  - get_campaign_timeline, get_campaign_summary
+- **活动 API** (backend/api/content.py)
+  - POST /api/v1/campaigns - 创建活动
+  - GET /api/v1/campaigns - 获取活动列表
+  - GET /api/v1/campaigns/{id} - 获取活动详情
+  - PUT /api/v1/campaigns/{id} - 更新活动
+  - DELETE /api/v1/campaigns/{id} - 删除活动
+  - POST /api/v1/campaigns/{id}/contents - 添加内容
+  - GET /api/v1/campaigns/{id}/timeline - 获取时间线
+  - GET /api/v1/campaigns/{id}/summary - 获取摘要
+
+### 提交
+- 添加营销活动管理模块 (3ba432b)
