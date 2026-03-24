@@ -420,6 +420,106 @@ async def generate_content(request: Request, body: ContentRequest):
         )
 
 
+class BatchGenerateRequest(BaseModel):
+    """批量生成请求"""
+    products: List[ProductInput]
+    platforms: List[str] = Field(default=["xiaohongshu"])
+    enable_research: bool = Field(default=False)
+
+
+@app.post("/api/v1/content/batch-generate")
+@limiter.limit("5/minute")  # 批量生成更耗资源，限制更严
+async def batch_generate_content(request: Request, body: BatchGenerateRequest):
+    """
+    批量生成多个产品的内容
+
+    一次请求生成多个产品的多平台内容
+    """
+    global _request_count
+
+    results = []
+    errors = []
+
+    for i, product_input in enumerate(body.products):
+        _request_count += 1
+        try:
+            planner = get_planner()
+            copywriter = get_copywriter()
+            reviewer = get_reviewer()
+
+            product_obj = ProductInfo(
+                name=product_input.name,
+                description=product_input.description,
+                selling_points=product_input.selling_points,
+                target_users=product_input.target_users,
+                category=product_input.category,
+                price_range=product_input.price_range,
+            )
+
+            plan = planner.plan_content(
+                product_obj,
+                body.platforms,
+                enable_research=body.enable_research,
+            )
+
+            copy_results = copywriter.generate_all(product_obj, plan)
+
+            platform_results = []
+            for platform, result in copy_results.items():
+                platform_key = str(platform)
+                review_result = None
+                if result.content:
+                    review = reviewer.review_quality(result.content)
+                    review_result = ReviewResultModel(
+                        passed=review.passed,
+                        violations=[ViolationModel(**asdict(v)) for v in review.violations],
+                        quality_score=review.quality_score,
+                        suggestions=review.suggestions,
+                    )
+
+                platform_results.append(CopyResultModel(
+                    platform=platform_key,
+                    title=result.title,
+                    content=result.content,
+                    script=result.script,
+                    tags=result.tags,
+                    image_suggestions=result.image_suggestions,
+                    cta=result.cta,
+                    review=review_result,
+                    success=result.success,
+                    error=result.error,
+                ))
+
+                if not result.success:
+                    errors.append(f"产品{i+1} {platform_key}: {result.error}")
+
+            results.append({
+                "product_index": i,
+                "product_name": product_input.name,
+                "success": True,
+                "platform_results": platform_results,
+            })
+
+        except Exception as e:
+            logger.error(f"Batch generate error for product {i}: {e}")
+            errors.append(f"产品{i+1}: {str(e)}")
+            results.append({
+                "product_index": i,
+                "product_name": product_input.name,
+                "success": False,
+                "error": str(e),
+            })
+
+    return {
+        "success": len(errors) == 0,
+        "total_products": len(body.products),
+        "successful": len([r for r in results if r.get("success")]),
+        "failed": len([r for r in results if not r.get("success")]),
+        "results": results,
+        "errors": errors,
+    }
+
+
 @app.post("/api/v1/content/review")
 async def review_content(content: str = Body(..., embed=True)):
     """
