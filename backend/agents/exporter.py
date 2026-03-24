@@ -406,6 +406,371 @@ class Exporter:
         }
 
 
+class ContentArchive:
+    """
+    内容归档管理器
+
+    负责内容的备份、归档和恢复
+    """
+
+    def __init__(self):
+        self._archives: List[Dict[str, Any]] = []
+        self._archive_id_counter = 0
+
+    def archive_content(
+        self,
+        content: Dict[str, Any],
+        name: str = "",
+        category: str = "general",
+    ) -> Dict[str, Any]:
+        """
+        归档内容
+
+        Args:
+            content: 内容数据
+            name: 归档名称
+            category: 分类
+
+        Returns:
+            dict: 归档结果
+        """
+        self._archive_id_counter += 1
+        archive_id = f"arc_{self._archive_id_counter:06d}"
+
+        archive_entry = {
+            "id": archive_id,
+            "name": name or f"Archive {self._archive_id_counter}",
+            "category": category,
+            "content": content,
+            "created_at": datetime.now().isoformat(),
+            "size": len(json.dumps(content)),
+        }
+
+        self._archives.append(archive_entry)
+
+        return {
+            "success": True,
+            "archive_id": archive_id,
+            "total_archives": len(self._archives),
+        }
+
+    def get_archives(
+        self,
+        category: Optional[str] = None,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """
+        获取归档列表
+
+        Args:
+            category: 可选的分类过滤
+            limit: 返回数量限制
+
+        Returns:
+            list: 归档列表
+        """
+        archives = self._archives
+
+        if category:
+            archives = [a for a in archives if a["category"] == category]
+
+        return sorted(
+            archives,
+            key=lambda x: x["created_at"],
+            reverse=True
+        )[:limit]
+
+    def get_archive(self, archive_id: str) -> Optional[Dict[str, Any]]:
+        """
+        获取单个归档
+
+        Args:
+            archive_id: 归档ID
+
+        Returns:
+            dict: 归档数据
+        """
+        for archive in self._archives:
+            if archive["id"] == archive_id:
+                return archive
+        return None
+
+    def delete_archive(self, archive_id: str) -> bool:
+        """
+        删除归档
+
+        Args:
+            archive_id: 归档ID
+
+        Returns:
+            bool: 是否成功
+        """
+        original_count = len(self._archives)
+        self._archives = [a for a in self._archives if a["id"] != archive_id]
+        return len(self._archives) < original_count
+
+    def search_archives(self, keyword: str) -> List[Dict[str, Any]]:
+        """
+        搜索归档
+
+        Args:
+            keyword: 搜索关键词
+
+        Returns:
+            list: 匹配的归档
+        """
+        keyword_lower = keyword.lower()
+        results = []
+
+        for archive in self._archives:
+            # 搜索名称和分类
+            if keyword_lower in archive["name"].lower():
+                results.append(archive)
+                continue
+
+            # 搜索内容
+            content_str = json.dumps(archive["content"], ensure_ascii=False)
+            if keyword_lower in content_str.lower():
+                results.append(archive)
+
+        return results
+
+    def export_archive_summary(self) -> Dict[str, Any]:
+        """
+        导出归档统计摘要
+
+        Returns:
+            dict: 统计摘要
+        """
+        total_size = sum(a["size"] for a in self._archives)
+        categories = {}
+
+        for archive in self._archives:
+            cat = archive["category"]
+            if cat not in categories:
+                categories[cat] = 0
+            categories[cat] += 1
+
+        return {
+            "total_archives": len(self._archives),
+            "total_size_bytes": total_size,
+            "by_category": categories,
+            "newest_archive": self._archives[-1]["created_at"] if self._archives else None,
+        }
+
+
+# 全局归档管理器
+_content_archive = ContentArchive()
+
+
+# 新增导出格式
+class AdvancedExportFormat(Enum):
+    """高级导出格式"""
+    CSV = "csv"
+    XML = "xml"
+    PDF_HTML = "pdf_html"  # HTML格式，适合打印
+    EMAIL_HTML = "email_html"  # 邮件格式
+
+
+class AdvancedExporter(Exporter):
+    """
+    高级导出器
+
+    扩展 Exporter，支持更多导出格式
+    """
+
+    def export_csv(self, content: Dict[str, Any]) -> ExportResult:
+        """导出为 CSV 格式"""
+        try:
+            import csv
+            import io
+
+            output = io.StringIO()
+
+            # 准备CSV数据
+            rows = []
+
+            # 标题行
+            rows.append(["平台", "标题", "内容", "标签", "质量分数", "是否通过"])
+
+            # 内容行
+            if "copies" in content:
+                for platform, data in content["copies"].items():
+                    copy = data.get("copy", {})
+                    review = data.get("review", {})
+
+                    rows.append([
+                        platform,
+                        copy.get("title", ""),
+                        copy.get("content", ""),
+                        ",".join(copy.get("tags", [])),
+                        str(review.get("quality_score", "")),
+                        "是" if review.get("passed") else "否",
+                    ])
+
+            writer = csv.writer(output)
+            writer.writerows(rows)
+
+            return ExportResult(success=True, content=output.getvalue())
+        except Exception as e:
+            return ExportResult(success=False, error=str(e))
+
+    def export_xml(self, content: Dict[str, Any]) -> ExportResult:
+        """导出为 XML 格式"""
+        try:
+            lines = ['<?xml version="1.0" encoding="UTF-8"?>']
+            lines.append("<content_report>")
+
+            # 产品信息
+            if "product" in content:
+                product = content["product"]
+                lines.append("  <product>")
+                lines.append(f"    <name>{self._escape_xml(product.get('name', ''))}</name>")
+                lines.append(f"    <description>{self._escape_xml(product.get('description', ''))}</description>")
+                lines.append("  </product>")
+
+            # 内容
+            if "copies" in content:
+                lines.append("  <copies>")
+                for platform, data in content["copies"].items():
+                    lines.append(f"    <{platform}>")
+                    copy = data.get("copy", {})
+                    if copy.get("title"):
+                        lines.append(f"      <title>{self._escape_xml(copy['title'])}</title>")
+                    if copy.get("content"):
+                        lines.append(f"      <content>{self._escape_xml(copy['content'])}</content>")
+                    if copy.get("tags"):
+                        lines.append(f"      <tags>{self._escape_xml(','.join(copy['tags']))}</tags>")
+                    lines.append(f"    </{platform}>")
+                lines.append("  </copies>")
+
+            lines.append("</content_report>")
+
+            return ExportResult(success=True, content="\n".join(lines))
+        except Exception as e:
+            return ExportResult(success=False, error=str(e))
+
+    def export_pdf_html(self, content: Dict[str, Any]) -> ExportResult:
+        """导出为适合打印的HTML格式"""
+        try:
+            md_result = self.export_markdown(content)
+            if not md_result.success:
+                return md_result
+
+            html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>内容生成报告 - 打印版</title>
+    <style>
+        @media print {{
+            body {{ font-size: 12pt; }}
+            h1 {{ page-break-before: always; }}
+            .platform-section {{ page-break-inside: avoid; }}
+        }}
+        body {{ font-family: 'Georgia', serif; max-width: 800px; margin: 0 auto; padding: 40px; }}
+        h1 {{ color: #333; border-bottom: 2px solid #FF6B35; padding-bottom: 10px; }}
+        h2 {{ color: #666; margin-top: 30px; }}
+        .platform-section {{ margin: 20px 0; padding: 15px; border: 1px solid #ddd; }}
+        .title {{ font-size: 14pt; font-weight: bold; margin-bottom: 10px; }}
+        .content {{ line-height: 1.6; }}
+        .tags {{ margin-top: 10px; color: #888; }}
+        .review {{ margin-top: 10px; padding: 10px; background: #f9f9f9; }}
+        .passed {{ color: green; }}
+        .failed {{ color: red; }}
+    </style>
+</head>
+<body>
+    <pre>{md_result.content}</pre>
+</body>
+</html>
+            """
+            return ExportResult(success=True, content=html)
+        except Exception as e:
+            return ExportResult(success=False, error=str(e))
+
+    def export_email_html(self, content: Dict[str, Any]) -> ExportResult:
+        """导出为邮件HTML格式"""
+        try:
+            platform_names = {
+                "xiaohongshu": "小红书",
+                "tiktok": "抖音",
+                "official": "公众号",
+                "friend_circle": "朋友圈",
+            }
+
+            lines = ['<!DOCTYPE html><html><body style="font-family: Arial, sans-serif;">']
+
+            # 标题
+            product_name = content.get("product", {}).get("name", "产品")
+            lines.append(f'<h2 style="color: #FF6B35;">{product_name} - 多平台内容方案</h2>')
+
+            if "copies" in content:
+                for platform, data in content["copies"].items():
+                    copy = data.get("copy", {})
+                    pname = platform_names.get(platform, platform)
+
+                    lines.append(f'''
+<div style="margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+    <h3 style="color: #333; margin-bottom: 10px;">{pname}</h3>
+    <p style="font-weight: bold; font-size: 14px;">{copy.get('title', '')}</p>
+    <p style="line-height: 1.6; color: #555;">{copy.get('content', '')}</p>
+    <p style="color: #888; font-size: 12px;">
+        标签: {' '.join(copy.get('tags', []))}
+    </p>
+</div>
+                    ''')
+
+            lines.append('</body></html>')
+
+            return ExportResult(success=True, content="\n".join(lines))
+        except Exception as e:
+            return ExportResult(success=False, error=str(e))
+
+    def _escape_xml(self, text: str) -> str:
+        """转义XML特殊字符"""
+        return (
+            text.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+            .replace("'", "&apos;")
+        )
+
+    def advanced_export(
+        self,
+        content: Dict[str, Any],
+        format: str = "csv",
+    ) -> ExportResult:
+        """
+        高级导出
+
+        Args:
+            content: 内容数据
+            format: 导出格式 (csv/xml/pdf_html/email_html)
+
+        Returns:
+            ExportResult: 导出结果
+        """
+        format_map = {
+            "csv": self.export_csv,
+            "xml": self.export_xml,
+            "pdf_html": self.export_pdf_html,
+            "email_html": self.export_email_html,
+        }
+
+        exporter = format_map.get(format)
+        if not exporter:
+            return ExportResult(success=False, error=f"Unknown format: {format}")
+
+        return exporter(content)
+
+
+# 全局高级导出器
+advanced_exporter = AdvancedExporter()
+
+
 if __name__ == "__main__":
     exporter = Exporter()
 

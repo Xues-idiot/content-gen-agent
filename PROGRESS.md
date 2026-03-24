@@ -842,3 +842,23 @@ content-gen-agent/
 ### 提交
 - 添加内容日历和最佳实践 (2422f92)
 - 添加数据分析仪表板 (57058a6)
+
+## 第311-320轮 (2026-03-24)
+
+### 完成
+- **内容改进建议** (backend/agents/reviewer.py)
+  - generate_improvement_suggestions 方法
+  - 总体/标题/内容/结构/SEO多维度建议
+- **内容角度建议** (backend/agents/reviewer.py)
+  - suggest_content_angles 方法
+  - 6种内容角度类型
+- **批量审核** (backend/agents/reviewer.py)
+  - batch_review_contents 方法
+- **关键词研究 API** (backend/api/content.py)
+  - GET /api/v1/keywords/{platform}
+- **模板库 API** (backend/api/content.py)
+  - 预置小红书/抖音/公众号模板
+- **内容灵感组件** (frontend/src/components/ContentInspiration.tsx)
+
+### 提交
+- 添加内容灵感和模板 (11904a9)

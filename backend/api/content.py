@@ -1607,3 +1607,172 @@ async def get_all_templates():
         "success": True,
         "templates": CONTENT_TEMPLATES,
     }
+
+
+# ===== Content Archive =====
+
+@app.post("/api/v1/archive")
+async def archive_content(
+    content: Dict[str, Any],
+    name: str = "",
+    category: str = "general",
+):
+    """
+    归档内容
+
+    将内容添加到归档库
+    """
+    try:
+        from backend.agents.exporter import _content_archive
+
+        result = _content_archive.archive_content(content, name, category)
+        return result
+    except Exception as e:
+        logger.error(f"Archive content error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/archive")
+async def get_archives(
+    category: Optional[str] = None,
+    limit: int = 50,
+):
+    """
+    获取归档列表
+
+    获取已归档的内容列表
+    """
+    try:
+        from backend.agents.exporter import _content_archive
+
+        archives = _content_archive.get_archives(category, limit)
+        summary = _content_archive.export_archive_summary()
+
+        return {
+            "success": True,
+            "archives": [
+                {
+                    "id": a["id"],
+                    "name": a["name"],
+                    "category": a["category"],
+                    "created_at": a["created_at"],
+                    "size": a["size"],
+                }
+                for a in archives
+            ],
+            "summary": summary,
+        }
+    except Exception as e:
+        logger.error(f"Get archives error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/archive/{archive_id}")
+async def get_archive(archive_id: str):
+    """
+    获取归档内容
+
+    获取指定归档的完整内容
+    """
+    try:
+        from backend.agents.exporter import _content_archive
+
+        archive = _content_archive.get_archive(archive_id)
+        if not archive:
+            raise HTTPException(status_code=404, detail="Archive not found")
+
+        return {"success": True, "archive": archive}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get archive error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/v1/archive/{archive_id}")
+async def delete_archive(archive_id: str):
+    """
+    删除归档
+
+    从归档库中移除内容
+    """
+    try:
+        from backend.agents.exporter import _content_archive
+
+        success = _content_archive.delete_archive(archive_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Archive not found")
+
+        return {"success": True, "message": "Archive deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Delete archive error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/archive/search")
+async def search_archives(keyword: str):
+    """
+    搜索归档
+
+    在归档库中搜索内容
+    """
+    try:
+        from backend.agents.exporter import _content_archive
+
+        results = _content_archive.search_archives(keyword)
+        return {
+            "success": True,
+            "results": [
+                {
+                    "id": a["id"],
+                    "name": a["name"],
+                    "category": a["category"],
+                    "created_at": a["created_at"],
+                }
+                for a in results
+            ],
+            "total": len(results),
+        }
+    except Exception as e:
+        logger.error(f"Search archives error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Advanced Export =====
+
+@app.post("/api/v1/export/advanced")
+async def advanced_export_content(
+    content: Dict[str, Any],
+    format: str = "csv",
+):
+    """
+    高级导出
+
+    导出内容为CSV/XML/PDF_HTML/EMAIL_HTML格式
+    """
+    try:
+        from backend.agents.exporter import advanced_exporter
+
+        valid_formats = ["csv", "xml", "pdf_html", "email_html"]
+        if format not in valid_formats:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid format. Must be one of: {valid_formats}"
+            )
+
+        result = advanced_exporter.advanced_export(content, format)
+        if not result.success:
+            raise HTTPException(status_code=500, detail=result.error)
+
+        return {
+            "success": True,
+            "content": result.content,
+            "format": format,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Advanced export error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
