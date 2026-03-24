@@ -610,3 +610,25 @@ async def suggest_hashtags(body: HashtagRequest):
     except Exception as e:
         logger.error(f"Suggest hashtags error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class PerformanceRequest(BaseModel):
+    """表现预测请求"""
+    content: str
+    platform: str = "xiaohongshu"
+
+
+@app.post("/api/v1/content/predict")
+async def predict_performance(body: PerformanceRequest):
+    """
+    预测内容表现
+
+    基于内容特征预测可能的用户互动和传播效果
+    """
+    try:
+        reviewer = get_reviewer()
+        prediction = reviewer.predict_performance(body.content, body.platform)
+        return prediction
+    except Exception as e:
+        logger.error(f"Predict performance error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

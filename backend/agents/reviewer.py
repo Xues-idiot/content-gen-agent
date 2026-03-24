@@ -475,6 +475,104 @@ class Reviewer:
 
         return suggested[:max_tags]
 
+    def predict_performance(self, content: str, platform: str) -> Dict[str, Any]:
+        """
+        预测内容表现
+
+        基于内容特征预测可能的用户互动和传播效果
+
+        Returns:
+            dict: 包含预测分数和影响因素
+        """
+        analysis = self.analyze_structure(content)
+        violations = self.check_ad_words(content)
+
+        # 计算基础分数
+        base_score = 70.0
+
+        # 长度因素
+        length = len(content)
+        if 100 <= length <= 500:
+            base_score += 10.0  # 最佳长度范围
+        elif length < 100:
+            base_score -= 10.0
+        elif length > 1000:
+            base_score -= 5.0
+
+        # 结构因素
+        if analysis["has_emoji"]:
+            base_score += 8.0
+        if analysis["has_numbers"]:
+            base_score += 5.0
+        if analysis["has_hashtags"]:
+            base_score += 5.0
+        if analysis["paragraph_count"] >= 3:
+            base_score += 5.0
+
+        # 违规词惩罚
+        for v in violations:
+            if v.severity == "error":
+                base_score -= 15.0
+            else:
+                base_score -= 5.0
+
+        # 平台特定调整
+        if platform == "xiaohongshu":
+            if analysis["has_emoji"] and analysis["has_hashtags"]:
+                base_score += 10.0  # 小红书偏好
+        elif platform == "tiktok":
+            if length <= 150:
+                base_score += 10.0  # 抖音偏好简短
+        elif platform == "official":
+            if length >= 500:
+                base_score += 10.0  # 公众号偏好深度
+
+        # 限制分数范围
+        predicted_score = max(0, min(100, base_score))
+
+        # 评级
+        if predicted_score >= 85:
+            rating = "A"
+        elif predicted_score >= 70:
+            rating = "B"
+        elif predicted_score >= 55:
+            rating = "C"
+        else:
+            rating = "D"
+
+        # 影响因素
+        factors = {
+            "strengths": [],
+            "weaknesses": [],
+            "opportunities": [],
+        }
+
+        if analysis["has_emoji"]:
+            factors["strengths"].append("使用表情符号增强亲和力")
+        if analysis["has_numbers"]:
+            factors["strengths"].append("包含具体数据增强说服力")
+        if analysis["has_hashtags"]:
+            factors["strengths"].append("话题标签有助于曝光")
+        if length and 100 <= length <= 500:
+            factors["strengths"].append("内容长度适中")
+
+        if violations:
+            factors["weaknesses"].append(f"存在 {len([v for v in violations if v.severity == 'error'])} 个严重违规词")
+        if not analysis["has_emoji"]:
+            factors["opportunities"].append("添加表情符号可能提升互动")
+        if not analysis["has_numbers"]:
+            factors["opportunities"].append("添加具体数字可能增强说服力")
+        if not analysis["has_hashtags"]:
+            factors["opportunities"].append("添加话题标签可能增加曝光")
+
+        return {
+            "predicted_score": round(predicted_score, 1),
+            "rating": rating,
+            "platform": platform,
+            "factors": factors,
+            "confidence": "medium",  # 简化版本，始终返回中等置信度
+        }
+
 
 if __name__ == "__main__":
     reviewer = Reviewer()
