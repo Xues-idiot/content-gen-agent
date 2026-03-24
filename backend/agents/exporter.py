@@ -9,7 +9,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-import base64
 
 
 class ExportFormat(Enum):

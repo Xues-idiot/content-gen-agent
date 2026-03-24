@@ -52,8 +52,12 @@ class Config:
     
     @property
     def minimax_api_key(self) -> str:
-        key = os.getenv("MINIMAX_API_KEY") or self.minimax.get("api_key", "")
-        return key.replace("${MINIMAX_API_KEY}", "")
+        # Environment variable takes precedence over config file
+        key = os.getenv("MINIMAX_API_KEY")
+        if key:
+            return key
+        # Config file value - don't replace placeholders, return as-is
+        return self.minimax.get("api_key", "")
     
     @property
     def minimax_base_url(self) -> str:
