@@ -5,9 +5,10 @@ Vox Exporter 模块 - 导出功能
 """
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
+from datetime import datetime
 import base64
 
 
@@ -26,6 +27,66 @@ class ExportResult:
     content: str = ""
     file_path: str = ""
     error: str = ""
+
+
+@dataclass
+class ContentTemplate:
+    """内容模板"""
+    id: str
+    name: str
+    platform: str
+    content: str
+    tags: List[str] = field(default_factory=list)
+    created_at: str = ""
+    updated_at: str = ""
+    usage_count: int = 0
+
+
+class TemplateStorage:
+    """模板存储管理器"""
+
+    def __init__(self):
+        self._templates: Dict[str, List[ContentTemplate]] = {}
+
+    def save_template(self, template: ContentTemplate) -> bool:
+        """保存模板"""
+        try:
+            if template.platform not in self._templates:
+                self._templates[template.platform] = []
+            self._templates[template.platform].append(template)
+            return True
+        except Exception:
+            return False
+
+    def get_templates(self, platform: str) -> List[ContentTemplate]:
+        """获取平台的所有模板"""
+        return self._templates.get(platform, [])
+
+    def get_all_templates(self) -> Dict[str, List[ContentTemplate]]:
+        """获取所有模板"""
+        return self._templates
+
+    def delete_template(self, platform: str, template_id: str) -> bool:
+        """删除模板"""
+        if platform in self._templates:
+            self._templates[platform] = [
+                t for t in self._templates[platform] if t.id != template_id
+            ]
+            return True
+        return False
+
+    def increment_usage(self, platform: str, template_id: str) -> bool:
+        """增加模板使用次数"""
+        if platform in self._templates:
+            for t in self._templates[platform]:
+                if t.id == template_id:
+                    t.usage_count += 1
+                    return True
+        return False
+
+
+# 全局模板存储实例
+_template_storage = TemplateStorage()
 
 
 class Exporter:
@@ -236,6 +297,40 @@ class Exporter:
             return self.export_text(content)
         else:
             return ExportResult(success=False, error=f"Unknown format: {format}")
+
+    # 模板管理方法
+    def save_as_template(
+        self,
+        name: str,
+        platform: str,
+        content: str,
+        tags: Optional[List[str]] = None,
+    ) -> ContentTemplate:
+        """将内容保存为模板"""
+        template = ContentTemplate(
+            id=f"tpl_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            name=name,
+            platform=platform,
+            content=content,
+            tags=tags or [],
+            created_at=datetime.now().isoformat(),
+            updated_at=datetime.now().isoformat(),
+            usage_count=0,
+        )
+        _template_storage.save_template(template)
+        return template
+
+    def get_templates(self, platform: str) -> List[ContentTemplate]:
+        """获取平台模板"""
+        return _template_storage.get_templates(platform)
+
+    def get_all_templates(self) -> Dict[str, List[ContentTemplate]]:
+        """获取所有模板"""
+        return _template_storage.get_all_templates()
+
+    def delete_template(self, platform: str, template_id: str) -> bool:
+        """删除模板"""
+        return _template_storage.delete_template(platform, template_id)
 
 
 if __name__ == "__main__":

@@ -180,6 +180,7 @@ class RegenerateRequest(BaseModel):
 _planner: Optional["ContentPlanner"] = None
 _copywriter: Optional["Copywriter"] = None
 _reviewer: Optional["Reviewer"] = None
+_exporter: Optional["Exporter"] = None  # type: ignore
 _request_count: int = 0
 
 
@@ -205,6 +206,14 @@ def get_reviewer() -> "Reviewer":
         from backend.agents.reviewer import Reviewer
         _reviewer = Reviewer()
     return _reviewer
+
+
+def get_exporter() -> "Exporter":
+    global _exporter
+    if _exporter is None:
+        from backend.agents.exporter import Exporter
+        _exporter = Exporter()
+    return _exporter
 
 
 @app.get("/", response_model=dict)
@@ -631,4 +640,74 @@ async def predict_performance(body: PerformanceRequest):
         return prediction
     except Exception as e:
         logger.error(f"Predict performance error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class SaveTemplateRequest(BaseModel):
+    """保存模板请求"""
+    name: str
+    platform: str
+    content: str
+    tags: List[str] = Field(default_factory=list)
+
+
+@app.post("/api/v1/templates")
+async def save_template(body: SaveTemplateRequest):
+    """保存内容为模板"""
+    try:
+        exporter = get_exporter()
+        template = exporter.save_as_template(
+            name=body.name,
+            platform=body.platform,
+            content=body.content,
+            tags=body.tags,
+        )
+        return {
+            "success": True,
+            "template": {
+                "id": template.id,
+                "name": template.name,
+                "platform": template.platform,
+                "created_at": template.created_at,
+            },
+        }
+    except Exception as e:
+        logger.error(f"Save template error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/templates/{platform}")
+async def get_templates(platform: str):
+    """获取平台模板列表"""
+    try:
+        exporter = get_exporter()
+        templates = exporter.get_templates(platform)
+        return {
+            "platform": platform,
+            "templates": [
+                {
+                    "id": t.id,
+                    "name": t.name,
+                    "content": t.content,
+                    "tags": t.tags,
+                    "usage_count": t.usage_count,
+                    "created_at": t.created_at,
+                }
+                for t in templates
+            ],
+        }
+    except Exception as e:
+        logger.error(f"Get templates error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/v1/templates/{platform}/{template_id}")
+async def delete_template(platform: str, template_id: str):
+    """删除模板"""
+    try:
+        exporter = get_exporter()
+        success = exporter.delete_template(platform, template_id)
+        return {"success": success}
+    except Exception as e:
+        logger.error(f"Delete template error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
