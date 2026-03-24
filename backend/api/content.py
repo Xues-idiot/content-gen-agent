@@ -689,6 +689,27 @@ async def get_scheduling_suggestions(platform: str, content_type: str = "general
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class AnalyticsRequest(BaseModel):
+    """分析请求"""
+    copies: List[dict]  # 包含 platform, content, review 的列表
+
+
+@app.post("/api/v1/content/analytics")
+async def get_content_analytics(body: AnalyticsRequest):
+    """
+    获取多平台内容的分析摘要
+
+    汇总分析多个平台文案的质量分数、违规词等
+    """
+    try:
+        reviewer = get_reviewer()
+        summary = reviewer.generate_analytics_summary(body.copies)
+        return summary
+    except Exception as e:
+        logger.error(f"Get content analytics error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 class DuplicateCheckRequest(BaseModel):
     """重复检测请求"""
     content: str

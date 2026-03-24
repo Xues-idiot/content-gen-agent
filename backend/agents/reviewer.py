@@ -682,6 +682,91 @@ class Reviewer:
             ],
         }
 
+    def generate_analytics_summary(self, copies: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        生成多平台内容的分析摘要
+
+        Args:
+            copies: 包含多个平台文案结果的列表
+
+        Returns:
+            dict: 汇总分析结果
+        """
+        if not copies:
+            return {
+                "total_platforms": 0,
+                "avg_quality_score": 0.0,
+                "platform_scores": {},
+                "common_violations": [],
+                "recommendations": [],
+            }
+
+        total_score = 0.0
+        score_count = 0
+        platform_scores = {}
+        all_violations = []
+
+        for copy in copies:
+            platform = copy.get("platform", "unknown")
+            review = copy.get("review", {})
+            content = copy.get("content", "")
+
+            # 收集分数
+            if review and "quality_score" in review:
+                score = review["quality_score"]
+                platform_scores[platform] = score
+                total_score += score
+                score_count += 1
+
+            # 收集违规词
+            if review and "violations" in review:
+                for v in review["violations"]:
+                    all_violations.append({
+                        "platform": platform,
+                        "word": v.get("word", ""),
+                        "severity": v.get("severity", "warning"),
+                    })
+
+        # 计算平均分数
+        avg_score = total_score / score_count if score_count > 0 else 0.0
+
+        # 找出常见违规词
+        violation_counts = {}
+        for v in all_violations:
+            word = v["word"]
+            violation_counts[word] = violation_counts.get(word, 0) + 1
+
+        common_violations = sorted(
+            violation_counts.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )[:5]
+
+        # 生成建议
+        recommendations = []
+
+        if avg_score < 7.0:
+            recommendations.append("整体质量分数偏低，建议优化文案内容")
+        if common_violations:
+            recommendations.append(f"发现 {len(common_violations)} 个常见违规词，需重点关注")
+        if len(platform_scores) < 4:
+            recommendations.append("建议覆盖更多平台以获得更广泛的受众")
+
+        # 找出分数最低的平台
+        if platform_scores:
+            lowest_platform = min(platform_scores.items(), key=lambda x: x[1])
+            recommendations.append(f"{lowest_platform[0]} 平台分数最低({lowest_platform[1]:.1f})，建议重点优化")
+
+        return {
+            "total_platforms": len(copies),
+            "avg_quality_score": round(avg_score, 1),
+            "platform_scores": {k: round(v, 1) for k, v in platform_scores.items()},
+            "common_violations": [
+                {"word": w, "count": c} for w, c in common_violations
+            ],
+            "recommendations": recommendations,
+        }
+
 
 if __name__ == "__main__":
     reviewer = Reviewer()
