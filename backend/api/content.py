@@ -1297,3 +1297,129 @@ async def get_all_best_practices():
         "success": True,
         "platforms": PLATFORM_BEST_PRATICES,
     }
+
+
+# ===== Content Analytics =====
+
+@app.post("/api/v1/analytics/record")
+async def record_content_analytics(
+    platform: str,
+    quality_score: float,
+    word_count: int,
+    char_count: int,
+    violation_count: int = 0,
+    emoji_count: int = 0,
+    hashtag_count: int = 0,
+):
+    """
+    记录内容分析数据
+
+    用于追踪内容质量和表现
+    """
+    try:
+        from backend.services.analytics import content_analytics
+
+        content_data = {
+            "platform": platform,
+            "quality_score": quality_score,
+            "word_count": word_count,
+            "char_count": char_count,
+            "violation_count": violation_count,
+            "emoji_count": emoji_count,
+            "hashtag_count": hashtag_count,
+        }
+
+        content_id = content_analytics.record_content(content_data)
+
+        return {
+            "success": True,
+            "content_id": content_id,
+            "message": "Content recorded successfully",
+        }
+    except Exception as e:
+        logger.error(f"Record analytics error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/analytics/platform")
+async def get_analytics_by_platform(platform: Optional[str] = None):
+    """
+    获取平台分析数据
+
+    获取指定平台或所有平台的统计分析
+    """
+    try:
+        from backend.services.analytics import content_analytics
+
+        result = content_analytics.get_platform_analytics(platform)
+        return {"success": True, **result}
+    except Exception as e:
+        logger.error(f"Get platform analytics error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/analytics/trends")
+async def get_quality_trends(days: int = 7):
+    """
+    获取质量趋势
+
+    获取最近N天的内容质量趋势
+    """
+    try:
+        from backend.services.analytics import content_analytics
+
+        trends = content_analytics.get_quality_trends(days)
+        return {
+            "success": True,
+            "trends": [
+                {
+                    "date": t.date,
+                    "avg_score": t.avg_score,
+                    "content_count": t.content_count,
+                    "violation_rate": t.violation_rate,
+                }
+                for t in trends
+            ],
+        }
+    except Exception as e:
+        logger.error(f"Get quality trends error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/analytics/compare")
+async def compare_platform_analytics():
+    """
+    对比平台表现
+
+    对比各平台的内容质量和其他指标
+    """
+    try:
+        from backend.services.analytics import content_analytics
+
+        result = content_analytics.compare_platforms()
+        return {"success": True, **result}
+    except Exception as e:
+        logger.error(f"Compare platforms error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/analytics/health/{content_id}")
+async def get_content_health(content_id: str):
+    """
+    获取内容健康分
+
+    获取指定内容的健康评分和改进建议
+    """
+    try:
+        from backend.services.analytics import content_analytics
+
+        result = content_analytics.get_content_health_score(content_id)
+        if "error" in result:
+            raise HTTPException(status_code=404, detail=result["error"])
+
+        return {"success": True, **result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get content health error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
