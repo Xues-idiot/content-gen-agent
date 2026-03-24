@@ -907,3 +907,17 @@ content-gen-agent/
 
 ### 提交
 - 添加协作笔记和批量操作 (ec7af85)
+
+## 第341-350轮 (2026-03-24)
+
+### 完成
+- **内容工具 API** (backend/api/content.py)
+  - POST /api/v1/validate/content - 全面验证内容质量和合规性
+  - POST /api/v1/summarize - 生成内容摘要
+  - POST /api/v1/expand - 扩展短内容
+  - POST /api/v1/paraphrase - 改写内容风格
+  - GET /api/v1/word-count - 字数统计
+  - POST /api/v1/extract/hashtags - 提取话题标签
+
+### 提交
+- 添加内容工具 API (55a779a)
