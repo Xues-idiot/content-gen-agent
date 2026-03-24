@@ -1776,3 +1776,297 @@ async def advanced_export_content(
     except Exception as e:
         logger.error(f"Advanced export error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Content Collaboration =====
+
+class ContentNote(BaseModel):
+    """内容笔记"""
+    id: str
+    content_id: str
+    platform: str
+    note: str
+    author: str
+    created_at: str
+    updated_at: str
+    tags: List[str] = []
+
+
+class ContentComment(BaseModel):
+    """内容评论"""
+    id: str
+    content_id: str
+    comment: str
+    author: str
+    created_at: str
+
+
+# 内存存储
+_content_notes: List[ContentNote] = []
+_content_comments: List[ContentComment] = []
+_note_id_counter = 0
+_comment_id_counter = 0
+
+
+@app.post("/api/v1/notes")
+async def add_content_note(
+    content_id: str,
+    platform: str,
+    note: str,
+    author: str = "Anonymous",
+    tags: List[str] = [],
+):
+    """
+    添加内容笔记
+
+    为内容添加备注或说明
+    """
+    global _note_id_counter
+    try:
+        from datetime import datetime
+
+        _note_id_counter += 1
+        note_obj = ContentNote(
+            id=f"note_{_note_id_counter:06d}",
+            content_id=content_id,
+            platform=platform,
+            note=note,
+            author=author,
+            created_at=datetime.now().isoformat(),
+            updated_at=datetime.now().isoformat(),
+            tags=tags,
+        )
+        _content_notes.append(note_obj)
+
+        return {"success": True, "note": note_obj}
+    except Exception as e:
+        logger.error(f"Add note error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/notes/{content_id}")
+async def get_content_notes(content_id: str):
+    """
+    获取内容的笔记
+
+    获取指定内容的所有笔记
+    """
+    try:
+        notes = [n for n in _content_notes if n.content_id == content_id]
+        return {
+            "success": True,
+            "notes": notes,
+            "total": len(notes),
+        }
+    except Exception as e:
+        logger.error(f"Get notes error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/v1/notes/{note_id}")
+async def delete_note(note_id: str):
+    """
+    删除笔记
+
+    删除指定的笔记
+    """
+    global _content_notes
+    try:
+        original_count = len(_content_notes)
+        _content_notes = [n for n in _content_notes if n.id != note_id]
+
+        if len(_content_notes) == original_count:
+            raise HTTPException(status_code=404, detail="Note not found")
+
+        return {"success": True, "message": "Note deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Delete note error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/comments")
+async def add_content_comment(
+    content_id: str,
+    comment: str,
+    author: str = "Anonymous",
+):
+    """
+    添加内容评论
+
+    为内容添加反馈或评论
+    """
+    global _comment_id_counter
+    try:
+        from datetime import datetime
+
+        _comment_id_counter += 1
+        comment_obj = ContentComment(
+            id=f"comment_{_comment_id_counter:06d}",
+            content_id=content_id,
+            comment=comment,
+            author=author,
+            created_at=datetime.now().isoformat(),
+        )
+        _content_comments.append(comment_obj)
+
+        return {"success": True, "comment": comment_obj}
+    except Exception as e:
+        logger.error(f"Add comment error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/comments/{content_id}")
+async def get_content_comments(content_id: str):
+    """
+    获取内容的评论
+
+    获取指定内容的所有评论
+    """
+    try:
+        comments = [c for c in _content_comments if c.content_id == content_id]
+        return {
+            "success": True,
+            "comments": comments,
+            "total": len(comments),
+        }
+    except Exception as e:
+        logger.error(f"Get comments error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Content Batch Operations =====
+
+@app.post("/api/v1/batch/approve")
+async def batch_approve_contents(
+    content_ids: List[str],
+):
+    """
+    批量审批内容
+
+    一次性审批多条内容
+    """
+    try:
+        from datetime import datetime
+
+        results = []
+        for content_id in content_ids:
+            # 模拟审批操作
+            results.append({
+                "content_id": content_id,
+                "status": "approved",
+                "approved_at": datetime.now().isoformat(),
+            })
+
+        return {
+            "success": True,
+            "results": results,
+            "total": len(results),
+        }
+    except Exception as e:
+        logger.error(f"Batch approve error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/batch/reject")
+async def batch_reject_contents(
+    content_ids: List[str],
+    reason: str = "",
+):
+    """
+    批量拒绝内容
+
+    一次性拒绝多条内容
+    """
+    try:
+        from datetime import datetime
+
+        results = []
+        for content_id in content_ids:
+            results.append({
+                "content_id": content_id,
+                "status": "rejected",
+                "reason": reason,
+                "rejected_at": datetime.now().isoformat(),
+            })
+
+        return {
+            "success": True,
+            "results": results,
+            "total": len(results),
+        }
+    except Exception as e:
+        logger.error(f"Batch reject error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/batch/export")
+async def batch_export_contents(
+    content_ids: List[str],
+    format: str = "json",
+):
+    """
+    批量导出内容
+
+    一次性导出多条内容
+    """
+    try:
+        from backend.agents.exporter import _content_archive
+
+        exported = []
+        for content_id in content_ids:
+            archive = _content_archive.get_archive(content_id)
+            if archive:
+                exported.append({
+                    "content_id": content_id,
+                    "content": archive["content"],
+                    "exported": True,
+                })
+            else:
+                exported.append({
+                    "content_id": content_id,
+                    "exported": False,
+                    "error": "Content not found",
+                })
+
+        return {
+            "success": True,
+            "exported": exported,
+            "total": len(exported),
+            "successful": len([e for e in exported if e.get("exported", False)]),
+        }
+    except Exception as e:
+        logger.error(f"Batch export error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/batch/delete")
+async def batch_delete_contents(
+    content_ids: List[str],
+):
+    """
+    批量删除内容
+
+    一次性删除多条内容
+    """
+    try:
+        from backend.agents.exporter import _content_archive
+
+        deleted = []
+        for content_id in content_ids:
+            success = _content_archive.delete_archive(content_id)
+            deleted.append({
+                "content_id": content_id,
+                "deleted": success,
+            })
+
+        return {
+            "success": True,
+            "results": deleted,
+            "total": len(deleted),
+            "successful": len([d for d in deleted if d.get("deleted", False)]),
+        }
+    except Exception as e:
+        logger.error(f"Batch delete error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

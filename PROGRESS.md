@@ -862,3 +862,29 @@ content-gen-agent/
 
 ### 提交
 - 添加内容灵感和模板 (11904a9)
+
+## 第321-330轮 (2026-03-24)
+
+### 完成
+- **内容归档系统** (backend/agents/exporter.py)
+  - ContentArchive 类
+  - archive_content - 归档内容
+  - get_archives - 获取归档列表
+  - search_archives - 搜索归档
+  - delete_archive - 删除归档
+  - export_archive_summary - 归档统计
+- **高级导出** (backend/agents/exporter.py)
+  - AdvancedExportFormat 枚举：CSV, XML, PDF_HTML, EMAIL_HTML
+  - AdvancedExporter 类
+  - export_csv, export_xml, export_pdf_html, export_email_html 方法
+- **归档 API** (backend/api/content.py)
+  - POST /api/v1/archive - 创建归档
+  - GET /api/v1/archive - 获取归档列表
+  - GET /api/v1/archive/{id} - 获取归档内容
+  - DELETE /api/v1/archive/{id} - 删除归档
+  - GET /api/v1/archive/search - 搜索归档
+- **高级导出 API** (backend/api/content.py)
+  - POST /api/v1/export/advanced - 高级格式导出
+
+### 提交
+- 添加内容归档和高级导出 (9d2e723)
