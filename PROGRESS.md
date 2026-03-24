@@ -921,3 +921,19 @@ content-gen-agent/
 
 ### 提交
 - 添加内容工具 API (55a779a)
+
+## 第351-360轮 (2026-03-24)
+
+### 完成
+- **报告生成模块** (backend/services/reporting.py)
+  - ContentReporter 类
+  - generate_summary_report - 综合报告
+  - generate_comparison_report - 对比报告
+  - generate_trend_report - 趋势报告
+  - _generate_overview - 概览部分
+  - _generate_platform_breakdown - 平台分布
+  - _generate_quality_analysis - 质量分析
+  - _generate_violation_report - 违规词报告
+
+### 提交
+- 添加报告生成模块 (4fba467)
