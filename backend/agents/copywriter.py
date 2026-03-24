@@ -345,7 +345,7 @@ class Copywriter:
         product: ProductInfo,
         platform: str,
         base_content: str,
-        styles: List[str] = None,
+        styles: Optional[List[str]] = None,
     ) -> List[Dict[str, str]]:
         """
         生成多种风格的文案变体

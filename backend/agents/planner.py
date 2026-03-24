@@ -68,7 +68,7 @@ class ContentPlanner:
     def plan_content(
         self,
         product: ProductInfo,
-        platforms: List[str] = None,
+        platforms: Optional[List[str]] = None,
         enable_research: bool = True,
     ) -> ContentPlan:
         """
