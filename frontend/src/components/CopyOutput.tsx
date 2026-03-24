@@ -33,8 +33,100 @@ const PLATFORM_INFO: Record<string, { name: string; icon: string; color: string;
   friend_circle: { name: "朋友圈", icon: "👥", color: "#10B981", bgColor: "bg-green-50" },
 };
 
+// Platform-specific preview components
+function XiaohongshuPreview({ result }: { result: CopyResult }) {
+  return (
+    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 max-w-sm">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+          <span>📕</span>
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-900">用户名</p>
+          <p className="text-xs text-gray-500">小红书号</p>
+        </div>
+      </div>
+      {result.title && <h3 className="font-bold text-gray-900 mb-2">{result.title}</h3>}
+      <div className="text-sm text-gray-700 whitespace-pre-wrap mb-3">
+        {result.content.slice(0, 200)}{result.content.length > 200 && "..."}
+      </div>
+      {result.tags && result.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          {result.tags.slice(0, 5).map((tag, idx) => (
+            <span key={idx} className="text-xs text-red-500">#{tag.replace("#", "")}</span>
+          ))}
+        </div>
+      )}
+      {result.cta && <div className="bg-red-50 rounded-lg p-3 text-sm text-red-600">{result.cta}</div>}
+    </div>
+  );
+}
+
+function TikTokPreview({ result }: { result: CopyResult }) {
+  return (
+    <div className="bg-black rounded-lg p-4 shadow-lg max-w-sm">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-full bg-pink-900 flex items-center justify-center">
+          <span>📺</span>
+        </div>
+        <div className="text-white">
+          <p className="font-medium">@用户名</p>
+          <p className="text-xs text-gray-400">抖音号</p>
+        </div>
+      </div>
+      {result.script && (
+        <div className="text-white text-sm mb-3 font-mono whitespace-pre-wrap">
+          {result.script.slice(0, 150)}{result.script.length > 150 && "..."}
+        </div>
+      )}
+      {result.cta && <div className="bg-pink-600 text-white rounded-lg p-3 text-sm">{result.cta}</div>}
+    </div>
+  );
+}
+
+function OfficialPreview({ result }: { result: CopyResult }) {
+  return (
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 max-w-md overflow-hidden">
+      <div className="p-4">
+        {result.title && <h2 className="text-xl font-bold text-gray-900 mb-2">{result.title}</h2>}
+        <div className="text-sm text-gray-500 mb-3">公众号名称 · 日期</div>
+        <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+          {result.content.slice(0, 300)}{result.content.length > 300 && "..."}
+        </div>
+      </div>
+      <div className="border-t border-gray-200 p-3 bg-gray-50">
+        <span className="text-xs text-gray-500">阅读全文</span>
+      </div>
+    </div>
+  );
+}
+
+function FriendCirclePreview({ result }: { result: CopyResult }) {
+  return (
+    <div className="bg-white rounded-lg shadow-md p-4 max-w-sm">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+          <span>👤</span>
+        </div>
+        <div>
+          <p className="font-medium text-gray-900">微信用户</p>
+          <p className="text-xs text-gray-500">刚刚</p>
+        </div>
+      </div>
+      <div className="text-gray-800 text-sm whitespace-pre-wrap mb-3">{result.content}</div>
+      {result.cta && <div className="bg-green-50 rounded-lg p-3 text-sm text-green-700 mb-3">{result.cta}</div>}
+      <div className="border-t border-gray-200 pt-2">
+        <div className="text-xs text-gray-400 flex gap-4">
+          <span>评论</span><span>赞</span><span>收藏</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CopyOutput({ results }: CopyOutputProps) {
   const [copiedPlatform, setCopiedPlatform] = useState<string | null>(null);
+  const [previewPlatform, setPreviewPlatform] = useState<string | null>(null);
 
   const handleCopy = async (platform: string, text: string) => {
     const success = await copyToClipboard(text);
@@ -48,6 +140,16 @@ export default function CopyOutput({ results }: CopyOutputProps) {
     if (score >= 8) return "#10B981";
     if (score >= 6) return "#F59E0B";
     return "#EF4444";
+  };
+
+  const renderPreview = (result: CopyResult) => {
+    switch (result.platform) {
+      case "xiaohongshu": return <XiaohongshuPreview result={result} />;
+      case "tiktok": return <TikTokPreview result={result} />;
+      case "official": return <OfficialPreview result={result} />;
+      case "friend_circle": return <FriendCirclePreview result={result} />;
+      default: return null;
+    }
   };
 
   if (results.length === 0) {
@@ -121,26 +223,54 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                 </div>
                 <div className="flex gap-2">
                   {result.success && (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() =>
-                        handleCopy(
-                          result.platform,
-                          `${result.title}\n\n${result.content}`
-                        )
-                      }
-                      className="text-sm px-4 py-1.5 rounded-lg font-medium transition-all"
-                      style={{
-                        backgroundColor: copiedPlatform === result.platform ? info.color : "#F3F4F6",
-                        color: copiedPlatform === result.platform ? "white" : "#374151",
-                      }}
-                    >
-                      {copiedPlatform === result.platform ? "✓ 已复制" : "📋 复制文案"}
-                    </motion.button>
+                    <>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setPreviewPlatform(previewPlatform === result.platform ? null : result.platform)}
+                        className="text-sm px-4 py-1.5 rounded-lg font-medium transition-all"
+                        style={{
+                          backgroundColor: previewPlatform === result.platform ? info.color : "#F3F4F6",
+                          color: previewPlatform === result.platform ? "white" : "#374151",
+                        }}
+                      >
+                        {previewPlatform === result.platform ? "📝 返回编辑" : "👁️ 预览"}
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() =>
+                          handleCopy(result.platform, `${result.title}\n\n${result.content}`)
+                        }
+                        className="text-sm px-4 py-1.5 rounded-lg font-medium transition-all"
+                        style={{
+                          backgroundColor: copiedPlatform === result.platform ? info.color : "#F3F4F6",
+                          color: copiedPlatform === result.platform ? "white" : "#374151",
+                        }}
+                      >
+                        {copiedPlatform === result.platform ? "✓ 已复制" : "📋 复制文案"}
+                      </motion.button>
+                    </>
                   )}
                 </div>
               </div>
+
+              {/* Platform Preview */}
+              <AnimatePresence>
+                {previewPlatform === result.platform && result.success && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="border-t border-gray-200 bg-gray-50 p-6 overflow-hidden"
+                  >
+                    <h4 className="text-sm font-medium text-gray-500 mb-4 flex items-center gap-2">
+                      <span>👁️</span> {info.name} 预览效果
+                    </h4>
+                    <div className="flex justify-center">{renderPreview(result)}</div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Content */}
               <div className="p-6">

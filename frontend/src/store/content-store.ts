@@ -78,7 +78,7 @@ interface ContentState {
   setMarketResearch: (research: MarketResearch) => void;
   setIsLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  setProgress: (progress: number) => void;
+  setProgress: (progress: number | ((prev: number) => number)) => void;
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
 
@@ -123,7 +123,9 @@ export const useContentStore = create<ContentState>()(
 
       setError: (error) => set({ error }),
 
-      setProgress: (progress) => set({ progress }),
+      setProgress: (progress) => set((state) => ({
+        progress: typeof progress === 'function' ? progress(state.progress) : progress,
+      })),
 
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
 

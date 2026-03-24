@@ -617,3 +617,48 @@ content-gen-agent/
 - 健康检查增强 (7ada571)
 - 状态指示器 (1dc1ad9)
 - 调研数据清除 (916b827)
+
+## 第221-240轮 (2026-03-24)
+
+### 完成
+- **content_graph.py 修复** (5d4dbd5)
+  - ContentPlan 包含新字段
+  - Copywriter 实例化修正
+  - Final content 包含 CTA 和市场调研
+- **CTA 解析增强** (f8c828b)
+  - 小红书、朋友圈支持行动号召解析
+- **Prompt 模板更新** (aaad31f)
+  - 小红书、朋友圈、公众号 Prompt 新增 CTA 部分
+- **前端工具函数** (daf674c)
+  - isValidUrl、CTA_PLATFORM_HINTS、getCtaHint
+- **验证器增强** (8505850)
+  - validate_enable_research 方法
+- **ImagePreview 增强** (caea2fe)
+  - 复制按钮状态反馈
+- **ExportPanel 增强** (f55b555)
+  - Markdown 导出包含完整信息
+- **测试增强** (66a443e)
+  - CopyResult cta 字段测试
+  - TikTok CTA 解析测试
+- **日志配置增强** (c8ba719)
+  - LoggerFilter 类
+- **ProductInput 增强** (b8720cf)
+  - 描述字数统计
+- **历史记录增强** (9255091)
+  - 包含市场调研数据
+- **API 客户端增强** (fee1d84)
+  - checkAvailable() 方法
+
+### 提交
+- content_graph 修复 (5d4dbd5)
+- CTA 解析增强 (f8c828b)
+- Prompt 模板更新 (aaad31f)
+- 前端工具函数 (daf674c)
+- 验证器增强 (8505850)
+- ImagePreview 增强 (caea2fe)
+- ExportPanel 增强 (f55b555)
+- copywriter 测试 (66a443e)
+- 日志配置 (c8ba719)
+- ProductInput 增强 (b8720cf)
+- 历史记录增强 (9255091)
+- API 客户端 (fee1d84)

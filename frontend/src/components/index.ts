@@ -7,4 +7,4 @@ export { default as ExportPanel } from "./ExportPanel";
 export { default as MarketInsights } from "./MarketInsights";
 export { default as LoadingSpinner } from "./LoadingSpinner";
 export { default as ErrorBoundary } from "./ErrorBoundary";
-export { default as ToastProvider, useToast } from "./Toast";
+export { ToastProvider, useToast } from "./Toast";

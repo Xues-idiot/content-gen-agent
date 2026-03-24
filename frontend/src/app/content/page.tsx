@@ -40,6 +40,18 @@ function ContentPageContent() {
     tavily: boolean;
   }>({ api: false, tavily: false });
 
+  // Loading steps for detailed progress
+  const loadingSteps = [
+    "正在分析产品信息",
+    "正在获取市场洞察",
+    "正在生成小红书文案",
+    "正在生成抖音脚本",
+    "正在生成公众号内容",
+    "正在生成朋友圈文案",
+    "正在进行内容审核",
+  ];
+  const [currentLoadingStep, setCurrentLoadingStep] = React.useState(0);
+
   useEffect(() => {
     const checkHealth = async () => {
       try {
@@ -62,16 +74,22 @@ function ContentPageContent() {
     setProduct(prod);
     setIsLoading(true);
     setError(null);
+    setCurrentLoadingStep(0);
     setMarketResearch({ insights: [], trends: [], competitors: [] }); // Clear previous research
-    setProgress(10);
+    setProgress(5);
 
     try {
+      setProgress(10);
+      setCurrentLoadingStep(0);
+
       // Simulate progress for better UX
       const progressInterval = setInterval(() => {
-        setProgress((prev) => Math.min(prev + 10, 90));
-      }, 500);
+        setProgress((prev) => Math.min(prev + 5, 90));
+        setCurrentLoadingStep((prev) => Math.min(prev + 1, loadingSteps.length - 1));
+      }, 800);
 
-      setProgress(20);
+      setProgress(15);
+      setCurrentLoadingStep(1);
 
       const response = await fetch("http://localhost:8003/api/v1/content/generate", {
         method: "POST",
@@ -92,12 +110,13 @@ function ContentPageContent() {
       });
 
       clearInterval(progressInterval);
-      setProgress(70);
+      setProgress(80);
+      setCurrentLoadingStep(loadingSteps.length - 1);
 
       const data = await response.json();
 
       if (data.success) {
-        setProgress(90);
+        setProgress(95);
         setCopyResults(data.platform_results);
 
         const suggestions: Record<string, any[]> = {};
@@ -132,7 +151,10 @@ function ContentPageContent() {
       showToast("网络错误，请检查后端服务是否运行", "error");
     } finally {
       setIsLoading(false);
-      setTimeout(() => setProgress(0), 500);
+      setTimeout(() => {
+        setProgress(0);
+        setCurrentLoadingStep(0);
+      }, 500);
     }
   };
 
@@ -247,7 +269,12 @@ function ContentPageContent() {
               exit={{ opacity: 0 }}
               className="mb-6 flex items-center justify-center gap-3 py-8"
             >
-              <LoadingSpinner size="lg" text="AI 正在生成内容..." />
+              <LoadingSpinner
+                size="lg"
+                text="AI 正在生成内容..."
+                steps={loadingSteps}
+                currentStep={currentLoadingStep}
+              />
             </motion.div>
           )}
         </AnimatePresence>

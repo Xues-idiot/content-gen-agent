@@ -123,11 +123,12 @@ class ReviewResultModel(BaseModel):
 class CopyResultModel(BaseModel):
     """文案结果模型"""
     platform: str
-    title: str
-    content: str
+    title: str = ""
+    content: str = ""
     script: str = ""
     tags: List[str] = Field(default_factory=list)
     image_suggestions: List[str] = Field(default_factory=list)
+    cta: str = Field(default="", description="行动号召/Call-to-Action")
     review: Optional[ReviewResultModel] = None
     success: bool = True
     error: str = ""
@@ -340,6 +341,7 @@ async def generate_content(request: Request, body: ContentRequest):
                 script=result.script,
                 tags=result.tags,
                 image_suggestions=result.image_suggestions,
+                cta=result.cta,
                 review=review_result,
                 success=result.success,
                 error=result.error,
@@ -362,10 +364,44 @@ async def generate_content(request: Request, body: ContentRequest):
 
     except ValueError as e:
         logger.warning(f"Validation error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "参数验证错误",
+                "detail": str(e),
+                "type": "validation"
+            }
+        )
+    except TimeoutError as e:
+        logger.error(f"Generation timeout: {e}")
+        raise HTTPException(
+            status_code=504,
+            detail={
+                "error": "生成超时，请稍后重试",
+                "detail": str(e),
+                "type": "timeout"
+            }
+        )
+    except ConnectionError as e:
+        logger.error(f"Connection error: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "服务暂时不可用，请稍后重试",
+                "detail": str(e),
+                "type": "connection"
+            }
+        )
     except Exception as e:
         logger.error(f"Generate content error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "内容生成失败，请稍后重试",
+                "detail": str(e),
+                "type": "internal"
+            }
+        )
 
 
 @app.post("/api/v1/content/review")
