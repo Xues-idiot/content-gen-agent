@@ -25,7 +25,7 @@ TIKTOK_PROMPT = """
 {user_profile}
 
 ### 时长要求
-{ duration }秒
+{duration}秒
 
 ## Output Format:
 请按以下格式输出：

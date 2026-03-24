@@ -5,17 +5,14 @@ Vox Content API
 支持 CORS、请求验证和错误处理
 """
 
+import os
+import uuid
 from typing import Dict, List, Optional
 from dataclasses import asdict
-from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator, Body
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
 
 from backend.logging_config import get_logger
 from backend.constants import VERSION
@@ -23,45 +20,8 @@ from backend.agents.planner import ProductInfo
 
 logger = get_logger("api")
 
-# Rate limiter
-limiter = Limiter(key_func=get_remote_address)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """应用生命周期管理"""
-    logger.info("Vox Content API starting up...")
-    yield
-    logger.info("Vox Content API shutting down...")
-
-
-app = FastAPI(
-    title="Vox Content API",
-    version=VERSION,
-    description="多平台营销内容生成 API",
-    lifespan=lifespan,
-)
-
-# CORS 配置
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # 生产环境应该限制具体域名
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-# Rate limit exceeded handler
-@app.exception_handler(RateLimitExceeded)
-async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
-    return JSONResponse(
-        status_code=429,
-        content={
-            "error": "请求过于频繁，请稍后再试",
-            "detail": str(exc),
-        }
-    )
+# Create router with prefix
+router = APIRouter(prefix="/api/v1", tags=["内容生成"])
 
 
 # Request/Response Models
@@ -216,7 +176,7 @@ def get_exporter() -> "Exporter":
     return _exporter
 
 
-@app.get("/", response_model=dict)
+@router.get("/", response_model=dict)
 async def root():
     """根路径"""
     return {
@@ -227,7 +187,7 @@ async def root():
     }
 
 
-@app.get("/health", response_model=HealthResponse)
+@router.get("/health", response_model=HealthResponse)
 async def health():
     """健康检查"""
     from backend.services.llm import llm_client
@@ -241,7 +201,7 @@ async def health():
     )
 
 
-@app.get("/api/v1/platforms", response_model=PlatformsResponse)
+@router.get("/platforms", response_model=PlatformsResponse)
 async def get_platforms():
     """获取支持的平台列表"""
     return PlatformsResponse(
@@ -274,7 +234,7 @@ async def get_platforms():
     )
 
 
-@app.get("/api/v1/categories", response_model=CategoriesResponse)
+@router.get("/categories", response_model=CategoriesResponse)
 async def get_categories():
     """获取产品类别列表"""
     return CategoriesResponse(
@@ -292,8 +252,7 @@ async def get_categories():
     )
 
 
-@app.post("/api/v1/content/generate", response_model=ContentResponse)
-@limiter.limit("10/minute")  # 每分钟10次请求
+@router.post("/content/generate", response_model=ContentResponse)
 async def generate_content(request: Request, body: ContentRequest):
     """
     生成多平台内容
@@ -427,8 +386,7 @@ class BatchGenerateRequest(BaseModel):
     enable_research: bool = Field(default=False)
 
 
-@app.post("/api/v1/content/batch-generate")
-@limiter.limit("5/minute")  # 批量生成更耗资源，限制更严
+@router.post("/content/batch-generate")
 async def batch_generate_content(request: Request, body: BatchGenerateRequest):
     """
     批量生成多个产品的内容
@@ -520,7 +478,7 @@ async def batch_generate_content(request: Request, body: BatchGenerateRequest):
     }
 
 
-@app.post("/api/v1/content/review")
+@router.post("/content/review")
 async def review_content(content: str = Body(..., embed=True)):
     """
     审核单条文案
@@ -542,7 +500,7 @@ async def review_content(content: str = Body(..., embed=True)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/stats", response_model=StatsResponse)
+@router.get("/stats", response_model=StatsResponse)
 async def get_stats():
     """获取 API 统计信息"""
     return StatsResponse(
@@ -552,7 +510,7 @@ async def get_stats():
     )
 
 
-@app.post("/api/v1/content/regenerate")
+@router.post("/content/regenerate")
 async def regenerate_content(body: RegenerateRequest):
     """
     重新生成单个平台的内容
@@ -634,7 +592,7 @@ async def regenerate_content(body: RegenerateRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/content/ab-suggestions")
+@router.post("/content/ab-suggestions")
 async def get_ab_test_suggestions(body: PerformanceRequest):
     """
     获取 A/B 测试建议
@@ -650,7 +608,7 @@ async def get_ab_test_suggestions(body: PerformanceRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/suggestions/{platform}")
+@router.get("/suggestions/{platform}")
 async def get_platform_suggestions(platform: str, content: str):
     """
     获取指定平台的优化建议
@@ -669,7 +627,7 @@ async def get_platform_suggestions(platform: str, content: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/scheduling/{platform}")
+@router.get("/scheduling/{platform}")
 async def get_scheduling_suggestions(platform: str, content_type: str = "general"):
     """
     获取指定平台的发布时段建议
@@ -694,7 +652,7 @@ class AnalyticsRequest(BaseModel):
     copies: List[dict]  # 包含 platform, content, review 的列表
 
 
-@app.post("/api/v1/content/analytics")
+@router.post("/content/analytics")
 async def get_content_analytics(body: AnalyticsRequest):
     """
     获取多平台内容的分析摘要
@@ -717,7 +675,7 @@ class ConvertFormatRequest(BaseModel):
     to_platform: str
 
 
-@app.post("/api/v1/content/convert")
+@router.post("/content/convert")
 async def convert_content_format(body: ConvertFormatRequest):
     """
     将内容从一种平台格式转换到另一种平台格式
@@ -743,7 +701,7 @@ class DuplicateCheckRequest(BaseModel):
     existing_contents: List[str] = Field(default_factory=list)
 
 
-@app.post("/api/v1/content/check-duplicate")
+@router.post("/content/check-duplicate")
 async def check_content_duplicate(body: DuplicateCheckRequest):
     """
     检测内容是否重复
@@ -765,7 +723,7 @@ class SeoKeywordsRequest(BaseModel):
     platform: str = "general"
 
 
-@app.post("/api/v1/seo/keywords")
+@router.post("/seo/keywords")
 async def get_seo_keywords(body: SeoKeywordsRequest):
     """
     提取 SEO 关键词
@@ -787,7 +745,7 @@ class CompareRequest(BaseModel):
     content2: str
 
 
-@app.post("/api/v1/content/compare")
+@router.post("/content/compare")
 async def compare_contents(body: CompareRequest):
     """
     对比两个内容的差异
@@ -810,7 +768,7 @@ class HashtagRequest(BaseModel):
     max_tags: int = Field(default=5, ge=1, le=10)
 
 
-@app.post("/api/v1/hashtags/suggest")
+@router.post("/hashtags/suggest")
 async def suggest_hashtags(body: HashtagRequest):
     """
     根据内容推荐话题标签
@@ -835,7 +793,7 @@ class PerformanceRequest(BaseModel):
     platform: str = "xiaohongshu"
 
 
-@app.post("/api/v1/content/predict")
+@router.post("/content/predict")
 async def predict_performance(body: PerformanceRequest):
     """
     预测内容表现
@@ -859,7 +817,7 @@ class SaveTemplateRequest(BaseModel):
     tags: List[str] = Field(default_factory=list)
 
 
-@app.post("/api/v1/templates")
+@router.post("/templates")
 async def save_template(body: SaveTemplateRequest):
     """保存内容为模板"""
     try:
@@ -884,7 +842,7 @@ async def save_template(body: SaveTemplateRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/templates/{platform}")
+@router.get("/templates/{platform}")
 async def get_templates(platform: str):
     """获取平台模板列表"""
     try:
@@ -909,7 +867,7 @@ async def get_templates(platform: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/v1/templates/{platform}/{template_id}")
+@router.delete("/templates/{platform}/{template_id}")
 async def delete_template(platform: str, template_id: str):
     """删除模板"""
     try:
@@ -921,7 +879,7 @@ async def delete_template(platform: str, template_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/trending/{platform}")
+@router.get("/trending/{platform}")
 async def get_trending_topics(platform: str, category: str = "general"):
     """
     获取热门话题
@@ -946,7 +904,7 @@ async def get_trending_topics(platform: str, category: str = "general"):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/hot-keywords")
+@router.get("/hot-keywords")
 async def get_hot_keywords(category: str = "general"):
     """
     获取热门关键词
@@ -995,7 +953,7 @@ class CalendarResponse(BaseModel):
 _scheduled_content_store: List[ScheduledContent] = []
 
 
-@app.post("/api/v1/schedule", response_model=CalendarResponse)
+@router.post("/schedule", response_model=CalendarResponse)
 async def schedule_content(
     product_name: str,
     platform: str,
@@ -1036,7 +994,7 @@ async def schedule_content(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/calendar", response_model=CalendarResponse)
+@router.get("/calendar", response_model=CalendarResponse)
 async def get_content_calendar(
     start_date: str = "",
     end_date: str = "",
@@ -1063,7 +1021,7 @@ async def get_content_calendar(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/v1/schedule/{schedule_id}")
+@router.delete("/schedule/{schedule_id}")
 async def delete_scheduled_content(schedule_id: str):
     """
     删除计划的内容
@@ -1088,7 +1046,7 @@ async def delete_scheduled_content(schedule_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.put("/api/v1/schedule/{schedule_id}/publish")
+@router.put("/schedule/{schedule_id}/publish")
 async def mark_as_published(schedule_id: str):
     """
     标记内容为已发布
@@ -1126,7 +1084,7 @@ class ContentVersion(BaseModel):
 _content_versions_store: Dict[str, List[ContentVersion]] = {}
 
 
-@app.post("/api/v1/versions")
+@router.post("/versions")
 async def save_content_version(
     content_id: str,
     version_number: int,
@@ -1166,7 +1124,7 @@ async def save_content_version(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/versions/{content_id}")
+@router.get("/versions/{content_id}")
 async def get_content_versions(content_id: str):
     """
     获取内容版本历史
@@ -1186,7 +1144,7 @@ async def get_content_versions(content_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/versions/{content_id}/v/{version_number}")
+@router.get("/versions/{content_id}/v/{version_number}")
 async def get_specific_version(content_id: str, version_number: int):
     """
     获取特定版本
@@ -1269,7 +1227,7 @@ PLATFORM_BEST_PRATICES = {
 }
 
 
-@app.get("/api/v1/best-practices/{platform}")
+@router.get("/best-practices/{platform}")
 async def get_platform_best_practices(platform: str):
     """
     获取平台最佳实践
@@ -1286,7 +1244,7 @@ async def get_platform_best_practices(platform: str):
     }
 
 
-@app.get("/api/v1/best-practices")
+@router.get("/best-practices")
 async def get_all_best_practices():
     """
     获取所有平台最佳实践
@@ -1301,7 +1259,7 @@ async def get_all_best_practices():
 
 # ===== Content Analytics =====
 
-@app.post("/api/v1/analytics/record")
+@router.post("/analytics/record")
 async def record_content_analytics(
     platform: str,
     quality_score: float,
@@ -1341,7 +1299,7 @@ async def record_content_analytics(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/analytics/platform")
+@router.get("/analytics/platform")
 async def get_analytics_by_platform(platform: Optional[str] = None):
     """
     获取平台分析数据
@@ -1358,7 +1316,7 @@ async def get_analytics_by_platform(platform: Optional[str] = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/analytics/trends")
+@router.get("/analytics/trends")
 async def get_quality_trends(days: int = 7):
     """
     获取质量趋势
@@ -1386,7 +1344,7 @@ async def get_quality_trends(days: int = 7):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/analytics/compare")
+@router.get("/analytics/compare")
 async def compare_platform_analytics():
     """
     对比平台表现
@@ -1403,7 +1361,7 @@ async def compare_platform_analytics():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/analytics/health/{content_id}")
+@router.get("/analytics/health/{content_id}")
 async def get_content_health(content_id: str):
     """
     获取内容健康分
@@ -1427,7 +1385,7 @@ async def get_content_health(content_id: str):
 
 # ===== Content Improvement & Inspiration =====
 
-@app.post("/api/v1/content/improve")
+@router.post("/content/improve")
 async def get_improvement_suggestions(
     content: str = Body(..., embed=True),
     platform: str = Body("xiaohongshu", embed=True),
@@ -1446,7 +1404,7 @@ async def get_improvement_suggestions(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/content/angles")
+@router.post("/content/angles")
 async def suggest_content_angles(
     product_name: str = Body(..., embed=True),
     description: str = Body("", embed=True),
@@ -1472,7 +1430,7 @@ async def suggest_content_angles(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/content/batch-review")
+@router.post("/content/batch-review")
 async def batch_review_contents(
     contents: List[Dict[str, str]] = Body(..., description="内容列表，每项包含content和platform"),
 ):
@@ -1498,7 +1456,7 @@ async def batch_review_contents(
 
 # ===== Keyword Research =====
 
-@app.get("/api/v1/keywords/{platform}")
+@router.get("/keywords/{platform}")
 async def get_platform_keywords(
     platform: str,
     category: str = "general",
@@ -1579,7 +1537,7 @@ CONTENT_TEMPLATES = {
 }
 
 
-@app.get("/api/v1/templates/library/{platform}")
+@router.get("/templates/library/{platform}")
 async def get_template_library(platform: str):
     """
     获取平台模板库
@@ -1596,7 +1554,7 @@ async def get_template_library(platform: str):
     }
 
 
-@app.get("/api/v1/templates/library")
+@router.get("/templates/library")
 async def get_all_templates():
     """
     获取所有平台模板库
@@ -1611,7 +1569,7 @@ async def get_all_templates():
 
 # ===== Content Archive =====
 
-@app.post("/api/v1/archive")
+@router.post("/archive")
 async def archive_content(
     content: Dict[str, Any],
     name: str = "",
@@ -1632,7 +1590,7 @@ async def archive_content(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/archive")
+@router.get("/archive")
 async def get_archives(
     category: Optional[str] = None,
     limit: int = 50,
@@ -1667,7 +1625,7 @@ async def get_archives(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/archive/{archive_id}")
+@router.get("/archive/{archive_id}")
 async def get_archive(archive_id: str):
     """
     获取归档内容
@@ -1689,7 +1647,7 @@ async def get_archive(archive_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/v1/archive/{archive_id}")
+@router.delete("/archive/{archive_id}")
 async def delete_archive(archive_id: str):
     """
     删除归档
@@ -1711,7 +1669,7 @@ async def delete_archive(archive_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/archive/search")
+@router.get("/archive/search")
 async def search_archives(keyword: str):
     """
     搜索归档
@@ -1742,7 +1700,7 @@ async def search_archives(keyword: str):
 
 # ===== Advanced Export =====
 
-@app.post("/api/v1/export/advanced")
+@router.post("/export/advanced")
 async def advanced_export_content(
     content: Dict[str, Any],
     format: str = "csv",
@@ -1808,13 +1766,13 @@ _note_id_counter = 0
 _comment_id_counter = 0
 
 
-@app.post("/api/v1/notes")
+@router.post("/notes")
 async def add_content_note(
     content_id: str,
     platform: str,
     note: str,
     author: str = "Anonymous",
-    tags: List[str] = [],
+    tags: Optional[List[str]] = None,
 ):
     """
     添加内容笔记
@@ -1834,7 +1792,7 @@ async def add_content_note(
             author=author,
             created_at=datetime.now().isoformat(),
             updated_at=datetime.now().isoformat(),
-            tags=tags,
+            tags=tags or [],
         )
         _content_notes.append(note_obj)
 
@@ -1844,7 +1802,7 @@ async def add_content_note(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/notes/{content_id}")
+@router.get("/notes/{content_id}")
 async def get_content_notes(content_id: str):
     """
     获取内容的笔记
@@ -1863,7 +1821,7 @@ async def get_content_notes(content_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/v1/notes/{note_id}")
+@router.delete("/notes/{note_id}")
 async def delete_note(note_id: str):
     """
     删除笔记
@@ -1886,7 +1844,7 @@ async def delete_note(note_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/comments")
+@router.post("/comments")
 async def add_content_comment(
     content_id: str,
     comment: str,
@@ -1917,7 +1875,7 @@ async def add_content_comment(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/comments/{content_id}")
+@router.get("/comments/{content_id}")
 async def get_content_comments(content_id: str):
     """
     获取内容的评论
@@ -1938,7 +1896,7 @@ async def get_content_comments(content_id: str):
 
 # ===== Content Batch Operations =====
 
-@app.post("/api/v1/batch/approve")
+@router.post("/batch/approve")
 async def batch_approve_contents(
     content_ids: List[str],
 ):
@@ -1969,7 +1927,7 @@ async def batch_approve_contents(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/batch/reject")
+@router.post("/batch/reject")
 async def batch_reject_contents(
     content_ids: List[str],
     reason: str = "",
@@ -2001,7 +1959,7 @@ async def batch_reject_contents(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/batch/export")
+@router.post("/batch/export")
 async def batch_export_contents(
     content_ids: List[str],
     format: str = "json",
@@ -2041,7 +1999,7 @@ async def batch_export_contents(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/batch/delete")
+@router.post("/batch/delete")
 async def batch_delete_contents(
     content_ids: List[str],
 ):
@@ -2074,7 +2032,7 @@ async def batch_delete_contents(
 
 # ===== Content Utilities =====
 
-@app.post("/api/v1/validate/content")
+@router.post("/validate/content")
 async def validate_content(
     content: str = Body(..., embed=True),
 ):
@@ -2114,7 +2072,7 @@ async def validate_content(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/summarize")
+@router.post("/summarize")
 async def summarize_content(
     content: str = Body(..., embed=True),
     max_length: int = 100,
@@ -2154,7 +2112,7 @@ async def summarize_content(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/expand")
+@router.post("/expand")
 async def expand_content(
     content: str = Body(..., embed=True),
     target_length: int = 500,
@@ -2193,7 +2151,7 @@ async def expand_content(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/paraphrase")
+@router.post("/paraphrase")
 async def paraphrase_content(
     content: str = Body(..., embed=True),
     style: str = "natural",
@@ -2224,7 +2182,7 @@ async def paraphrase_content(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/word-count")
+@router.get("/word-count")
 async def get_word_count(
     content: str,
 ):
@@ -2260,7 +2218,7 @@ async def get_word_count(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/extract/hashtags")
+@router.post("/extract/hashtags")
 async def extract_hashtags(
     content: str = Body(..., embed=True),
 ):
@@ -2290,7 +2248,7 @@ async def extract_hashtags(
 
 # ===== Style Variations & A/B Testing =====
 
-@app.post("/api/v1/copy/variations")
+@router.post("/copy/variations")
 async def generate_style_variations(
     product_name: str,
     product_description: str,
@@ -2327,7 +2285,7 @@ async def generate_style_variations(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/copy/ab-test")
+@router.post("/copy/ab-test")
 async def generate_ab_copies(
     product_name: str,
     product_description: str,
@@ -2372,7 +2330,7 @@ async def generate_ab_copies(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/copy/regenerate-with-feedback")
+@router.post("/copy/regenerate-with-feedback")
 async def regenerate_with_feedback(
     original_title: str,
     original_content: str,
@@ -2422,7 +2380,7 @@ async def regenerate_with_feedback(
 
 # ===== Seasonal Copy =====
 
-@app.post("/api/v1/copy/seasonal")
+@router.post("/copy/seasonal")
 async def generate_seasonal_copy(
     product_name: str,
     product_description: str,
@@ -2464,7 +2422,7 @@ async def generate_seasonal_copy(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/seasons")
+@router.get("/seasons")
 async def get_available_seasons():
     """
     获取可选的季节列表
@@ -2484,7 +2442,7 @@ async def get_available_seasons():
 
 # ===== Report Generation =====
 
-@app.post("/api/v1/reports/summary")
+@router.post("/reports/summary")
 async def generate_summary_report(
     content_data: List[Dict[str, Any]],
     title: str = "内容报告",
@@ -2519,7 +2477,7 @@ async def generate_summary_report(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/reports/comparison")
+@router.post("/reports/comparison")
 async def generate_comparison_report(
     content1: Dict[str, Any],
     content2: Dict[str, Any],
@@ -2547,7 +2505,7 @@ async def generate_comparison_report(
 
 # ===== Campaign Management =====
 
-@app.post("/api/v1/campaigns")
+@router.post("/campaigns")
 async def create_campaign(
     name: str,
     description: str,
@@ -2589,7 +2547,7 @@ async def create_campaign(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/campaigns")
+@router.get("/campaigns")
 async def get_campaigns(
     status: Optional[str] = None,
     campaign_type: Optional[str] = None,
@@ -2626,7 +2584,7 @@ async def get_campaigns(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/campaigns/{campaign_id}")
+@router.get("/campaigns/{campaign_id}")
 async def get_campaign(campaign_id: str):
     """
     获取活动详情
@@ -2676,7 +2634,7 @@ async def get_campaign(campaign_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.put("/api/v1/campaigns/{campaign_id}")
+@router.put("/campaigns/{campaign_id}")
 async def update_campaign(
     campaign_id: str,
     name: Optional[str] = None,
@@ -2730,7 +2688,7 @@ async def update_campaign(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/v1/campaigns/{campaign_id}")
+@router.delete("/campaigns/{campaign_id}")
 async def delete_campaign(campaign_id: str):
     """
     删除活动
@@ -2752,7 +2710,7 @@ async def delete_campaign(campaign_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/campaigns/{campaign_id}/contents")
+@router.post("/campaigns/{campaign_id}/contents")
 async def add_campaign_content(
     campaign_id: str,
     platform: str,
@@ -2796,7 +2754,7 @@ async def add_campaign_content(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/campaigns/{campaign_id}/timeline")
+@router.get("/campaigns/{campaign_id}/timeline")
 async def get_campaign_timeline(campaign_id: str):
     """
     获取活动时间线
@@ -2818,7 +2776,7 @@ async def get_campaign_timeline(campaign_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/campaigns/{campaign_id}/summary")
+@router.get("/campaigns/{campaign_id}/summary")
 async def get_campaign_summary(campaign_id: str):
     """
     获取活动摘要
@@ -2842,7 +2800,7 @@ async def get_campaign_summary(campaign_id: str):
 
 # ===== Performance Prediction =====
 
-@app.post("/api/v1/predict/performance")
+@router.post("/predict/performance")
 async def predict_performance(
     content: str,
     platform: str,
@@ -2887,7 +2845,7 @@ async def predict_performance(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/predict/platform/{platform}")
+@router.get("/predict/platform/{platform}")
 async def get_platform_recommendations(platform: str):
     """
     获取平台发布建议
@@ -2905,7 +2863,7 @@ async def get_platform_recommendations(platform: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/predict/compare")
+@router.post("/predict/compare")
 async def compare_predictions(
     content1: Dict[str, Any],
     content2: Dict[str, Any],
@@ -2951,4 +2909,329 @@ async def compare_predictions(
         }
     except Exception as e:
         logger.error(f"Compare predictions error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Video Generation =====
+
+class VideoSearchRequest(BaseModel):
+    """视频素材搜索请求"""
+    search_terms: List[str] = Field(..., description="搜索关键词列表")
+    video_aspect: str = Field(default="9:16", description="视频比例 (9:16, 16:9, 1:1)")
+    source: str = Field(default="pexels", description="素材源 (pexels/pixabay)")
+
+
+class VideoSearchResponse(BaseModel):
+    """视频素材搜索响应"""
+    success: bool
+    videos: List[dict]
+    total: int
+
+
+@router.post("/video/search-materials", response_model=VideoSearchResponse)
+async def search_video_materials(body: VideoSearchRequest):
+    """
+    搜索视频素材
+
+    从 Pexels 或 Pixabay 搜索视频素材
+    """
+    try:
+        from backend.tools.material_collector import material_collector
+
+        all_videos = []
+        seen_urls = set()
+
+        for term in body.search_terms:
+            videos = material_collector.search_videos(
+                search_term=term,
+                video_aspect=body.video_aspect,
+                source=body.source,
+            )
+            for video in videos:
+                if video["url"] not in seen_urls:
+                    all_videos.append(video)
+                    seen_urls.add(video["url"])
+
+        return VideoSearchResponse(
+            success=True,
+            videos=all_videos,
+            total=len(all_videos),
+        )
+    except Exception as e:
+        logger.error(f"Search video materials error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class VideoDownloadRequest(BaseModel):
+    """视频下载请求"""
+    video_urls: List[str] = Field(..., description="视频URL列表")
+    save_dir: str = Field(default="", description="保存目录")
+
+
+class VideoDownloadResponse(BaseModel):
+    """视频下载响应"""
+    success: bool
+    video_paths: List[str]
+    total: int
+
+
+@router.post("/video/download", response_model=VideoDownloadResponse)
+async def download_videos(body: VideoDownloadRequest):
+    """
+    下载视频素材
+
+    下载视频到本地
+    """
+    try:
+        from backend.tools.material_collector import material_collector
+
+        video_paths = []
+        for url in body.video_urls:
+            path = material_collector.download_video(url, body.save_dir)
+            if path:
+                video_paths.append(path)
+
+        return VideoDownloadResponse(
+            success=len(video_paths) > 0,
+            video_paths=video_paths,
+            total=len(video_paths),
+        )
+    except Exception as e:
+        logger.error(f"Download videos error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class AudioGenerateRequest(BaseModel):
+    """音频生成请求"""
+    text: str = Field(..., description="要转换的文本")
+    voice_name: str = Field(default="zh-CN-XiaoyiNeural", description="声音名称")
+    voice_rate: float = Field(default=1.0, description="语速 (0.5-2.0)")
+
+
+class AudioGenerateResponse(BaseModel):
+    """音频生成响应"""
+    success: bool
+    audio_path: str
+    subtitle_path: str
+    duration: float
+
+
+@router.post("/video/generate-audio", response_model=AudioGenerateResponse)
+async def generate_audio(body: AudioGenerateRequest):
+    """
+    生成语音
+
+    使用 Edge TTS 生成语音
+    """
+    try:
+        from backend.services.voice import voice_service
+
+        audio_path, subtitle_path, duration = voice_service.generate_with_subtitles(
+            text=body.text,
+            voice_name=body.voice_name,
+            voice_rate=body.voice_rate,
+        )
+
+        return AudioGenerateResponse(
+            success=bool(audio_path),
+            audio_path=audio_path,
+            subtitle_path=subtitle_path,
+            duration=duration,
+        )
+    except Exception as e:
+        logger.error(f"Generate audio error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class SubtitleGenerateRequest(BaseModel):
+    """字幕生成请求"""
+    audio_path: str = Field(..., description="音频文件路径")
+    language: str = Field(default="zh", description="语音语言")
+
+
+class SubtitleGenerateResponse(BaseModel):
+    """字幕生成响应"""
+    success: bool
+    subtitle_path: str
+
+
+@router.post("/video/generate-subtitle", response_model=SubtitleGenerateResponse)
+async def generate_subtitle(body: SubtitleGenerateRequest):
+    """
+    生成字幕
+
+    使用 Whisper 从音频生成字幕
+    """
+    try:
+        from backend.services.subtitle import subtitle_service
+
+        subtitle_path = subtitle_service.generate_subtitle(
+            audio_path=body.audio_path,
+            language=body.language,
+        )
+
+        return SubtitleGenerateResponse(
+            success=bool(subtitle_path),
+            subtitle_path=subtitle_path,
+        )
+    except Exception as e:
+        logger.error(f"Generate subtitle error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class VideoCombineRequest(BaseModel):
+    """视频合并请求"""
+    video_paths: List[str] = Field(..., description="视频文件路径列表")
+    audio_path: str = Field(..., description="音频文件路径")
+    output_path: str = Field(default="", description="输出路径")
+    video_aspect: str = Field(default="9:16", description="视频比例")
+    concat_mode: str = Field(default="random", description="拼接模式 (random/sequential)")
+    transition_mode: str = Field(default="fade_in", description="转场模式")
+
+
+class VideoCombineResponse(BaseModel):
+    """视频合并响应"""
+    success: bool
+    video_path: str
+
+
+@router.post("/video/combine", response_model=VideoCombineResponse)
+async def combine_videos(body: VideoCombineRequest):
+    """
+    合并视频
+
+    将多个视频片段合并为一个视频
+    """
+    try:
+        from backend.tools.video_generator import VideoGenerator, VideoAspect, VideoConcatMode, VideoTransitionMode, VideoParams
+
+        aspect_map = {
+            "9:16": VideoAspect.PORTRAIT,
+            "16:9": VideoAspect.LANDSCAPE,
+            "1:1": VideoAspect.SQUARE,
+        }
+        concat_map = {
+            "random": VideoConcatMode.RANDOM,
+            "sequential": VideoConcatMode.SEQUENTIAL,
+        }
+        transition_map = {
+            "none": VideoTransitionMode.NONE,
+            "fade_in": VideoTransitionMode.FADE_IN,
+            "fade_out": VideoTransitionMode.FADE_OUT,
+            "slide_in": VideoTransitionMode.SLIDE_IN,
+            "slide_out": VideoTransitionMode.SLIDE_OUT,
+            "shuffle": VideoTransitionMode.SHUFFLE,
+        }
+
+        params = VideoParams(
+            video_aspect=aspect_map.get(body.video_aspect, VideoAspect.PORTRAIT),
+            video_concat_mode=concat_map.get(body.concat_mode, VideoConcatMode.RANDOM),
+            video_transition_mode=transition_map.get(body.transition_mode, VideoTransitionMode.FADE_IN),
+        )
+
+        generator = VideoGenerator()
+        output_path = body.output_path or os.path.join(
+            generator.output_dir, f"combined-{uuid.uuid4().hex[:8]}.mp4"
+        )
+
+        result = generator.combine_videos(
+            video_paths=body.video_paths,
+            audio_path=body.audio_path,
+            output_path=output_path,
+            params=params,
+        )
+
+        return VideoCombineResponse(
+            success=bool(result),
+            video_path=result,
+        )
+    except Exception as e:
+        logger.error(f"Combine videos error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class VideoGenerateRequest(BaseModel):
+    """视频生成请求"""
+    video_path: str = Field(..., description="视频文件路径")
+    audio_path: str = Field(..., description="音频文件路径")
+    subtitle_path: str = Field(default="", description="字幕文件路径")
+    output_path: str = Field(default="", description="输出路径")
+    video_aspect: str = Field(default="9:16", description="视频比例")
+    subtitle_enabled: bool = Field(default=True, description="是否启用字幕")
+    bgm_type: str = Field(default="none", description="背景音乐类型 (random/none)")
+    bgm_volume: float = Field(default=0.3, description="背景音乐音量")
+
+
+class VideoGenerateResponse(BaseModel):
+    """视频生成响应"""
+    success: bool
+    video_path: str
+    duration: float
+    error: str = ""
+
+
+@router.post("/video/generate", response_model=VideoGenerateResponse)
+async def generate_video(body: VideoGenerateRequest):
+    """
+    生成最终视频
+
+    添加字幕和音频生成最终视频
+    """
+    try:
+        from backend.tools.video_generator import VideoGenerator, VideoAspect, VideoParams
+
+        aspect_map = {
+            "9:16": VideoAspect.PORTRAIT,
+            "16:9": VideoAspect.LANDSCAPE,
+            "1:1": VideoAspect.SQUARE,
+        }
+
+        params = VideoParams(
+            video_aspect=aspect_map.get(body.video_aspect, VideoAspect.PORTRAIT),
+            subtitle_enabled=body.subtitle_enabled,
+            bgm_type=body.bgm_type,
+            bgm_volume=body.bgm_volume,
+        )
+
+        generator = VideoGenerator()
+        output_path = body.output_path or os.path.join(
+            generator.output_dir, f"final-{uuid.uuid4().hex[:8]}.mp4"
+        )
+
+        result = generator.generate_video(
+            video_path=body.video_path,
+            audio_path=body.audio_path,
+            subtitle_path=body.subtitle_path,
+            output_path=output_path,
+            params=params,
+        )
+
+        return VideoGenerateResponse(
+            success=result.success,
+            video_path=result.video_path,
+            duration=result.duration,
+            error=result.error,
+        )
+    except Exception as e:
+        logger.error(f"Generate video error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/video/voices")
+async def get_available_voices():
+    """
+    获取可用的声音列表
+
+    返回 Edge TTS 支持的声音
+    """
+    try:
+        from backend.services.voice import voice_service
+        voices = voice_service.get_available_voices()
+        return {
+            "success": True,
+            "voices": voices,
+            "total": len(voices),
+        }
+    except Exception as e:
+        logger.error(f"Get voices error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

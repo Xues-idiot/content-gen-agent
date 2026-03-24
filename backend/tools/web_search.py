@@ -192,7 +192,7 @@ class WebSearchTool:
 
         return self.search(query, max_results=max_results, search_depth="deep")
 
-    def search_for_comp分析(
+    def search_for_competitor(
         self,
         competitor_name: str,
         max_results: int = 5,

@@ -86,6 +86,22 @@ class Reviewer:
     - 改进建议生成
     """
 
+    # 预编译的正则表达式（避免重复编译）
+    _EMOJI_PATTERN = re.compile(
+        "["
+        "\U0001F600-\U0001F64F"  # emoticons
+        "\U0001F300-\U0001F5FF"  # symbols & pictographs
+        "\U0001F680-\U0001F6FF"  # transport & map symbols
+        "\U0001F700-\U0001F77F"  # alchemical symbols
+        "\U0001F780-\U0001F7FF"  # Geometric Shapes Extended
+        "\U0001F800-\U0001F8FF"  # Supplemental Arrows-C
+        "\U0001F900-\U0001F9FF"  # Supplemental Symbols and Pictographs
+        "\U0001FA00-\U0001FA6F"  # Chess Symbols
+        "\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
+        "\U00002702-\U000027B0"  # Dingbats
+        "]+"
+    )
+
     # 替换建议映射
     SUGGESTIONS = {
         "最好": "优秀",
@@ -168,21 +184,7 @@ class Reviewer:
         analysis["has_title"] = bool(re.search(r'^#{1,3}\s|\n.{0,20}\n.*═', copy))
 
         # 检测 emoji
-        emoji_pattern = re.compile(
-            "["
-            "\U0001F600-\U0001F64F"  # emoticons
-            "\U0001F300-\U0001F5FF"  # symbols & pictographs
-            "\U0001F680-\U0001F6FF"  # transport & map symbols
-            "\U0001F700-\U0001F77F"  # alchemical symbols
-            "\U0001F780-\U0001F7FF"  # Geometric Shapes Extended
-            "\U0001F800-\U0001F8FF"  # Supplemental Arrows-C
-            "\U0001F900-\U0001F9FF"  # Supplemental Symbols and Pictographs
-            "\U0001FA00-\U0001FA6F"  # Chess Symbols
-            "\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
-            "\U00002702-\U000027B0"  # Dingbats
-            "]+"
-        )
-        analysis["has_emoji"] = bool(emoji_pattern.search(copy))
+        analysis["has_emoji"] = bool(self._EMOJI_PATTERN.search(copy))
 
         # 检测数字
         analysis["has_numbers"] = bool(re.search(r'\d+', copy))

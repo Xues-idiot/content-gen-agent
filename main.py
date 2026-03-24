@@ -29,7 +29,7 @@ def create_app() -> uvicorn:
     """创建并配置应用"""
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
-    from backend.api.content import app as content_app
+    from backend.api.content import router as content_router
 
     app = FastAPI(
         title=f"{APP_NAME} - {APP_DESCRIPTION}",
@@ -48,7 +48,7 @@ def create_app() -> uvicorn:
     )
 
     # 注册 API 路由
-    app.include_router(content_app, prefix="/api/v1", tags=["content"])
+    app.include_router(content_router)
 
     @app.get("/")
     async def root():

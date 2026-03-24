@@ -16,6 +16,10 @@ from loguru import logger
 
 from backend.config import config
 
+# 预编译的正则表达式（避免重复编译）
+_JSON_PATTERN = re.compile(r"\{[\s\S]*\}")
+_MARKDOWN_CODE_PATTERN = re.compile(r"```(?:json)?\s*([\s\S]*?)```")
+
 
 def retry_on_error(max_retries: int = 3, delay: float = 1.0, backoff: float = 2.0):
     """重试装饰器 - 指数退避"""
@@ -187,16 +191,16 @@ class LLMClient:
         """
         import json
 
-        # 尝试提取 JSON
-        json_match = re.search(r"\{[\s\S]*\}", text)
+        # 尝试提取 JSON（使用预编译的正则）
+        json_match = _JSON_PATTERN.search(text)
         if json_match:
             try:
                 return json.loads(json_match.group())
             except json.JSONDecodeError:
                 pass
 
-        # 尝试解析 Markdown 代码块
-        code_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", text)
+        # 尝试解析 Markdown 代码块（使用预编译的正则）
+        code_match = _MARKDOWN_CODE_PATTERN.search(text)
         if code_match:
             try:
                 return json.loads(code_match.group(1))

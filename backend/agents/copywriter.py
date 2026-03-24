@@ -4,6 +4,7 @@ Vox Copywriter 模块 - 多平台文案生成
 负责生成小红书、抖音、公众号、朋友圈等平台的文案
 """
 
+import re
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional, Dict, Any
@@ -18,6 +19,23 @@ from backend.prompts import (
     OFFICIAL_PROMPT,
     FRIEND_CIRCLE_PROMPT,
 )
+
+# 预编译的正则表达式（避免重复编译）
+_RE_TITLE = re.compile(r"标题：(.+)")
+_RE_TAGS = re.compile(r"标签：([\s\S]+?)(?:配图|$)")
+_RE_IMAGE_SUGGESTION = re.compile(r"配图建议：([\s\S]+?)$")
+_RE_CONTENT_XHS = re.compile(r"正文：([\s\S]+?)标签：")
+_RE_CONTENT_XHS_FALLBACK = re.compile(r"正文：([\s\S]+)$")
+_RE_CTA = re.compile(r"【?(?:行动号召|结尾|引导)[】]?\s*\n?([\s\S]+?)$")
+_RE_HOOK = re.compile(r"【开头钩子】[^\n]*\n([\s\S]+?)(?:\n【|完整脚本|$)")
+_RE_SCRIPT = re.compile(r"【内容主体】([\s\S]+?)(?:【结尾|$)")
+_RE_CTA_TIKTOK = re.compile(r"【结尾行动号召】\s*\n?([\s\S]+?)$")
+_RE_SUBTITLE = re.compile(r"副标题：(.+)")
+_RE_LAYOUT = re.compile(r"排版建议：([\s\S]+?)$")
+_RE_CONTENT_OFFICIAL = re.compile(r"正文：([\s\S]+?)(?:排版|$)")
+_RE_CONTENT_OFFICIAL_FALLBACK = re.compile(r"正文：([\s\S]+)$")
+_RE_CONTENT_FC = re.compile(r"文案：([\s\S]+?)(?:配图|$)")
+_RE_POST_TIME = re.compile(r"发布时间建议：(.+)")
 
 
 class Platform(Enum):
@@ -228,33 +246,32 @@ class Copywriter:
 
     def _parse_xiaohongshu_response(self, response: str) -> CopyResult:
         """解析小红书文案响应"""
-        import re
         result = CopyResult(platform="xiaohongshu", raw_output=response)
 
-        title_match = re.search(r"标题：(.+)", response)
+        title_match = _RE_TITLE.search(response)
         if title_match:
             result.title = title_match.group(1).strip()
 
-        tags_match = re.search(r"标签：([\s\S]+?)(?:配图|$)", response)
+        tags_match = _RE_TAGS.search(response)
         if tags_match:
             result.tags = re.findall(r"#\w+", tags_match.group(1))
 
-        img_match = re.search(r"配图建议：([\s\S]+?)$", response)
+        img_match = _RE_IMAGE_SUGGESTION.search(response)
         if img_match:
             result.image_suggestions = [
                 s.strip() for s in img_match.group(1).strip().split("\n") if s.strip()
             ]
 
-        content_match = re.search(r"正文：([\s\S]+?)标签：", response)
+        content_match = _RE_CONTENT_XHS.search(response)
         if content_match:
             result.content = content_match.group(1).strip()
         else:
-            content_match = re.search(r"正文：([\s\S]+)$", response)
+            content_match = _RE_CONTENT_XHS_FALLBACK.search(response)
             if content_match:
                 result.content = content_match.group(1).strip()
 
         # 尝试提取 CTA（小红书也有行动号召）
-        cta_match = re.search(r"【?(?:行动号召|结尾|引导)[】]?\s*\n?([\s\S]+?)$", response)
+        cta_match = _RE_CTA.search(response)
         if cta_match and not result.cta:
             result.cta = cta_match.group(1).strip()
 
@@ -262,21 +279,20 @@ class Copywriter:
 
     def _parse_tiktok_response(self, response: str) -> CopyResult:
         """解析抖音文案响应"""
-        import re
         result = CopyResult(platform="tiktok", raw_output=response)
 
         # 提取开头钩子
-        hook_match = re.search(r"【开头钩子】[^\n]*\n([\s\S]+?)(?:\n【|完整脚本|$)", response)
+        hook_match = _RE_HOOK.search(response)
         if hook_match:
             result.title = hook_match.group(1).strip()
 
         # 提取内容主体
-        script_match = re.search(r"【内容主体】([\s\S]+?)(?:【结尾|$)", response)
+        script_match = _RE_SCRIPT.search(response)
         if script_match:
             result.script = script_match.group(1).strip()
 
         # 提取 CTA（行动号召）
-        cta_match = re.search(r"【结尾行动号召】\s*\n?([\s\S]+?)$", response)
+        cta_match = _RE_CTA_TIKTOK.search(response)
         if cta_match:
             result.cta = cta_match.group(1).strip()
             result.content = result.title + "\n" + result.script + "\n" + result.cta
@@ -289,26 +305,25 @@ class Copywriter:
 
     def _parse_official_response(self, response: str) -> CopyResult:
         """解析公众号文案响应"""
-        import re
         result = CopyResult(platform="official", raw_output=response)
 
-        title_match = re.search(r"标题：(.+)", response)
+        title_match = _RE_TITLE.search(response)
         if title_match:
             result.title = title_match.group(1).strip()
 
-        subtitle_match = re.search(r"副标题：(.+)", response)
+        subtitle_match = _RE_SUBTITLE.search(response)
         if subtitle_match:
             result.analysis["subtitle"] = subtitle_match.group(1).strip()
 
-        layout_match = re.search(r"排版建议：([\s\S]+?)$", response)
+        layout_match = _RE_LAYOUT.search(response)
         if layout_match:
             result.analysis["layout"] = layout_match.group(1).strip()
 
-        content_match = re.search(r"正文：([\s\S]+?)(?:排版|$)", response)
+        content_match = _RE_CONTENT_OFFICIAL.search(response)
         if content_match:
             result.content = content_match.group(1).strip()
         else:
-            content_match = re.search(r"正文：([\s\S]+)$", response)
+            content_match = _RE_CONTENT_OFFICIAL_FALLBACK.search(response)
             if content_match:
                 result.content = content_match.group(1).strip()
 
@@ -316,25 +331,24 @@ class Copywriter:
 
     def _parse_friend_circle_response(self, response: str) -> CopyResult:
         """解析朋友圈文案响应"""
-        import re
         result = CopyResult(platform="friend_circle", raw_output=response)
 
-        content_match = re.search(r"文案：([\s\S]+?)(?:配图|$)", response)
+        content_match = _RE_CONTENT_FC.search(response)
         if content_match:
             result.content = content_match.group(1).strip()
 
-        img_match = re.search(r"配图建议：([\s\S]+?)(?:发布|$)", response)
+        img_match = _RE_IMAGE_SUGGESTION.search(response)
         if img_match:
             result.image_suggestions = [
                 s.strip() for s in img_match.group(1).strip().split("\n") if s.strip()
             ]
 
-        time_match = re.search(r"发布时间建议：(.+)", response)
+        time_match = _RE_POST_TIME.search(response)
         if time_match:
             result.analysis["posting_time"] = time_match.group(1).strip()
 
         # 尝试提取 CTA（朋友圈也有行动号召）
-        cta_match = re.search(r"【?(?:行动号召|结尾|引导)[】]?\s*\n?([\s\S]+?)$", response)
+        cta_match = _RE_CTA.search(response)
         if cta_match:
             result.cta = cta_match.group(1).strip()
 
@@ -543,8 +557,9 @@ class SeasonalCopywriter:
     根据不同季节和节日生成应景的营销文案
     """
 
-    def __init__(self):
+    def __init__(self, llm_client: Optional[LLMClient] = None):
         self.templates = SEASONAL_TEMPLATES
+        self.llm = llm_client or LLMClient()
 
     def generate_seasonal_copy(
         self,
@@ -586,15 +601,13 @@ class SeasonalCopywriter:
 
 请生成包含标题、正文、标签的完整文案，体现季节感。"""
 
-        llm = LLMClient()
-        response = llm.generate(prompt)
+        response = self.llm.generate(prompt)
 
-        # 简单解析
-        import re
-        title_match = re.search(r"标题：(.+)", response)
+        # 使用预编译的正则解析
+        title_match = _RE_TITLE.search(response)
         title = title_match.group(1).strip() if title_match else f"{product.name} - {template['name']}推荐"
 
-        tags_match = re.search(r"标签：([\s\S]+?)(?:配图|$)", response)
+        tags_match = _RE_TAGS.search(response)
         tags = re.findall(r"#\w+", tags_match.group(1)) if tags_match else []
 
         content_match = re.search(r"正文：([\s\S]+?)(?:标签|$)", response)
@@ -637,8 +650,7 @@ class SeasonalCopywriter:
 
 请保持文案核心信息不变，只调整季节性表达。"""
 
-        llm = LLMClient()
-        response = llm.generate(prompt)
+        response = self.llm.generate(prompt)
 
         return response if not response.startswith("Error:") else original_content
 

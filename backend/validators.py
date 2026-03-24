@@ -5,7 +5,7 @@ Vox 验证模块
 """
 
 from typing import List, Optional, Tuple
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -19,11 +19,7 @@ class ValidationError:
 class ValidationResult:
     """验证结果"""
     is_valid: bool
-    errors: List[ValidationError] = None
-
-    def __post_init__(self):
-        if self.errors is None:
-            self.errors = []
+    errors: List[ValidationError] = field(default_factory=list)
 
     @property
     def error_messages(self) -> List[str]:

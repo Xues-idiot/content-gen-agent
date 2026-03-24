@@ -158,7 +158,7 @@ class ContentPlanner:
 
             # 搜索竞品内容（如果存在竞品）
             for competitor in product.competitors[:2]:
-                competitor_response = self.web_search.search_for_comp分析(
+                competitor_response = self.web_search.search_for_competitor(
                     competitor_name=competitor,
                     max_results=2,
                 )

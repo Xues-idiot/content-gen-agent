@@ -5,7 +5,7 @@ Vox Content Graph - LangGraph 编排
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional, Literal
+from typing import List, Dict, Any, Optional
 from enum import Enum
 
 from loguru import logger

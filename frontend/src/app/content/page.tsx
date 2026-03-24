@@ -11,6 +11,7 @@ import MarketInsights from "@/components/MarketInsights";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useContentStore } from "@/store/content-store";
 import { ToastProvider, useToast } from "@/components/Toast";
+import { API_BASE_URL } from "@/lib/api";
 
 function ContentPageContent() {
   const {
@@ -55,7 +56,7 @@ function ContentPageContent() {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const response = await fetch("http://localhost:8003/health");
+        const response = await fetch(`${API_BASE_URL}/health`);
         if (response.ok) {
           const data = await response.json();
           setBackendStatus({
@@ -91,7 +92,7 @@ function ContentPageContent() {
       setProgress(15);
       setCurrentLoadingStep(1);
 
-      const response = await fetch("http://localhost:8003/api/v1/content/generate", {
+      const response = await fetch(`${API_BASE_URL}/api/v1/content/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

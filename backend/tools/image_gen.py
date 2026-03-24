@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 from enum import Enum
 
-import requests
 from loguru import logger
 
 from backend.config import config
