@@ -7,10 +7,10 @@ Vox Content API
 
 import os
 import uuid
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from dataclasses import asdict
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator, Body
 
@@ -3234,4 +3234,145 @@ async def get_available_voices():
         }
     except Exception as e:
         logger.error(f"Get voices error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Task Queue =====
+
+class TaskStatusResponse(BaseModel):
+    """任务状态响应"""
+    task_id: str
+    state: str
+    progress: int
+    created_at: str
+    updated_at: str
+    result: Dict[str, Any] = Field(default_factory=dict)
+    error: str = ""
+
+
+class TaskCreateRequest(BaseModel):
+    """任务创建请求"""
+    task_type: str = Field(..., description="任务类型: video_generate, batch_generate")
+    params: Dict[str, Any] = Field(default_factory=dict, description="任务参数")
+
+
+class TaskListResponse(BaseModel):
+    """任务列表响应"""
+    success: bool
+    tasks: List[Dict[str, Any]]
+    total: int
+    page: int
+    page_size: int
+
+
+@router.post("/tasks", response_model=Dict[str, Any])
+async def create_task(body: TaskCreateRequest):
+    """
+    创建异步任务
+
+    任务将在后台执行，可通过 /tasks/{task_id} 查询状态
+    """
+    try:
+        from backend.services.task_queue import async_task_queue, video_generate_task
+
+        task_id = await async_task_queue.submit_task(
+            task_type=body.task_type,
+            params=body.params,
+            coro_func=video_generate_task if body.task_type == "video_generate" else None,
+        )
+
+        return {
+            "success": True,
+            "task_id": task_id,
+            "message": f"任务已创建: {task_id}",
+        }
+    except Exception as e:
+        logger.error(f"Create task error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/tasks/{task_id}", response_model=TaskStatusResponse)
+async def get_task_status(task_id: str):
+    """
+    获取任务状态
+
+    返回任务的当前状态、进度和结果
+    """
+    try:
+        from backend.services.task_queue import async_task_queue, TaskState
+
+        task = async_task_queue.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
+
+        return TaskStatusResponse(
+            task_id=task.task_id,
+            state=task.state.value,
+            progress=task.progress,
+            created_at=task.created_at,
+            updated_at=task.updated_at,
+            result=task.result,
+            error=task.error,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get task error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/tasks", response_model=TaskListResponse)
+async def list_tasks(
+    page: int = Query(default=1, ge=1, description="页码"),
+    page_size: int = Query(default=20, ge=1, le=100, description="每页数量"),
+    state: str = Query(default=None, description="过滤状态: pending, processing, complete, failed"),
+):
+    """
+    获取任务列表
+
+    支持分页和状态过滤
+    """
+    try:
+        from backend.services.task_queue import task_queue, TaskState
+
+        state_filter = TaskState(state) if state else None
+        tasks, total = task_queue.get_all_tasks(
+            page=page,
+            page_size=page_size,
+            state=state_filter,
+        )
+
+        return TaskListResponse(
+            success=True,
+            tasks=[t.to_dict() for t in tasks],
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
+    except Exception as e:
+        logger.error(f"List tasks error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/tasks/{task_id}")
+async def delete_task(task_id: str):
+    """
+    删除任务
+    """
+    try:
+        from backend.services.task_queue import task_queue, async_task_queue
+
+        # 先取消正在运行的任务
+        async_task_queue.cancel_task(task_id)
+        # 删除任务记录
+        success = task_queue.delete_task(task_id)
+
+        if not success:
+            raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
+
+        return {"success": True, "message": f"任务已删除: {task_id}"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Delete task error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

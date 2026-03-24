@@ -457,6 +457,77 @@ class Copywriter:
 
         return results
 
+    def generate_keywords(
+        self,
+        script: str,
+        product: Optional[ProductInfo] = None,
+        amount: int = 5,
+    ) -> List[str]:
+        """
+        生成视频素材搜索关键词
+
+        根据文案脚本生成适合搜索视频素材的关键词
+
+        Args:
+            script: 文案脚本
+            product: 产品信息（可选）
+            amount: 生成数量
+
+        Returns:
+            list: 关键词列表
+        """
+        product_context = ""
+        if product:
+            product_context = f"""
+产品信息：
+- 名称：{product.name}
+- 描述：{product.description}
+- 卖点：{', '.join(product.selling_points)}
+"""
+
+        prompt = f"""根据以下文案生成{amount}个英文视频搜索关键词。
+
+{product_context}
+文案脚本：
+{script}
+
+要求：
+1. 每个关键词由1-3个英文单词组成
+2. 必须包含文案的核心主题
+3. 关键词应该适合在Pexels/Pixabay等视频素材网站搜索
+4. 只返回JSON数组格式的英文关键词，不要返回其他内容
+
+输出格式：
+["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"]
+"""
+
+        response = self.llm.generate(prompt)
+
+        if response.startswith("Error:"):
+            logger.error(f"生成关键词失败: {response}")
+            return ["video", "background", "nature"] if amount >= 3 else ["video"]
+
+        try:
+            import json
+            keywords = json.loads(response)
+            if isinstance(keywords, list) and all(isinstance(k, str) for k in keywords):
+                return keywords[:amount]
+        except json.JSONDecodeError:
+            pass
+
+        import re
+        match = re.search(r'\[.*]', response, re.DOTALL)
+        if match:
+            try:
+                keywords = json.loads(match.group())
+                if isinstance(keywords, list):
+                    return keywords[:amount]
+            except json.JSONDecodeError:
+                pass
+
+        logger.warning(f"无法解析关键词响应: {response[:100]}")
+        return ["video", "background"] if amount >= 2 else ["video"]
+
     def regenerate_with_feedback(
         self,
         original: CopyResult,
