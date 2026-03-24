@@ -1423,3 +1423,187 @@ async def get_content_health(content_id: str):
     except Exception as e:
         logger.error(f"Get content health error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Content Improvement & Inspiration =====
+
+@app.post("/api/v1/content/improve")
+async def get_improvement_suggestions(
+    content: str = Body(..., embed=True),
+    platform: str = Body("xiaohongshu", embed=True),
+):
+    """
+    获取内容改进建议
+
+    基于内容分析提供具体改进方案
+    """
+    try:
+        reviewer = get_reviewer()
+        suggestions = reviewer.generate_improvement_suggestions(content, platform)
+        return {"success": True, **suggestions}
+    except Exception as e:
+        logger.error(f"Get improvement suggestions error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/content/angles")
+async def suggest_content_angles(
+    product_name: str = Body(..., embed=True),
+    description: str = Body("", embed=True),
+    selling_points: str = Body("", embed=True),
+    platform: str = Body("xiaohongshu", embed=True),
+):
+    """
+    建议内容角度
+
+    基于产品信息生成多种内容创作角度
+    """
+    try:
+        reviewer = get_reviewer()
+        product_info = {
+            "name": product_name,
+            "description": description,
+            "selling_points": [s.strip() for s in selling_points.split(",") if s.strip()] if selling_points else [],
+        }
+        angles = reviewer.suggest_content_angles(product_info, platform)
+        return {"success": True, "angles": angles}
+    except Exception as e:
+        logger.error(f"Suggest content angles error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/content/batch-review")
+async def batch_review_contents(
+    contents: List[Dict[str, str]] = Body(..., description="内容列表，每项包含content和platform"),
+):
+    """
+    批量审核内容
+
+    一次性审核多条内容
+    """
+    try:
+        reviewer = get_reviewer()
+        results = reviewer.batch_review_contents(contents)
+        return {
+            "success": True,
+            "results": results,
+            "total": len(results),
+            "passed": len([r for r in results if r.get("passed", False)]),
+            "needs_improvement": len([r for r in results if r.get("needs_improvement", False)]),
+        }
+    except Exception as e:
+        logger.error(f"Batch review error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Keyword Research =====
+
+@app.get("/api/v1/keywords/{platform}")
+async def get_platform_keywords(
+    platform: str,
+    category: str = "general",
+    limit: int = 10,
+):
+    """
+    获取平台关键词
+
+    获取指定平台的热搜关键词和趋势词
+    """
+    try:
+        from backend.tools.web_search import web_search_tool
+
+        # 搜索趋势
+        trends = web_search_tool.search_trending_topics(category, platform, max_results=limit)
+        keywords = web_search_tool.get_hot_keywords(category, max_results=limit)
+
+        return {
+            "success": True,
+            "platform": platform,
+            "category": category,
+            "trending_topics": [
+                {"title": r.title, "url": r.url, "score": r.score}
+                for r in trends.results
+            ] if trends.success else [],
+            "hot_keywords": keywords.get("hot_keywords", [])[:limit],
+        }
+    except Exception as e:
+        logger.error(f"Get platform keywords error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Content Template Library =====
+
+# 预置内容模板
+CONTENT_TEMPLATES = {
+    "xiaohongshu": {
+        "product_review": {
+            "name": "产品测评模板",
+            "structure": ["痛点引入", "产品介绍", "使用体验", "效果展示", "总结推荐"],
+            "example_title": "这款[产品名]真的绝了！用了[时间]效果太惊艳",
+        },
+        "tutorial": {
+            "name": "教程分享模板",
+            "structure": ["问题背景", "解决方案", "步骤详解", "注意事项", "效果对比"],
+            "example_title": "手把手教你[技能]，新手必看！",
+        },
+        "comparison": {
+            "name": "对比测评模板",
+            "structure": ["选择背景", "产品A介绍", "产品B介绍", "多维度对比", "个人推荐"],
+            "example_title": "[产品A] vs [产品B]？真实对比告诉你答案！",
+        },
+    },
+    "tiktok": {
+        "hook": {
+            "name": "爆款开头模板",
+            "structure": ["3秒悬念", "价值承诺", "内容预告"],
+            "example_title": "这个[话题]你一定要知道！",
+        },
+        "tutorial": {
+            "name": "抖音教程模板",
+            "structure": ["痛点激发", "解决方案", "实操展示", "效果证明"],
+            "example_title": "只需3步，轻松搞定[问题]！",
+        },
+    },
+    "official": {
+        "deep_analysis": {
+            "name": "深度分析模板",
+            "structure": ["行业背景", "核心观点", "案例解读", "趋势预测", "总结建议"],
+            "example_title": "[行业]深度报告：2025年发展趋势分析",
+        },
+        "product_intro": {
+            "name": "产品介绍模板",
+            "structure": ["产品背景", "核心卖点", "功能详解", "应用场景", "购买引导"],
+            "example_title": "一文读懂[产品名]：功能、优势与适用场景",
+        },
+    },
+}
+
+
+@app.get("/api/v1/templates/library/{platform}")
+async def get_template_library(platform: str):
+    """
+    获取平台模板库
+
+    获取指定平台的预置内容模板
+    """
+    if platform not in CONTENT_TEMPLATES:
+        raise HTTPException(status_code=404, detail="Platform templates not found")
+
+    return {
+        "success": True,
+        "platform": platform,
+        "templates": CONTENT_TEMPLATES[platform],
+    }
+
+
+@app.get("/api/v1/templates/library")
+async def get_all_templates():
+    """
+    获取所有平台模板库
+
+    返回所有平台的预置内容模板
+    """
+    return {
+        "success": True,
+        "templates": CONTENT_TEMPLATES,
+    }

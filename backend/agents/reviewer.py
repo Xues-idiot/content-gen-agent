@@ -910,6 +910,199 @@ class Reviewer:
             "suggestions": suggestions,
         }
 
+    def generate_improvement_suggestions(self, content: str, platform: str) -> Dict[str, Any]:
+        """
+        生成内容改进建议
+
+        基于内容分析和平台特性提供具体改进方案
+
+        Returns:
+            dict: 包含改进建议
+        """
+        analysis = self.analyze_structure(content)
+        violations = self.check_ad_words(content)
+        review = self.review_quality(content)
+
+        suggestions = {
+            "overall": [],
+            "title": [],
+            "content": [],
+            "structure": [],
+            "seo": [],
+        }
+
+        # 总体建议
+        if review.quality_score < 7:
+            suggestions["overall"].append("内容质量偏低，建议全面优化")
+        elif review.quality_score >= 8:
+            suggestions["overall"].append("内容质量良好，可以发布")
+
+        # 违规词处理
+        if violations:
+            error_violations = [v for v in violations if v.severity == "error"]
+            warning_violations = [v for v in violations if v.severity == "warning"]
+            if error_violations:
+                suggestions["content"].append(f"需要修改 {len(error_violations)} 个严重违规词")
+            if warning_violations:
+                suggestions["content"].append(f"建议修改 {len(warning_violations)} 个警告词汇")
+
+        # 标题建议
+        title_patterns = {
+            "xiaohongshu": ["感叹句", "疑问句", "数字+惊叹"],
+            "tiktok": ["简短有力", "悬念", "热点结合"],
+            "official": ["专业正式", "数字化", "价值承诺"],
+            "friend_circle": ["生活化", "真实感", "轻松语气"],
+        }
+
+        suggestions["title"] = title_patterns.get(platform, [])
+
+        # 内容结构建议
+        if analysis["paragraph_count"] < 3:
+            suggestions["structure"].append("建议增加段落，分点叙述")
+        if not analysis["has_emoji"]:
+            suggestions["structure"].append("建议添加表情符号增强可读性")
+        if not analysis["has_numbers"]:
+            suggestions["structure"].append("建议添加具体数据增强说服力")
+
+        # SEO建议
+        word_count = len(content)
+        if word_count < 300:
+            suggestions["seo"].append("内容偏短，建议补充到300字以上以提升SEO效果")
+        if not analysis["has_hashtags"]:
+            suggestions["seo"].append("建议添加3-5个相关话题标签")
+
+        # 平台特定建议
+        platform_specific = {
+            "xiaohongshu": [
+                "开头3行要吸引眼球，制造悬念",
+                "多使用emoji和符号增加视觉吸引力",
+                "结尾引导互动（评论、收藏、关注）",
+            ],
+            "tiktok": [
+                "文案要简短，适合视频口播",
+                "开头3秒要有爆点",
+                "口语化表达，避免书面语",
+            ],
+            "official": [
+                "标题要专业且有吸引力",
+                "内容要有深度和价值",
+                "排版要清晰美观",
+            ],
+            "friend_circle": [
+                "语气要自然，像朋友聊天",
+                "避免过度营销感",
+                "配图要真实生活化",
+            ],
+        }
+
+        suggestions["platform_specific"] = platform_specific.get(platform, [])
+
+        return {
+            "current_score": review.quality_score,
+            "suggestions": suggestions,
+            "priority_fixes": [v.word for v in violations[:3]] if violations else [],
+        }
+
+    def suggest_content_angles(self, product_info: Dict[str, Any], platform: str) -> List[Dict[str, Any]]:
+        """
+        建议内容角度
+
+        基于产品信息生成多种内容创作角度
+
+        Returns:
+            list: 多个内容角度建议
+        """
+        product_name = product_info.get("name", "")
+        description = product_info.get("description", "")
+        selling_points = product_info.get("selling_points", [])
+
+        angles = []
+
+        # 痛点解决角度
+        angles.append({
+            "type": "pain_point",
+            "title": "解决痛点型",
+            "description": "从目标用户的困扰出发，讲述产品如何解决问题",
+            "template": "你是否也为[痛点]烦恼？用了[产品]后，终于找到了解决方案！",
+            "tone": "共鸣型",
+        })
+
+        # 种草分享角度
+        angles.append({
+            "type": "sharing",
+            "title": "好物分享型",
+            "description": "真实分享使用体验，推荐给有需要的人",
+            "template": "今天要跟大家分享一款我最近超爱的东西——[产品]！",
+            "tone": "亲切型",
+        })
+
+        # 测评对比角度
+        angles.append({
+            "type": "review",
+            "title": "测评对比型",
+            "description": "客观测评，展示产品优缺点",
+            "template": "深度测评[产品]，从[维度1]到[维度2]全面解析",
+            "tone": "专业型",
+        })
+
+        # 教程指南角度
+        angles.append({
+            "type": "tutorial",
+            "title": "教程指南型",
+            "description": "教你如何使用产品，解决什么问题",
+            "template": "如何用[产品]实现[效果]？跟着这篇教程做就对了！",
+            "tone": "实用型",
+        })
+
+        # 热点结合角度
+        angles.append({
+            "type": "trending",
+            "title": "热点结合型",
+            "description": "结合当下热点话题，提升曝光",
+            "template": "最近全网都在讨论[热点]，[产品]竟然也能派上用场！",
+            "tone": "时效型",
+        })
+
+        # 限时优惠角度
+        angles.append({
+            "type": "promotion",
+            "title": "优惠促销型",
+            "description": "强调性价比和限时优惠，刺激购买",
+            "template": "姐妹们！[产品]限时特价，错过就没了！",
+            "tone": "紧迫型",
+        })
+
+        return angles
+
+    def batch_review_contents(self, contents: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+        """
+        批量审核内容
+
+        一次性审核多条内容
+
+        Returns:
+            list: 审核结果列表
+        """
+        results = []
+        for item in contents:
+            content = item.get("content", "")
+            platform = item.get("platform", "xiaohongshu")
+            review = self.review_quality(content)
+            violations = self.check_ad_words(content)
+            analysis = self.analyze_structure(content)
+
+            results.append({
+                "content": content[:50] + "..." if len(content) > 50 else content,
+                "platform": platform,
+                "passed": review.passed,
+                "quality_score": review.quality_score,
+                "violation_count": len(violations),
+                "structure": analysis,
+                "needs_improvement": not review.passed or review.quality_score < 7,
+            })
+
+        return results
+
 
 if __name__ == "__main__":
     reviewer = Reviewer()

@@ -8,6 +8,7 @@ export { default as MarketInsights } from "./MarketInsights";
 export { default as ContentCalendar } from "./ContentCalendar";
 export { default as PlatformBestPractices } from "./PlatformBestPractices";
 export { default as AnalyticsDashboard } from "./AnalyticsDashboard";
+export { default as ContentInspiration } from "./ContentInspiration";
 export { default as LoadingSpinner } from "./LoadingSpinner";
 export { default as ErrorBoundary } from "./ErrorBoundary";
 export { ToastProvider, useToast } from "./Toast";

@@ -807,3 +807,38 @@ content-gen-agent/
 
 ### 提交
 - 添加热门话题和关键词 API (c428d11)
+
+## 第301-310轮 (2026-03-24)
+
+### 完成
+- **内容日历系统** (backend/api/content.py)
+  - ContentCalendarRequest/CalendarResponse 模型
+  - POST /api/v1/schedule - 添加计划内容
+  - GET /api/v1/calendar - 获取日历
+  - DELETE /api/v1/schedule/{id} - 删除计划
+  - PUT /api/v1/schedule/{id}/publish - 标记已发布
+- **内容版本管理** (backend/api/content.py)
+  - POST /api/v1/versions - 保存版本
+  - GET /api/v1/versions/{content_id} - 获取版本列表
+  - GET /api/v1/versions/{content_id}/v/{version} - 获取特定版本
+- **平台最佳实践 API** (backend/api/content.py)
+  - GET /api/v1/best-practices/{platform}
+  - GET /api/v1/best-practices - 所有平台最佳实践
+- **前端组件**
+  - ContentCalendar.tsx - 内容日历组件
+  - PlatformBestPractices.tsx - 平台最佳实践组件
+  - AnalyticsDashboard.tsx - 数据分析仪表板
+- **分析服务** (backend/services/analytics.py)
+  - ContentAnalytics 类
+  - 内容质量追踪和健康分
+  - 平台对比和趋势分析
+- **分析 API** (backend/api/content.py)
+  - POST /api/v1/analytics/record - 记录内容分析
+  - GET /api/v1/analytics/platform - 平台分析
+  - GET /api/v1/analytics/trends - 质量趋势
+  - GET /api/v1/analytics/compare - 平台对比
+  - GET /api/v1/analytics/health/{id} - 内容健康分
+
+### 提交
+- 添加内容日历和最佳实践 (2422f92)
+- 添加数据分析仪表板 (57058a6)
