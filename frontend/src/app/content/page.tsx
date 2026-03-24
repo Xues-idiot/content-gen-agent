@@ -7,6 +7,7 @@ import PlatformSelect from "@/components/PlatformSelect";
 import CopyOutput from "@/components/CopyOutput";
 import ImagePreview from "@/components/ImagePreview";
 import ExportPanel from "@/components/ExportPanel";
+import MarketInsights from "@/components/MarketInsights";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useContentStore } from "@/store/content-store";
 import { ToastProvider, useToast } from "@/components/Toast";
@@ -248,6 +249,9 @@ function ContentPageContent() {
 
             {/* Image Suggestions */}
             <ImagePreview suggestions={imageSuggestions} />
+
+            {/* Market Insights */}
+            <MarketInsights />
 
             {/* Export Panel */}
             <ExportPanel content={exportContent} disabled={copyResults.length === 0} />
