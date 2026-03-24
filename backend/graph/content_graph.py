@@ -166,6 +166,9 @@ class ContentGraph:
             "tone_of_voice": plan.tone_of_voice,
             "recommended_platforms": plan.recommended_platforms,
             "content_ratio": plan.content_ratio,
+            "market_insights": plan.market_insights,
+            "trend_topics": plan.trend_topics,
+            "competitor_content": plan.competitor_content,
         }
 
         logger.info(f"Planning completed: {plan.content_direction}")
@@ -176,10 +179,10 @@ class ContentGraph:
         self.state.state = WorkflowState.WRITING
         self.state.progress = 40.0
 
-        from backend.agents.planner import ProductInfo, ContentPlan
+        from backend.agents.planner import ProductInfo, ContentPlan, UserProfile
         from backend.agents.copywriter import Copywriter, Platform
 
-        planner = Copywriter()
+        copywriter = Copywriter()
 
         product = ProductInfo(
             name=self.state.product_name,
@@ -189,17 +192,23 @@ class ContentGraph:
             category=self.state.category,
         )
 
-        # 临时创建 plan
+        # 使用 content_plan 中的信息创建 ContentPlan
         plan = ContentPlan(
             product=product,
-            target_users=[],
+            target_users=[
+                UserProfile(occupation=u) for u in self.state.target_users
+            ] if self.state.target_users else [UserProfile(occupation="目标用户")],
             content_direction=self.state.content_plan.get("content_direction", ""),
             key_themes=self.state.content_plan.get("key_themes", []),
             tone_of_voice=self.state.content_plan.get("tone_of_voice", ""),
             recommended_platforms=self.state.platforms,
+            content_ratio=self.state.content_plan.get("content_ratio", {}),
+            market_insights=self.state.content_plan.get("market_insights", []),
+            trend_topics=self.state.content_plan.get("trend_topics", []),
+            competitor_content=self.state.content_plan.get("competitor_content", []),
         )
 
-        results = planner.generate_all(product, plan)
+        results = copywriter.generate_all(product, plan)
 
         self.state.copy_results = {}
         for platform, result in results.items():
@@ -208,6 +217,7 @@ class ContentGraph:
                 "title": result.title,
                 "content": result.content,
                 "script": result.script,
+                "cta": result.cta,
                 "tags": result.tags,
                 "image_suggestions": result.image_suggestions,
                 "success": result.success,
@@ -280,6 +290,14 @@ class ContentGraph:
             "content_plan": self.state.content_plan,
             "copies": {},
         }
+
+        # Include market research in final output
+        if self.state.content_plan.get("market_insights"):
+            self.state.final_content["market_insights"] = self.state.content_plan["market_insights"]
+        if self.state.content_plan.get("trend_topics"):
+            self.state.final_content["trend_topics"] = self.state.content_plan["trend_topics"]
+        if self.state.content_plan.get("competitor_content"):
+            self.state.final_content["competitor_content"] = self.state.content_plan["competitor_content"]
 
         for platform, copy_data in self.state.copy_results.items():
             review = self.state.review_results.get(platform, {})
