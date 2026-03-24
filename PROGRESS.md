@@ -989,3 +989,20 @@ content-gen-agent/
 
 ### 提交
 - 添加营销活动管理模块 (3ba432b)
+
+## 第381-390轮 (2026-03-24)
+
+### 完成
+- **内容表现预测** (backend/services/predictor.py)
+  - PerformancePredictor 类
+  - PlatformBenchmarks 平台基准数据
+  - predict() - 预测浏览量、点赞、评论、分享
+  - compare_predictions() - 对比预测
+  - get_platform_recommendations() - 平台建议
+- **预测 API** (backend/api/content.py)
+  - POST /api/v1/predict/performance - 预测内容表现
+  - GET /api/v1/predict/platform/{platform} - 获取平台建议
+  - POST /api/v1/predict/compare - 对比两个预测
+
+### 提交
+- 添加内容表现预测 (d97fed1)
