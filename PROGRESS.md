@@ -707,3 +707,30 @@ content-gen-agent/
 - 添加平台特定优化建议 API (399ad31)
 - 增强内容状态管理 (ab356bd)
 - 添加内容版本历史管理 (970401f)
+
+## 第251-260轮 (2026-03-24)
+
+### 完成
+- **内容发布时段建议** (backend/agents/reviewer.py)
+  - suggest_scheduling 方法
+  - 支持小红书/抖音/公众号/朋友圈
+  - 最佳发布时间、避免时段、发布频率建议
+- **内容重复检测** (backend/agents/reviewer.py)
+  - check_similarity 方法（Jaccard相似度）
+  - check_duplicate_in_batch 批量检测
+  - /api/v1/content/check-duplicate 端点
+- **话题标签推荐** (backend/agents/reviewer.py)
+  - suggest_hashtags 方法
+  - 使用 jieba 分词提取关键词
+  - /api/v1/hashtags/suggest 端点
+- **内容表现预测** (backend/agents/reviewer.py)
+  - predict_performance 方法
+  - 预测分数、评级、A-D
+  - 识别优缺点和改进机会
+  - /api/v1/content/predict 端点
+
+### 提交
+- 添加内容发布时段建议功能 (471d440)
+- 添加内容重复检测功能 (e6efe6c)
+- 添加话题标签推荐功能 (9c31b99)
+- 添加内容表现预测功能 (8ea25be)
