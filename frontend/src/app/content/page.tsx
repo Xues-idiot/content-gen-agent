@@ -8,6 +8,7 @@ import CopyOutput from "@/components/CopyOutput";
 import ImagePreview from "@/components/ImagePreview";
 import ExportPanel from "@/components/ExportPanel";
 import MarketInsights from "@/components/MarketInsights";
+import VideoGenerator from "@/components/VideoGenerator";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useContentStore } from "@/store/content-store";
 import { ToastProvider, useToast } from "@/components/Toast";
@@ -185,6 +186,21 @@ function ContentPageContent() {
     };
   });
 
+  // Get script for video generation (prefer TikTok script)
+  const videoScript = React.useMemo(() => {
+    const tiktokResult = copyResults.find((r) => r.platform === "tiktok");
+    if (tiktokResult?.script) return tiktokResult.script;
+    if (copyResults.length > 0 && copyResults[0].content) return copyResults[0].content;
+    return "";
+  }, [copyResults]);
+
+  const videoTitle = React.useMemo(() => {
+    const tiktokResult = copyResults.find((r) => r.platform === "tiktok");
+    if (tiktokResult?.title) return tiktokResult.title;
+    if (product?.name) return product.name;
+    return "";
+  }, [copyResults, product]);
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FFF8F0" }}>
       {/* Header */}
@@ -315,6 +331,17 @@ function ContentPageContent() {
 
             {/* Export Panel */}
             <ExportPanel content={exportContent} disabled={copyResults.length === 0} />
+
+            {/* Video Generation */}
+            {copyResults.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+              >
+                <VideoGenerator script={videoScript} title={videoTitle} />
+              </motion.div>
+            )} />
           </motion.div>
         </div>
       </main>

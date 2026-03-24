@@ -44,7 +44,7 @@ export interface CopyResult {
   script?: string;
   tags: string[];
   imageSuggestions: string[];
-  cta?: string;  // Call-to-Action 行动号召
+  cta?: string;
   review?: ReviewResult;
   success: boolean;
   error?: string;
@@ -83,6 +83,101 @@ export interface ApiError {
   error: string;
   detail?: string;
 }
+
+// ============= Video Generation Types =============
+
+export interface VideoSearchRequest {
+  search_terms: string[];
+  video_aspect: string;
+  source: string;
+}
+
+export interface VideoSearchResponse {
+  success: boolean;
+  videos: {
+    provider: string;
+    url: string;
+    duration: number;
+    width: number;
+    height: number;
+    id: string;
+  }[];
+  total: number;
+}
+
+export interface VideoDownloadRequest {
+  video_urls: string[];
+  save_dir?: string;
+}
+
+export interface VideoDownloadResponse {
+  success: boolean;
+  video_paths: string[];
+  total: number;
+}
+
+export interface AudioGenerateRequest {
+  text: string;
+  voice_name: string;
+  voice_rate: number;
+}
+
+export interface AudioGenerateResponse {
+  success: boolean;
+  audio_path: string;
+  subtitle_path: string;
+  duration: number;
+}
+
+export interface SubtitleGenerateRequest {
+  audio_path: string;
+  language: string;
+}
+
+export interface SubtitleGenerateResponse {
+  success: boolean;
+  subtitle_path: string;
+}
+
+export interface VideoCombineRequest {
+  video_paths: string[];
+  audio_path: string;
+  output_path?: string;
+  video_aspect: string;
+  concat_mode: string;
+  transition_mode: string;
+}
+
+export interface VideoCombineResponse {
+  success: boolean;
+  video_path: string;
+}
+
+export interface VideoGenerateRequest {
+  video_path: string;
+  audio_path: string;
+  subtitle_path?: string;
+  output_path?: string;
+  video_aspect: string;
+  subtitle_enabled: boolean;
+  bgm_type: string;
+  bgm_volume: number;
+}
+
+export interface VideoGenerateResponse {
+  success: boolean;
+  video_path: string;
+  duration: number;
+  error?: string;
+}
+
+export interface Voice {
+  name: string;
+  language: string;
+  gender: string;
+}
+
+// ============= API Client =============
 
 class ApiClient {
   private baseUrl: string;
@@ -283,6 +378,67 @@ class ApiClient {
     });
     return this.handleResponse(response);
   }
+
+  // ============= Video Generation Methods =============
+
+  async searchVideoMaterials(request: VideoSearchRequest): Promise<VideoSearchResponse> {
+    const response = await fetch(`${this.baseUrl}/api/v1/video/search-materials`, {
+      method: "POST",
+      headers: this.defaultHeaders,
+      body: JSON.stringify(request),
+    });
+    return this.handleResponse<VideoSearchResponse>(response);
+  }
+
+  async downloadVideos(request: VideoDownloadRequest): Promise<VideoDownloadResponse> {
+    const response = await fetch(`${this.baseUrl}/api/v1/video/download`, {
+      method: "POST",
+      headers: this.defaultHeaders,
+      body: JSON.stringify(request),
+    });
+    return this.handleResponse<VideoDownloadResponse>(response);
+  }
+
+  async generateAudio(request: AudioGenerateRequest): Promise<AudioGenerateResponse> {
+    const response = await fetch(`${this.baseUrl}/api/v1/video/generate-audio`, {
+      method: "POST",
+      headers: this.defaultHeaders,
+      body: JSON.stringify(request),
+    });
+    return this.handleResponse<AudioGenerateResponse>(response);
+  }
+
+  async generateSubtitle(request: SubtitleGenerateRequest): Promise<SubtitleGenerateResponse> {
+    const response = await fetch(`${this.baseUrl}/api/v1/video/generate-subtitle`, {
+      method: "POST",
+      headers: this.defaultHeaders,
+      body: JSON.stringify(request),
+    });
+    return this.handleResponse<SubtitleGenerateResponse>(response);
+  }
+
+  async combineVideos(request: VideoCombineRequest): Promise<VideoCombineResponse> {
+    const response = await fetch(`${this.baseUrl}/api/v1/video/combine`, {
+      method: "POST",
+      headers: this.defaultHeaders,
+      body: JSON.stringify(request),
+    });
+    return this.handleResponse<VideoCombineResponse>(response);
+  }
+
+  async generateVideo(request: VideoGenerateRequest): Promise<VideoGenerateResponse> {
+    const response = await fetch(`${this.baseUrl}/api/v1/video/generate`, {
+      method: "POST",
+      headers: this.defaultHeaders,
+      body: JSON.stringify(request),
+    });
+    return this.handleResponse<VideoGenerateResponse>(response);
+  }
+
+  async getAvailableVoices(): Promise<{ success: boolean; voices: Voice[]; total: number }> {
+    const response = await fetch(`${this.baseUrl}/api/v1/video/voices`);
+    return this.handleResponse(response);
+  }
 }
 
 // 导出单例
@@ -297,3 +453,12 @@ export const getHealth = () => api.getHealth();
 export const getStats = () => api.getStats();
 export const getPlatformSuggestions = (platform: string, content: string) =>
   api.getPlatformSuggestions(platform, content);
+
+// Video API exports
+export const searchVideoMaterials = (request: VideoSearchRequest) => api.searchVideoMaterials(request);
+export const downloadVideos = (request: VideoDownloadRequest) => api.downloadVideos(request);
+export const generateAudio = (request: AudioGenerateRequest) => api.generateAudio(request);
+export const generateSubtitle = (request: SubtitleGenerateRequest) => api.generateSubtitle(request);
+export const combineVideos = (request: VideoCombineRequest) => api.combineVideos(request);
+export const generateVideo = (request: VideoGenerateRequest) => api.generateVideo(request);
+export const getAvailableVoices = () => api.getAvailableVoices();

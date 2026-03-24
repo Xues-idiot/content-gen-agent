@@ -396,4 +396,65 @@ backend/
 
 ---
 
+## video 前端组件
+
+### VideoGenerator 组件
+
+视频生成完整工作流组件，支持：
+
+- 视频素材搜索（Pexels/Pixabay）
+- 语音生成（Edge TTS）
+- 字幕生成（Whisper）
+- 视频合并与最终视频生成
+
+#### 类型定义
+
+```typescript
+// VideoSearchRequest
+{
+  search_terms: string[];
+  video_aspect: string; // "9:16", "16:9", "1:1"
+  source: string; // "pexels", "pixabay"
+}
+
+// AudioGenerateRequest
+{
+  text: string;
+  voice_name: string;
+  voice_rate: number;
+}
+
+// VideoGenerateRequest
+{
+  video_path: string;
+  audio_path: string;
+  subtitle_path?: string;
+  video_aspect: string;
+  subtitle_enabled: boolean;
+  bgm_type: string;
+  bgm_volume: number;
+}
+```
+
+#### 视频生成流程
+
+1. **搜索素材** - 输入关键词搜索 Pexels/Pixabay 视频
+2. **生成语音** - 使用 Edge TTS 将文案转为语音
+3. **合并视频** - 将视频片段与音频合并
+4. **生成最终视频** - 添加字幕和背景音乐
+
+### API 函数
+
+```typescript
+searchVideoMaterials(request: VideoSearchRequest): Promise<VideoSearchResponse>
+downloadVideos(request: VideoDownloadRequest): Promise<VideoDownloadResponse>
+generateAudio(request: AudioGenerateRequest): Promise<AudioGenerateResponse>
+generateSubtitle(request: SubtitleGenerateRequest): Promise<SubtitleGenerateResponse>
+combineVideos(request: VideoCombineRequest): Promise<VideoCombineResponse>
+generateVideo(request: VideoGenerateRequest): Promise<VideoGenerateResponse>
+getAvailableVoices(): Promise<{ success: boolean; voices: Voice[]; total: number }>
+```
+
+---
+
 *架构文档 | Vox | 2026-03-24 | 更新于 2026-03-24*
