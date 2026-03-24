@@ -1006,3 +1006,23 @@ content-gen-agent/
 
 ### 提交
 - 添加内容表现预测 (d97fed1)
+
+## 第391-395轮 (2026-03-24)
+
+### 完成
+- **视频生成前端组件**
+  - VideoGenerator.tsx - 4步视频生成工作流组件
+    - 搜索素材 (Pexels/Pixabay)
+    - 生成语音 (Edge TTS)
+    - 合并视频
+    - 生成最终视频
+  - api.ts - 添加视频API函数
+    - searchVideoMaterials, downloadVideos
+    - generateAudio, generateSubtitle
+    - combineVideos, generateVideo
+    - getAvailableVoices
+  - content/page.tsx - 集成VideoGenerator组件
+  - components/index.ts - 导出VideoGenerator
+
+### 提交
+- 添加视频生成前端组件 (08d648f)
