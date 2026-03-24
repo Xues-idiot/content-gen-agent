@@ -562,3 +562,25 @@ async def get_scheduling_suggestions(platform: str, content_type: str = "general
     except Exception as e:
         logger.error(f"Get scheduling suggestions error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class DuplicateCheckRequest(BaseModel):
+    """重复检测请求"""
+    content: str
+    existing_contents: List[str] = Field(default_factory=list)
+
+
+@app.post("/api/v1/content/check-duplicate")
+async def check_content_duplicate(body: DuplicateCheckRequest):
+    """
+    检测内容是否重复
+
+    检查新内容与已有内容的相似度
+    """
+    try:
+        reviewer = get_reviewer()
+        result = reviewer.check_duplicate_in_batch(body.content, body.existing_contents)
+        return result
+    except Exception as e:
+        logger.error(f"Check duplicate error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

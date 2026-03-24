@@ -375,6 +375,53 @@ class Reviewer:
 
         return scheduling
 
+    def check_similarity(self, content1: str, content2: str) -> float:
+        """
+        检查两段内容的相似度
+
+        Returns:
+            float: 0-1 的相似度分数，1 表示完全相同
+        """
+        import jieba
+
+        # 分词
+        words1 = set(jieba.cut(content1))
+        words2 = set(jieba.cut(content2))
+
+        # 计算 Jaccard 相似度
+        if not words1 or not words2:
+            return 0.0
+
+        intersection = words1 & words2
+        union = words1 | words2
+
+        return len(intersection) / len(union) if union else 0.0
+
+    def check_duplicate_in_batch(self, content: str, existing_contents: List[str]) -> Dict[str, Any]:
+        """
+        检查内容是否与已有内容重复
+
+        Returns:
+            dict: 包含相似度分数和警告信息
+        """
+        if not existing_contents:
+            return {"is_duplicate": False, "max_similarity": 0.0, "warnings": []}
+
+        similarities = [self.check_similarity(content, existing) for existing in existing_contents]
+        max_similarity = max(similarities) if similarities else 0.0
+
+        warnings = []
+        if max_similarity > 0.8:
+            warnings.append("与已有内容高度相似，建议修改以提高差异化")
+        elif max_similarity > 0.6:
+            warnings.append("与部分内容有较高相似度，可以进一步差异化")
+
+        return {
+            "is_duplicate": max_similarity > 0.8,
+            "max_similarity": round(max_similarity, 3),
+            "warnings": warnings,
+        }
+
 
 if __name__ == "__main__":
     reviewer = Reviewer()
