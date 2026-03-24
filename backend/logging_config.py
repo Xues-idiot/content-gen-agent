@@ -81,6 +81,24 @@ def get_logger(name: str = None):
     return logger
 
 
+class LoggerFilter:
+    """日志过滤器"""
+
+    def __init__(self, min_level: str = "INFO"):
+        self.min_level = min_level
+        self.levels = {
+            "DEBUG": 10,
+            "INFO": 20,
+            "WARNING": 30,
+            "ERROR": 40,
+            "CRITICAL": 50,
+        }
+
+    def __call__(self, record):
+        level = record["level"].name
+        return self.levels.get(level, 20) >= self.levels.get(self.min_level, 20)
+
+
 # 默认配置
 def default_logging():
     """应用默认日志配置"""
