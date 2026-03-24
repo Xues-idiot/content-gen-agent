@@ -615,3 +615,5 @@ content-gen-agent/
 - Planner 修复 (81d08c6)
 - WORKFLOW 更新 (53b3a19)
 - 健康检查增强 (7ada571)
+- 状态指示器 (1dc1ad9)
+- 调研数据清除 (916b827)
