@@ -136,6 +136,18 @@ class ApiClient {
     return this.handleResponse<HealthStatus>(response);
   }
 
+  async checkAvailable(): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseUrl}/health`, {
+        method: "GET",
+        signal: AbortSignal.timeout(3000),
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
   async getStats(): Promise<{
     total_requests: number;
     total_platforms: number;
