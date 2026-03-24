@@ -734,3 +734,28 @@ content-gen-agent/
 - 添加内容重复检测功能 (e6efe6c)
 - 添加话题标签推荐功能 (9c31b99)
 - 添加内容表现预测功能 (8ea25be)
+
+## 第261-270轮 (2026-03-24)
+
+### 完成
+- **内容模板管理** (backend/agents/exporter.py)
+  - TemplateStorage 类
+  - ContentTemplate 数据类
+  - save_template、get_templates、delete_template 方法
+  - POST /api/v1/templates - 保存模板
+  - GET /api/v1/templates/{platform} - 获取模板
+  - DELETE /api/v1/templates/{platform}/{id} - 删除模板
+- **批量内容生成** (backend/api/content.py)
+  - BatchGenerateRequest 模型
+  - POST /api/v1/content/batch-generate 端点
+  - 支持一次请求生成多个产品的内容
+- **A/B 测试建议** (backend/agents/reviewer.py)
+  - suggest_ab_tests 方法
+  - 可测试变量：标题、开头、CTA、长度、标签、emoji
+  - 优先级和建议的测试
+  - POST /api/v1/content/ab-suggestions 端点
+
+### 提交
+- 添加内容模板管理功能 (07c6a5c)
+- 添加批量内容生成功能 (2ce017d)
+- 添加 A/B 测试建议功能 (5d817ef)
