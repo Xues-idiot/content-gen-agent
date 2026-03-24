@@ -158,6 +158,20 @@ class ContentValidator:
 
         return ValidationResult(is_valid=len(errors) == 0, errors=errors)
 
+    def validate_enable_research(self, enable_research: bool) -> ValidationResult:
+        """
+        验证市场调研开关
+
+        Returns:
+            ValidationResult: 验证结果
+        """
+        errors = []
+
+        if not isinstance(enable_research, bool):
+            errors.append(ValidationError("enable_research", "enable_research 必须是布尔值"))
+
+        return ValidationResult(is_valid=len(errors) == 0, errors=errors)
+
 
 # 全局验证器实例
 product_validator = ProductValidator()
