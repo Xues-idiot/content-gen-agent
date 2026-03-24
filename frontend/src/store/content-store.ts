@@ -74,6 +74,7 @@ interface ContentState {
   setProduct: (product: ProductData) => void;
   setSelectedPlatforms: (platforms: string[]) => void;
   setCopyResults: (results: CopyResult[]) => void;
+  updateCopyResult: (platform: string, result: Partial<CopyResult>) => void;
   setImageSuggestions: (suggestions: Record<string, ImageSuggestion[]>) => void;
   setMarketResearch: (research: MarketResearch) => void;
   setIsLoading: (loading: boolean) => void;
@@ -114,6 +115,13 @@ export const useContentStore = create<ContentState>()(
       setSelectedPlatforms: (platforms) => set({ selectedPlatforms: platforms }),
 
       setCopyResults: (results) => set({ copyResults: results }),
+
+      updateCopyResult: (platform, update) =>
+        set((state) => ({
+          copyResults: state.copyResults.map((r) =>
+            r.platform === platform ? { ...r, ...update } : r
+          ),
+        })),
 
       setImageSuggestions: (suggestions) => set({ imageSuggestions: suggestions }),
 
