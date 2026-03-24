@@ -8,7 +8,7 @@ Vox Voice Service 模块
 import asyncio
 import os
 import re
-from typing import List, Optional, Tuple, Dict, Any
+from typing import List, Tuple, Dict, Any
 
 from loguru import logger
 

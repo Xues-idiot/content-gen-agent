@@ -11,7 +11,6 @@ import os
 import random
 import gc
 import shutil
-import math
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional, Tuple, Dict, Any
@@ -255,8 +254,7 @@ class VideoGenerator:
             audio_duration = audio_clip.duration
             video_width, video_height = params.video_aspect.to_resolution()
 
-            # 计算每个片段的时长
-            req_dur = audio_duration / len(video_paths)
+            # 每个片段的最大时长
             max_clip_duration = params.video_clip_duration
 
             subclipped_items = []
@@ -459,8 +457,6 @@ class VideoGenerator:
                     font=font_path,
                     fontsize=params.font_size
                 )
-
-                interline = int(params.font_size * 0.25)
 
                 clip = TextClip(
                     text=wrapped_txt,

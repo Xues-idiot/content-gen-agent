@@ -8,7 +8,7 @@ Vox Material Collector 模块
 import os
 import random
 import hashlib
-from typing import List, Optional, Tuple
+from typing import List
 from urllib.parse import urlencode
 
 from loguru import logger
