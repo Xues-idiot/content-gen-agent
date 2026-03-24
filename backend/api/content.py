@@ -148,6 +148,7 @@ class HealthResponse(BaseModel):
     status: str
     version: str
     api_key_configured: bool
+    tavily_api_configured: bool = False
 
 
 class PlatformsResponse(BaseModel):
@@ -213,11 +214,13 @@ async def root():
 async def health():
     """健康检查"""
     from backend.services.llm import llm_client
+    from backend.config import config
 
     return HealthResponse(
         status="healthy",
         version=VERSION,
         api_key_configured=llm_client.validate_config(),
+        tavily_api_configured=bool(config.tavily_api_key),
     )
 
 

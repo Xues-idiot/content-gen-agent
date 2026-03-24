@@ -76,6 +76,7 @@ export interface HealthStatus {
   status: string;
   version: string;
   api_key_configured: boolean;
+  tavily_api_configured?: boolean;
 }
 
 export interface ApiError {
