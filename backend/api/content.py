@@ -523,3 +523,22 @@ async def regenerate_content(body: RegenerateRequest):
     except Exception as e:
         logger.error(f"Regenerate content error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/suggestions/{platform}")
+async def get_platform_suggestions(platform: str, content: str):
+    """
+    获取指定平台的优化建议
+
+    根据内容特点和目标平台返回个性化优化建议
+    """
+    try:
+        reviewer = get_reviewer()
+        suggestions = reviewer.suggest_platform_optimization(content, platform)
+        return {
+            "platform": platform,
+            "suggestions": suggestions,
+        }
+    except Exception as e:
+        logger.error(f"Get platform suggestions error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

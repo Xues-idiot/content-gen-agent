@@ -156,6 +156,16 @@ class ApiClient {
     const response = await fetch(`${this.baseUrl}/api/v1/stats`);
     return this.handleResponse(response);
   }
+
+  async getPlatformSuggestions(platform: string, content: string): Promise<{
+    platform: string;
+    suggestions: string[];
+  }> {
+    const response = await fetch(
+      `${this.baseUrl}/api/v1/suggestions/${platform}?content=${encodeURIComponent(content)}`
+    );
+    return this.handleResponse(response);
+  }
 }
 
 // 导出单例
@@ -168,3 +178,5 @@ export const getPlatforms = () => api.getPlatforms();
 export const getCategories = () => api.getCategories();
 export const getHealth = () => api.getHealth();
 export const getStats = () => api.getStats();
+export const getPlatformSuggestions = (platform: string, content: string) =>
+  api.getPlatformSuggestions(platform, content);
