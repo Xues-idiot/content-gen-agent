@@ -32,14 +32,39 @@ export default function ExportPanel({ content, disabled = false }: ExportPanelPr
       contentStr = JSON.stringify(content, null, 2);
     } else if (selectedFormat === "markdown") {
       contentStr = "# 内容生成报告\n\n";
+      contentStr += `> 生成时间: ${new Date().toLocaleString("zh-CN")}\n\n`;
       if (content.product) {
-        contentStr += `## 产品: ${content.product.name}\n\n`;
+        contentStr += `## 产品信息\n\n`;
+        contentStr += `- **名称**: ${content.product.name || "-"}\n`;
+        contentStr += `- **描述**: ${content.product.description || "-"}\n`;
+        if (content.product.selling_points?.length) {
+          contentStr += `- **卖点**: ${content.product.selling_points.join(", ")}\n`;
+        }
+        contentStr += "\n";
       }
       if (content.copies) {
+        contentStr += `## 文案内容\n\n`;
         Object.entries(content.copies).forEach(([platform, data]: [string, any]) => {
-          contentStr += `### ${platform}\n\n`;
+          const platformName = { xiaohongshu: "小红书", tiktok: "抖音", official: "公众号", friend_circle: "朋友圈" }[platform] || platform;
+          contentStr += `### ${platformName}\n\n`;
           if (data.copy?.title) contentStr += `**标题**: ${data.copy.title}\n\n`;
-          if (data.copy?.content) contentStr += `${data.copy.content}\n\n`;
+          if (data.copy?.script) contentStr += `**口播脚本**:\n\`\`\`\n${data.copy.script}\n\`\`\`\n\n`;
+          if (data.copy?.content) contentStr += `**正文**:\n${data.copy.content}\n\n`;
+          if (data.copy?.cta) contentStr += `**行动号召**: ${data.copy.cta}\n\n`;
+          if (data.copy?.tags?.length) contentStr += `**标签**: ${data.copy.tags.join(" ")}\n\n`;
+          if (data.copy?.imageSuggestions?.length) {
+            contentStr += `**配图建议**:\n`;
+            data.copy.imageSuggestions.forEach((img: string) => {
+              contentStr += `- ${img}\n`;
+            });
+            contentStr += "\n";
+          }
+          if (data.review) {
+            contentStr += `**审核结果**: `;
+            contentStr += `质量评分 ${data.review.qualityScore?.toFixed(1) || "-"}/10 | `;
+            contentStr += `违规词 ${data.review.violations?.length || 0} 个\n\n`;
+          }
+          contentStr += "---\n\n";
         });
       }
     } else if (selectedFormat === "html") {
