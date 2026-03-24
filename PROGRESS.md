@@ -888,3 +888,22 @@ content-gen-agent/
 
 ### 提交
 - 添加内容归档和高级导出 (9d2e723)
+
+## 第331-340轮 (2026-03-24)
+
+### 完成
+- **内容协作功能** (backend/api/content.py)
+  - ContentNote 和 ContentComment 数据类
+  - POST /api/v1/notes - 添加笔记
+  - GET /api/v1/notes/{id} - 获取笔记
+  - DELETE /api/v1/notes/{id} - 删除笔记
+  - POST /api/v1/comments - 添加评论
+  - GET /api/v1/comments/{id} - 获取评论
+- **批量操作 API** (backend/api/content.py)
+  - POST /api/v1/batch/approve - 批量审批
+  - POST /api/v1/batch/reject - 批量拒绝
+  - POST /api/v1/batch/export - 批量导出
+  - POST /api/v1/batch/delete - 批量删除
+
+### 提交
+- 添加协作笔记和批量操作 (ec7af85)

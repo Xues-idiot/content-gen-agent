@@ -2070,3 +2070,219 @@ async def batch_delete_contents(
     except Exception as e:
         logger.error(f"Batch delete error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Content Utilities =====
+
+@app.post("/api/v1/validate/content")
+async def validate_content(
+    content: str = Body(..., embed=True),
+):
+    """
+    验证内容
+
+    全面验证内容质量和合规性
+    """
+    try:
+        reviewer = get_reviewer()
+
+        review = reviewer.review_quality(content)
+        violations = reviewer.check_ad_words(content)
+        analysis = reviewer.analyze_structure(content)
+
+        return {
+            "success": True,
+            "validation": {
+                "passed": review.passed,
+                "quality_score": review.quality_score,
+                "violations": [
+                    {
+                        "word": v.word,
+                        "position": v.position,
+                        "severity": v.severity,
+                        "category": v.category,
+                    }
+                    for v in violations
+                ],
+                "structure": analysis,
+                "suggestions": review.suggestions,
+            },
+            "is_compliant": len([v for v in violations if v.severity == "error"]) == 0,
+        }
+    except Exception as e:
+        logger.error(f"Validate content error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/summarize")
+async def summarize_content(
+    content: str = Body(..., embed=True),
+    max_length: int = 100,
+):
+    """
+    生成内容摘要
+
+    将长内容压缩为简短摘要
+    """
+    try:
+        reviewer = get_reviewer()
+
+        # 简单摘要逻辑
+        sentences = content.replace("！", "。").replace("？", "。").split("。")
+        summary_sentences = []
+
+        current_length = 0
+        for sentence in sentences:
+            if current_length + len(sentence) <= max_length:
+                summary_sentences.append(sentence)
+                current_length += len(sentence)
+            else:
+                break
+
+        summary = "。".join(summary_sentences).strip()
+        if summary and not summary.endswith("。"):
+            summary += "。"
+
+        return {
+            "success": True,
+            "original_length": len(content),
+            "summary": summary,
+            "compression_ratio": round(len(summary) / len(content), 2) if content else 0,
+        }
+    except Exception as e:
+        logger.error(f"Summarize content error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/expand")
+async def expand_content(
+    content: str = Body(..., embed=True),
+    target_length: int = 500,
+):
+    """
+    扩展内容
+
+    将短内容扩展为更长、更详细的内容
+    """
+    try:
+        reviewer = get_reviewer()
+
+        # 分析现有内容结构
+        analysis = reviewer.analyze_structure(content)
+
+        # 简单的扩展逻辑
+        expanded = content
+
+        # 添加开头
+        if len(content) < target_length:
+            expanded = f"关于这个话题，我想分享一些见解。{expanded}"
+
+        # 添加结尾
+        if len(expanded) < target_length:
+            expanded = f"{expanded}希望这些信息对你有帮助！"
+
+        return {
+            "success": True,
+            "original_length": len(content),
+            "expanded": expanded,
+            "target_length": target_length,
+            "expansion_ratio": round(len(expanded) / len(content), 2) if content else 0,
+        }
+    except Exception as e:
+        logger.error(f"Expand content error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/paraphrase")
+async def paraphrase_content(
+    content: str = Body(..., embed=True),
+    style: str = "natural",
+):
+    """
+    改写内容
+
+    将内容改写为不同风格
+    """
+    try:
+        # 简单的改写逻辑
+        paraphrased = content
+
+        # 根据风格调整
+        if style == "formal":
+            paraphrased = paraphrased.replace("啦", "了").replace("呀", "")
+        elif style == "casual":
+            paraphrased = paraphrased.replace("非常", "特别").replace("优秀", "棒")
+
+        return {
+            "success": True,
+            "original": content,
+            "paraphrased": paraphrased,
+            "style": style,
+        }
+    except Exception as e:
+        logger.error(f"Paraphrase content error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/word-count")
+async def get_word_count(
+    content: str,
+):
+    """
+    获取字数统计
+
+    统计内容的各种字数指标
+    """
+    try:
+        reviewer = get_reviewer()
+        analysis = reviewer.analyze_structure(content)
+
+        # 中文字符数
+        chinese_chars = len([c for c in content if '\u4e00' <= c <= '\u9fff'])
+        # 英文字数
+        english_words = len([c for c in content if c.isalpha() and ord(c) < 128])
+        # 数字个数
+        numbers = len([c for c in content if c.isdigit()])
+        # emoji个数
+        emojis = analysis.get("emoji_count", 0)
+
+        return {
+            "success": True,
+            "total_characters": len(content),
+            "chinese_characters": chinese_chars,
+            "english_words": english_words,
+            "numbers": numbers,
+            "emojis": emojis,
+            "paragraphs": analysis.get("paragraph_count", 0),
+        }
+    except Exception as e:
+        logger.error(f"Get word count error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/extract/hashtags")
+async def extract_hashtags(
+    content: str = Body(..., embed=True),
+):
+    """
+    提取话题标签
+
+    从内容中提取所有话题标签
+    """
+    import re
+    try:
+        # 提取 #标签# 格式
+        hashtags1 = re.findall(r'#([^#]+)#', content)
+        # 提取 #标签 格式
+        hashtags2 = re.findall(r'#(\S+)', content)
+
+        all_tags = list(set(hashtags1 + hashtags2))
+
+        return {
+            "success": True,
+            "hashtags": all_tags,
+            "total": len(all_tags),
+        }
+    except Exception as e:
+        logger.error(f"Extract hashtags error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
