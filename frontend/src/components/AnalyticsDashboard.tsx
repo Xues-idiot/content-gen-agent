@@ -226,7 +226,6 @@ export default function AnalyticsDashboard() {
             return (
               <motion.div
                 key={item.platform}
-                variants={item}
                 className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm"
               >
                 <div className="flex items-center justify-between mb-3">

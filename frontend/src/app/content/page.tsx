@@ -341,7 +341,7 @@ function ContentPageContent() {
               >
                 <VideoGenerator script={videoScript} title={videoTitle} />
               </motion.div>
-            )} />
+            )}
           </motion.div>
         </div>
       </main>

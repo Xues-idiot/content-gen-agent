@@ -1,6 +1,6 @@
 // API 工具函数
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8003";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8003";
 
 export interface ProductInput {
   name: string;
