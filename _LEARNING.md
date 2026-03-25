@@ -293,3 +293,72 @@ fetch(`${API_BASE_URL}/api/v1/analytics/platform`)
 - `common/critical-thinking/` - 逻辑审核
 - `common/retry-pattern/` - 重试机制
 - `tools/web-search/` - Tavily API
+
+---
+
+## 第415-418轮 迭代优化总结
+
+### 1. 前后端联调问题发现
+
+**问题模式**：
+- 多个组件使用相对路径 `fetch('/api/v1/...')`
+- 导致在生产环境或某些部署场景下API调用失败
+
+**受影响的组件**：
+- ContentCalendar.tsx: 3处
+- ContentInspiration.tsx: 2处
+- PlatformBestPractices.tsx: 1处
+
+**教训**：
+- 建立代码审查机制，检查API调用一致性
+- 统一使用 `${API_BASE_URL}/api/v1/...` 绝对路径
+
+### 2. 违规词库扩展
+
+**扩展前**：
+- 7个分类
+- 约110词
+
+**扩展后**：
+- 10个分类（新增：化妆品违规、房地产违规、教育培训违规）
+- 350+词
+
+**广告法核心条款**：
+- 第九条第（三）项：禁止"最"字系列用语
+- 特殊商品/服务有额外限制（化妆品、医疗、食品等）
+
+### 3. 组件生命周期管理
+
+**发现问题**：
+- ContentInspiration - 未被任何页面使用
+- PlatformBestPractices - 未被任何页面使用
+
+**决策**：
+- 保留组件（代表功能规划）
+- 但标记为"待集成"
+
+**最佳实践**：
+- 未使用的组件不应存在于活跃代码库中
+- 可以移到 `_reference/` 或 `_archive/` 目录
+- 或者立即删除并记录在TODO中
+
+### 4. 用户体验审计
+
+**审计结果**：
+- ErrorBoundary: ✅ 已在layout中使用
+- Toast提示: ✅ 各页面已集成
+- 加载状态: ✅ 各页面有loading状态
+- 错误处理: ✅ 有try-catch和错误提示
+
+**持续改进**：
+- 每次新增组件时检查是否有良好的错误处理
+- 使用 LoadingSpinner 组件统一加载状态
+- 使用 Toast 组件统一提示
+
+### 5. GitHub安全实践
+
+**经验教训**：
+- 永远不要在代码库中存储真实secrets
+- .gitignore 应包含所有敏感文件
+- 文档中的示例应使用占位符
+- 提交前使用 grep 检查敏感信息
