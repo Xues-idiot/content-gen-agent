@@ -84,3 +84,47 @@
 - 实际 API 测试和调优
 - 前端状态管理 (Redux/Zustand)
 - 端到端测试
+
+---
+
+## 第411轮 自主迭代学习
+
+### 1. 发现的问题
+
+#### 前端 store 版本方法缺失
+- `content-store.ts` 中 interface 定义了 `saveVersion` 和 `getVersions`
+- 但实际实现缺失，导致类型不完整
+- **解决**：补充完整的实现，并添加到 persist 中持久化
+
+#### 内容页面重复 header
+- 内容页面同时使用了 SidebarNav 和自己的 header
+- SidebarNav 已经包含了 logo 和导航
+- **解决**：移除内容页面自己的 header，保持简洁
+
+### 2. 产品思维反思
+
+按照 Vox 核心竞争力思考：
+
+| 组件 | 是否必要 | 原因 |
+|------|---------|------|
+| ProductInput | ✅ 必要 | 产品信息输入是起点 |
+| PlatformSelect | ✅ 必要 | 多平台选择是核心功能 |
+| CopyOutput | ✅ 必要 | 文案输出展示 |
+| ImagePreview | ✅ 必要 | 配图建议是输出的一部分 |
+| MarketInsights | ✅ 必要 | 市场调研是核心竞争力 |
+| ExportPanel | ✅ 必要 | 导出是核心流程 |
+| VideoGenerator | ⚠️ 待定 | 视频生成是扩展功能，非 MVP 必需 |
+| LoadingSpinner | ✅ 必要 | 加载状态必须要有 |
+
+### 3. 版本管理思考
+
+- 提交信息应该清晰记录改动内容
+- PROGRESS.md 应该按轮次记录
+- GitHub push 需要有效的远程仓库配置
+
+### 4. 下一步自主迭代方向
+
+1. **前后端联调验证**：检查前端页面是否真正调用后端 API
+2. **组件必要性审查**：按产品思维判断每个组件是否需要
+3. **用户体验优化**：加载状态、错误处理、toast 提示
+4. **GitHub 问题排查**：解决远程仓库 push 失败问题
