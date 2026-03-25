@@ -87,6 +87,50 @@
 
 ---
 
+## MoneyPrinterTurbo 参考分析
+
+### 项目概述
+- **Stars**: 52k+ ⭐
+- **架构**: Python + WebUI + API
+- **功能**: 输入主题 → 自动生成视频（文案+素材+字幕+背景音乐）
+
+### 已参考的部分（已实现）
+1. ✅ **视频素材搜索** - Pexels/Pixabay API 集成 → `material_collector.py`
+2. ✅ **视频生成管道** - moviepy 处理 → `video_generator.py`
+3. ✅ **语音合成** - Edge TTS → `voice.py`
+4. ✅ **字幕生成** - Whisper → `subtitle.py`
+
+### 可借鉴但尚未充分使用的部分
+
+| 模块 | MoneyPrinterTurbo 做法 | Vox 可借鉴 |
+|------|------------------------|-----------|
+| **LLM Provider** | 支持 12+ 种 provider（g4f, moonshot, deepseek 等） | 可考虑扩展多 provider 支持 |
+| **多 LLM 降级** | 一个 provider 失败自动切换其他 | 可借鉴提高稳定性 |
+| **配置文件** | `config.toml` 统一管理 | 可考虑更灵活的 Config 类 |
+
+### MoneyPrinterTurbo 与 Vox 的区别
+
+| 维度 | MoneyPrinterTurbo | Vox |
+|------|------------------|-----|
+| **核心输出** | 视频文件 | 文案 + 配图建议 |
+| **目标平台** | YouTube 等 | 小红书/抖音/公众号/朋友圈 |
+| **内容形式** | 通用视频 | 平台适配营销内容 |
+| **审核机制** | 无 | 违规词检测 + 质量评分 |
+
+### 辩证思考
+
+**MoneyPrinterTurbo 值得学习**：
+- 多 provider 降级机制 → 提高服务稳定性
+- 清晰的项目结构（services/ models/ controllers/）
+- 素材管理（去重、筛选、缓存）
+
+**MoneyPrinterTurbo 不适合照搬**：
+- 视频生成依赖 moviepy（重） vs Vox 只需文案（轻）
+- 通用内容 vs 平台定制营销内容
+- 无审核机制 vs Vox 必须有违规词检测
+
+---
+
 ## 第411轮 自主迭代学习
 
 ### 1. 发现的问题
