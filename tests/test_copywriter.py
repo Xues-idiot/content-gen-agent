@@ -116,7 +116,7 @@ class TestCopywriterGeneration:
         )
 
         # 使用不存在的平台
-        result = self.copywriter.generate(product, plan, "invalid_platform" as any)
+        result = self.copywriter.generate(product, plan, "invalid_platform")
 
         assert result.success == False
         assert "Unknown platform" in result.error

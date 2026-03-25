@@ -149,9 +149,13 @@ class Reviewer:
         seen_words = set()  # 避免重复报告同一个词
 
         for word in ALL_VIOLATION_WORDS:
-            # 使用正则匹配，考虑标点符号分隔
-            pattern = rf'(?<![\u4e00-\u9fa5])({re.escape(word)})(?![\u4e00-\u9fa5])'
-            for match in re.finditer(pattern, copy):
+            # 直接使用简单字符串查找，避免正则表达式处理中文的问题
+            start = 0
+            while True:
+                pos = copy.find(word, start)
+                if pos == -1:
+                    break
+
                 # 使用预计算的映射进行O(1)查找
                 word_info = WORD_TO_CATEGORY.get(word, {})
                 category = word_info.get("category", "")
@@ -162,11 +166,12 @@ class Reviewer:
                     seen_words.add(word)
                     violations.append(Violation(
                         word=word,
-                        position=match.start(),
+                        position=pos,
                         suggestion=self._get_suggestion(word),
                         severity=severity,
                         category=category,
                     ))
+                start = pos + 1  # 继续查找下一个出现位置
         return violations
 
     def analyze_structure(self, copy: str) -> Dict[str, Any]:

@@ -42,7 +42,7 @@ cd frontend && npm install
 # MiniMax API (LLM)
 MINIMAX_API_KEY=your_api_key
 MINIMAX_BASE_URL=https://api.minimaxi.com/anthropic
-MINIMAX_MODEL=MiniMax-M2.2
+MINIMAX_MODEL=MiniMax-M2.7
 
 # Tavily API (市场调研)
 TAVILY_API_KEY=your_tavily_api_key

@@ -10,18 +10,13 @@ import uuid
 from typing import Any, Dict, List, Optional
 from dataclasses import asdict
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, Body
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, field_validator, Body
+from pydantic import BaseModel, Field, field_validator
 
 from backend.logging_config import get_logger
 from backend.constants import VERSION
 from backend.agents.planner import ProductInfo
-
-logger = get_logger("api")
-
-# Create router with prefix
-router = APIRouter(prefix="/api/v1", tags=["内容生成"])
 
 
 # Request/Response Models
@@ -134,6 +129,130 @@ class RegenerateRequest(BaseModel):
     product: ProductInput
     platform: str = Field(..., description="目标平台")
     enable_research: bool = Field(default=False, description="是否启用市场调研")
+
+
+class BatchGenerateRequest(BaseModel):
+    """批量生成请求"""
+    products: List[ProductInput]
+    platforms: List[str] = Field(default=["xiaohongshu"])
+    enable_research: bool = Field(default=False)
+
+
+class AnalyticsRequest(BaseModel):
+    """分析请求"""
+    copies: List[dict]  # 包含 platform, content, review 的列表
+
+
+class ConvertFormatRequest(BaseModel):
+    """格式转换请求"""
+    content: str
+    from_platform: str
+    to_platform: str
+
+
+class DuplicateCheckRequest(BaseModel):
+    """重复检测请求"""
+    content: str
+    existing_contents: List[str] = Field(default_factory=list)
+
+
+class SeoKeywordsRequest(BaseModel):
+    """SEO关键词请求"""
+    content: str
+    platform: str = "general"
+
+
+class CompareRequest(BaseModel):
+    """内容对比请求"""
+    content1: str
+    content2: str
+
+
+class HashtagRequest(BaseModel):
+    """标签建议请求"""
+    content: str
+    platform: str = "xiaohongshu"
+    max_tags: int = Field(default=5, ge=1, le=10)
+
+
+class PerformanceRequest(BaseModel):
+    """表现预测请求"""
+    content: str
+    platform: str = "xiaohongshu"
+
+
+class SaveTemplateRequest(BaseModel):
+    """保存模板请求"""
+    name: str
+    platform: str
+    content: str
+    tags: List[str] = Field(default_factory=list)
+
+
+class ScheduledContent(BaseModel):
+    """计划发布的内容"""
+    id: str
+    product_name: str
+    platform: str
+    title: str
+    content: str
+    tags: List[str] = []
+    scheduled_time: str
+    status: str = "pending"  # pending, published, failed
+    created_at: str
+
+
+class ContentCalendarRequest(BaseModel):
+    """内容日历请求"""
+    start_date: str
+    end_date: str
+    platforms: Optional[List[str]] = None
+
+
+class CalendarResponse(BaseModel):
+    """日历响应"""
+    success: bool
+    scheduled_content: List[ScheduledContent]
+    total: int
+
+
+class ContentVersion(BaseModel):
+    """内容版本"""
+    id: str
+    content_id: str
+    version_number: int
+    title: str
+    content: str
+    platform: str
+    created_at: str
+    change_summary: str = ""
+
+
+class ContentNote(BaseModel):
+    """内容笔记"""
+    id: str
+    content_id: str
+    platform: str
+    note: str
+    author: str
+    created_at: str
+    updated_at: str
+    tags: List[str] = []
+
+
+class ContentComment(BaseModel):
+    """内容评论"""
+    id: str
+    content_id: str
+    comment: str
+    author: str
+    created_at: str
+
+
+logger = get_logger("api")
+
+# Create router with prefix
+router = APIRouter(prefix="/api/v1", tags=["内容生成"])
 
 
 # Initialize agents (延迟初始化避免循环导入)
@@ -377,13 +496,6 @@ async def generate_content(request: Request, body: ContentRequest):
                 "type": "internal"
             }
         )
-
-
-class BatchGenerateRequest(BaseModel):
-    """批量生成请求"""
-    products: List[ProductInput]
-    platforms: List[str] = Field(default=["xiaohongshu"])
-    enable_research: bool = Field(default=False)
 
 
 @router.post("/content/batch-generate")
@@ -647,11 +759,6 @@ async def get_scheduling_suggestions(platform: str, content_type: str = "general
         raise HTTPException(status_code=500, detail=str(e))
 
 
-class AnalyticsRequest(BaseModel):
-    """分析请求"""
-    copies: List[dict]  # 包含 platform, content, review 的列表
-
-
 @router.post("/content/analytics")
 async def get_content_analytics(body: AnalyticsRequest):
     """
@@ -666,13 +773,6 @@ async def get_content_analytics(body: AnalyticsRequest):
     except Exception as e:
         logger.error(f"Get content analytics error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-class ConvertFormatRequest(BaseModel):
-    """格式转换请求"""
-    content: str
-    from_platform: str
-    to_platform: str
 
 
 @router.post("/content/convert")
@@ -695,12 +795,6 @@ async def convert_content_format(body: ConvertFormatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-class DuplicateCheckRequest(BaseModel):
-    """重复检测请求"""
-    content: str
-    existing_contents: List[str] = Field(default_factory=list)
-
-
 @router.post("/content/check-duplicate")
 async def check_content_duplicate(body: DuplicateCheckRequest):
     """
@@ -715,12 +809,6 @@ async def check_content_duplicate(body: DuplicateCheckRequest):
     except Exception as e:
         logger.error(f"Check duplicate error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-class SeoKeywordsRequest(BaseModel):
-    """SEO关键词请求"""
-    content: str
-    platform: str = "general"
 
 
 @router.post("/seo/keywords")
@@ -739,12 +827,6 @@ async def get_seo_keywords(body: SeoKeywordsRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-class CompareRequest(BaseModel):
-    """内容对比请求"""
-    content1: str
-    content2: str
-
-
 @router.post("/content/compare")
 async def compare_contents(body: CompareRequest):
     """
@@ -759,13 +841,6 @@ async def compare_contents(body: CompareRequest):
     except Exception as e:
         logger.error(f"Compare contents error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-class HashtagRequest(BaseModel):
-    """标签建议请求"""
-    content: str
-    platform: str = "xiaohongshu"
-    max_tags: int = Field(default=5, ge=1, le=10)
 
 
 @router.post("/hashtags/suggest")
@@ -787,12 +862,6 @@ async def suggest_hashtags(body: HashtagRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-class PerformanceRequest(BaseModel):
-    """表现预测请求"""
-    content: str
-    platform: str = "xiaohongshu"
-
-
 @router.post("/content/predict")
 async def predict_performance(body: PerformanceRequest):
     """
@@ -807,14 +876,6 @@ async def predict_performance(body: PerformanceRequest):
     except Exception as e:
         logger.error(f"Predict performance error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-class SaveTemplateRequest(BaseModel):
-    """保存模板请求"""
-    name: str
-    platform: str
-    content: str
-    tags: List[str] = Field(default_factory=list)
 
 
 @router.post("/templates")
@@ -921,33 +982,6 @@ async def get_hot_keywords(category: str = "general"):
 
 
 # ===== Content Calendar & Scheduling =====
-
-class ScheduledContent(BaseModel):
-    """计划发布的内容"""
-    id: str
-    product_name: str
-    platform: str
-    title: str
-    content: str
-    tags: List[str] = []
-    scheduled_time: str
-    status: str = "pending"  # pending, published, failed
-    created_at: str
-
-
-class ContentCalendarRequest(BaseModel):
-    """内容日历请求"""
-    start_date: str
-    end_date: str
-    platforms: Optional[List[str]] = None
-
-
-class CalendarResponse(BaseModel):
-    """日历响应"""
-    success: bool
-    scheduled_content: List[ScheduledContent]
-    total: int
-
 
 # In-memory storage for scheduled content (替换为数据库)
 _scheduled_content_store: List[ScheduledContent] = []
@@ -1068,18 +1102,6 @@ async def mark_as_published(schedule_id: str):
 
 
 # ===== Content Version Management =====
-
-class ContentVersion(BaseModel):
-    """内容版本"""
-    id: str
-    content_id: str
-    version_number: int
-    title: str
-    content: str
-    platform: str
-    created_at: str
-    change_summary: str = ""
-
 
 _content_versions_store: Dict[str, List[ContentVersion]] = {}
 
@@ -1737,27 +1759,6 @@ async def advanced_export_content(
 
 
 # ===== Content Collaboration =====
-
-class ContentNote(BaseModel):
-    """内容笔记"""
-    id: str
-    content_id: str
-    platform: str
-    note: str
-    author: str
-    created_at: str
-    updated_at: str
-    tags: List[str] = []
-
-
-class ContentComment(BaseModel):
-    """内容评论"""
-    id: str
-    content_id: str
-    comment: str
-    author: str
-    created_at: str
-
 
 # 内存存储
 _content_notes: List[ContentNote] = []

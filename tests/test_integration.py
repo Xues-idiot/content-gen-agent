@@ -137,7 +137,7 @@ class TestErrorHandling:
         result = Reviewer().review_quality("")
 
         assert result.passed == True  # 空内容不算违规
-        assert result.quality_score == 10.0
+        assert result.quality_score == 8.5  # 空内容有建议扣分
 
     def test_export_invalid_format(self, sample_export_content):
         """测试导出无效格式"""

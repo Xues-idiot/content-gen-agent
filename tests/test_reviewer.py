@@ -41,7 +41,7 @@ class TestReviewer:
         assert len(violations) >= 1
         best_violations = [v for v in violations if v.word == "最好"]
         assert len(best_violations) == 1
-        assert best_violations[0].position == 3
+        assert best_violations[0].position == 2  # "最好" starts at index 2
 
     def test_check_ad_words_severity(self):
         """测试违规严重程度"""

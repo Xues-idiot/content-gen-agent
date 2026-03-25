@@ -66,7 +66,7 @@ class Config:
     
     @property
     def minimax_model(self) -> str:
-        return os.getenv("MINIMAX_MODEL") or self.llm.get("model", "MiniMax-M2.2")
+        return os.getenv("MINIMAX_MODEL") or self.llm.get("model", "MiniMax-M2.7")
     
     @property
     def tavily_api_key(self) -> str:

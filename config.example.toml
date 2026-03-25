@@ -8,7 +8,7 @@ debug = true
 
 [llm]
 provider = "minimax"
-model = "MiniMax-M2.2"
+model = "MiniMax-M2.7"
 
 [minimax]
 # API Key 从环境变量 MINIMAX_API_KEY 读取
