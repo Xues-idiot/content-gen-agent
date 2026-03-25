@@ -125,11 +125,16 @@ class VideoGenerator:
             return bgm_file
 
         if bgm_type == "random":
-            song_dir = os.path.join(os.getcwd(), "resource", "songs")
-            if os.path.exists(song_dir):
-                files = glob.glob(os.path.join(song_dir, "*.mp3"))
-                if files:
-                    return random.choice(files)
+            # 优先从本地 resource/songs 获取
+            song_dirs = [
+                os.path.join(os.getcwd(), "resource", "songs"),
+                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "_reference", "resource", "songs"),
+            ]
+            for song_dir in song_dirs:
+                if os.path.exists(song_dir):
+                    files = glob.glob(os.path.join(song_dir, "*.mp3"))
+                    if files:
+                        return random.choice(files)
 
         return ""
 
