@@ -87,6 +87,30 @@
 
 ---
 
+## 第414轮 GitHub Push 阻止问题
+
+### 问题描述
+- 初始提交 `4192e797` 包含真实的 API keys 和 GitHub token
+- GitHub secret scanning 检测到并阻止 push
+- 错误信息: `GH013: Repository rule violations found`
+
+### 解决方案
+1. **临时方案（已执行）**: 替换 `INSTRUCTIONS.md` 中的 secrets 为占位符
+2. **长期方案**: 用户需访问 unblock URL 解除阻止
+   - URL: `https://github.com/Xues-idiot/content-gen-agent/security/secret-scanning/unblock-secret/3BQD3HM877GijaLJe4c7NLdEqSe`
+
+### 经验教训
+1. **永远不要在代码库中存储真实 secrets** - 即使是文档文件
+2. **使用 .gitignore 和环境变量** - 不提交 .env 文件
+3. **文档中的 secrets 占位符** - 示例使用 `your_api_key_here`
+
+### GitHub Token 配置
+- Token 已设置在 remote URL（但 push 时被阻止）
+- Repo: `Xues-idiot/content-gen-agent`
+- 用户名: `Xues-idiot`
+
+---
+
 ## MoneyPrinterTurbo 参考分析
 
 ### 项目概述
