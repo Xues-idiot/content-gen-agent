@@ -47,6 +47,7 @@ out/
 # Build
 .DS_Store
 Thumbs.db
+*.tsbuildinfo
 
 # Project specific
 _reference/
