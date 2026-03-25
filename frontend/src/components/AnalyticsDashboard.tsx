@@ -59,6 +59,10 @@ export default function AnalyticsDashboard() {
         fetch(`${API_BASE_URL}/api/v1/analytics/compare`),
       ]);
 
+      if (!statsRes.ok || !trendsRes.ok || !compareRes.ok) {
+        throw new Error(`API error: ${statsRes.status || trendsRes.status || compareRes.status}`);
+      }
+
       const statsData = await statsRes.json();
       const trendsData = await trendsRes.json();
       const compareData = await compareRes.json();

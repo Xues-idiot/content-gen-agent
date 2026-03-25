@@ -47,6 +47,9 @@ export default function ContentCalendar({ onScheduleNew }: ContentCalendarProps)
       if (filterPlatform) params.append("platform", filterPlatform);
 
       const response = await fetch(`${API_BASE_URL}/api/v1/calendar?${params}`);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
       const data = await response.json();
       if (data.success) {
         setScheduledContent(data.scheduled_content || []);

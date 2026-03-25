@@ -72,12 +72,16 @@ function TemplatesPageContent() {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/templates/library/${activeTab}`);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
       const data = await response.json();
       if (data.success) {
         setLibraryTemplates(data.templates || {});
       }
     } catch (error) {
       console.error("Failed to fetch template library:", error);
+      showToast("获取模板库失败", "error");
     } finally {
       setLoading(false);
     }
@@ -86,12 +90,16 @@ function TemplatesPageContent() {
   const fetchSavedTemplates = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/templates/${activeTab}`);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
       const data = await response.json();
       if (data.templates) {
         setSavedTemplates(data.templates);
       }
     } catch (error) {
       console.error("Failed to fetch saved templates:", error);
+      showToast("获取模板列表失败", "error");
     }
   };
 

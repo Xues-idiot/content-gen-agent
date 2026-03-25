@@ -78,12 +78,16 @@ function CampaignsPageContent() {
       if (filterStatus) params.append("status", filterStatus);
 
       const response = await fetch(`${API_BASE_URL}/api/v1/campaigns?${params}`);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
       const data = await response.json();
       if (data.campaigns) {
         setCampaigns(data.campaigns);
       }
     } catch (error) {
       console.error("Failed to fetch campaigns:", error);
+      showToast("获取营销活动列表失败", "error");
     } finally {
       setLoading(false);
     }
@@ -92,12 +96,16 @@ function CampaignsPageContent() {
   const fetchCampaignContents = async (campaignId: string) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/campaigns/${campaignId}`);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
       const data = await response.json();
       if (data.contents) {
         setCampaignContents(data.contents);
       }
     } catch (error) {
       console.error("Failed to fetch campaign contents:", error);
+      showToast("获取活动内容失败", "error");
     }
   };
 

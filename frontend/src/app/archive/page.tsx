@@ -54,12 +54,16 @@ function ArchivePageContent() {
       params.append("limit", "50");
 
       const response = await fetch(`${API_BASE_URL}/api/v1/archive?${params}`);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
       const data = await response.json();
       if (data.archives) {
         setArchives(data.archives);
       }
     } catch (error) {
       console.error("Failed to fetch archives:", error);
+      showToast("获取归档列表失败", "error");
     } finally {
       setLoading(false);
     }
@@ -75,12 +79,16 @@ function ArchivePageContent() {
       const response = await fetch(
         `${API_BASE_URL}/api/v1/archive/search?keyword=${encodeURIComponent(query)}`
       );
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
       const data = await response.json();
       if (data.results) {
         setArchives(data.results);
       }
     } catch (error) {
       console.error("Failed to search archives:", error);
+      showToast("搜索失败", "error");
     } finally {
       setLoading(false);
     }
@@ -89,12 +97,16 @@ function ArchivePageContent() {
   const viewArchive = async (archiveId: string) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/archive/${archiveId}`);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
       const data = await response.json();
       if (data.archive) {
         setSelectedArchive(data.archive);
         setShowDetailModal(true);
       }
     } catch (error) {
+      console.error("Failed to view archive:", error);
       showToast("获取详情失败", "error");
     }
   };

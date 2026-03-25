@@ -50,6 +50,9 @@ function TasksPageContent() {
       if (filterState) params.append("state", filterState);
 
       const response = await fetch(`${API_BASE_URL}/api/v1/tasks?${params}`);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
       const data = await response.json();
       if (data.tasks) {
         setTasks(data.tasks);
@@ -57,6 +60,7 @@ function TasksPageContent() {
       }
     } catch (error) {
       console.error("Failed to fetch tasks:", error);
+      showToast("获取任务列表失败", "error");
     } finally {
       setLoading(false);
     }
