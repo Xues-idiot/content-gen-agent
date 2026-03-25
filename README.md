@@ -2,6 +2,9 @@
 
 > 代号 Vox (声)，意为"声音、音频内容生成"
 
+[![GitHub stars](https://img.shields.io/github/stars/Xues-idiot/content-gen-agent)](https://github.com/Xues-idiot/content-gen-agent)
+[![Version](https://img.shields.io/badge/version-v0.1.0-blue)]()
+
 **Vox** 是一个垂直领域的内容生成 Agent，专注于**文案+配图**的组合输出，服务于小红书、抖音、公众号、朋友圈等多平台营销内容生成。
 
 ## 核心功能
@@ -75,33 +78,36 @@ content-gen-agent/
 │   │   ├── reviewer.py      # 违规词检测 + 质量评分
 │   │   └── exporter.py      # 多格式导出
 │   ├── api/
-│   │   └── content.py       # FastAPI 接口
+│   │   └── content.py       # FastAPI 接口 (60+ 端点)
 │   ├── prompts/             # Prompt 模板
 │   │   ├── xiaohongshu.py   # 小红书
 │   │   ├── tiktok.py        # 抖音
 │   │   ├── official.py       # 公众号
 │   │   └── friend.py         # 朋友圈
 │   ├── services/
-│   │   └── llm.py           # LLM 客户端 (重试机制)
+│   │   ├── llm.py           # LLM 客户端 (重试机制)
+│   │   ├── analytics.py     # 内容分析
+│   │   ├── campaign.py      # 营销活动管理
+│   │   ├── task_queue.py    # 异步任务队列
+│   │   ├── voice.py         # 语音合成
+│   │   └── subtitle.py      # 字幕生成
 │   ├── tools/
-│   │   └── image_gen.py     # 图像生成
-│   └── graph/
-│       └── content_graph.py # 工作流编排
+│   │   ├── image_gen.py     # 图像生成
+│   │   ├── material_collector.py  # 素材采集 (Pexels/Pixabay)
+│   │   ├── web_search.py    # Tavily 搜索
+│   │   └── video_generator.py    # 视频生成
+│   ├── graph/
+│   │   └── content_graph.py # LangGraph 工作流编排
+│   ├── validators.py        # 数据验证
+│   ├── config.py            # 配置管理
+│   └── logging_config.py    # 日志配置
 ├── frontend/
 │   └── src/
-│       ├── app/             # Next.js 15 页面
+│       ├── app/             # Next.js 15 App Router
 │       ├── components/      # React 19 组件 (Motion 动画)
 │       ├── store/           # Zustand 状态管理
-│       └── lib/             # 工具函数
+│       └── lib/             # 工具函数和 API 客户端
 ├── tests/                   # pytest 测试用例
-│   ├── conftest.py         # fixtures
-│   ├── test_planner.py
-│   ├── test_copywriter.py
-│   ├── test_reviewer.py
-│   ├── test_exporter.py
-│   ├── test_api.py
-│   ├── test_llm.py
-│   └── test_integration.py
 ├── main.py                  # 后端入口
 ├── config.toml              # 配置文件
 └── requirements.txt         # Python 依赖
