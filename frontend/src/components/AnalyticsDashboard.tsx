@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { BarChart3, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 import { useState, useEffect } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 interface PlatformStats {
   total_contents: number;
@@ -53,9 +54,9 @@ export default function AnalyticsDashboard() {
     setLoading(true);
     try {
       const [statsRes, trendsRes, compareRes] = await Promise.all([
-        fetch("/api/v1/analytics/platform"),
-        fetch("/api/v1/analytics/trends?days=7"),
-        fetch("/api/v1/analytics/compare"),
+        fetch(`${API_BASE_URL}/api/v1/analytics/platform`),
+        fetch(`${API_BASE_URL}/api/v1/analytics/trends?days=7`),
+        fetch(`${API_BASE_URL}/api/v1/analytics/compare`),
       ]);
 
       const statsData = await statsRes.json();

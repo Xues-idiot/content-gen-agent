@@ -1106,3 +1106,26 @@ content-gen-agent/
 ### 下轮计划
 - 继续完善前端与其他后端 API 的联调
 - 检查各页面组件的必要性，按产品思维优化
+
+---
+
+## 第412轮 (2026-03-25)
+
+### 完成
+- **修复 AnalyticsDashboard API 调用问题**
+  - `AnalyticsDashboard.tsx` 使用相对路径 `fetch("/api/v1/...")`
+  - 改为使用 `${API_BASE_URL}/api/v1/...` 绝对路径
+  - 确保在生产环境下 API 调用正常
+
+- **Sigma Skills 位置记录**
+  - Skills 位置：`D:\PM-AI-Workstation\01-ai-agents\pm-agent-forge\skills`
+  - 待学习：marketing/, common/, tools/ 等 Skills
+  - 辩证使用，记录学习心得
+
+### 学习
+- 前端 API 调用应使用绝对路径，避免相对路径问题
+- 保持 API 调用方式一致（都使用 API_BASE_URL）
+
+### 版本改进
+本次为补丁修复 (v0.1.1 → v0.1.2)：
+- 修复 AnalyticsDashboard API 相对路径问题

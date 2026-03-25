@@ -128,3 +128,33 @@
 2. **组件必要性审查**：按产品思维判断每个组件是否需要
 3. **用户体验优化**：加载状态、错误处理、toast 提示
 4. **GitHub 问题排查**：解决远程仓库 push 失败问题
+
+---
+
+## 第412轮 发现并修复 API 调用问题
+
+### 问题：AnalyticsDashboard 使用相对路径
+
+**发现**：
+- `AnalyticsDashboard.tsx` 使用 `fetch("/api/v1/analytics/platform")` 相对路径
+- 其他所有页面都使用 `${API_BASE_URL}/api/v1/...`
+- 相对路径可能导致在生产环境或某些部署场景下 API 调用失败
+
+**解决**：
+```tsx
+import { API_BASE_URL } from "@/lib/api";
+// 改用绝对路径
+fetch(`${API_BASE_URL}/api/v1/analytics/platform`)
+```
+
+### Sigma Skills 位置记录
+
+用户告知 skills 位置：`D:\PM-AI-Workstation\01-ai-agents\pm-agent-forge\skills`
+
+待研究学习的 Skills：
+- `marketing/social-media-marketing/` - 平台选择策略
+- `marketing/content-marketing/` - 内容矩阵设计
+- `marketing/viral-marketing/` - 传播激励设计
+- `common/critical-thinking/` - 逻辑审核
+- `common/retry-pattern/` - 重试机制
+- `tools/web-search/` - Tavily API
