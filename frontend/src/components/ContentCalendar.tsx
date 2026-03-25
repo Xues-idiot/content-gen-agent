@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Calendar, Clock, Trash2, CheckCircle } from "lucide-react";
 import { useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 interface ScheduledContent {
   id: string;
@@ -45,7 +46,7 @@ export default function ContentCalendar({ onScheduleNew }: ContentCalendarProps)
       const params = new URLSearchParams();
       if (filterPlatform) params.append("platform", filterPlatform);
 
-      const response = await fetch(`/api/v1/calendar?${params}`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/calendar?${params}`);
       const data = await response.json();
       if (data.success) {
         setScheduledContent(data.scheduled_content || []);
@@ -59,7 +60,7 @@ export default function ContentCalendar({ onScheduleNew }: ContentCalendarProps)
 
   const deleteSchedule = async (id: string) => {
     try {
-      const response = await fetch(`/api/v1/schedule/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/schedule/${id}`, {
         method: "DELETE",
       });
       if (response.ok) {
@@ -72,7 +73,7 @@ export default function ContentCalendar({ onScheduleNew }: ContentCalendarProps)
 
   const markPublished = async (id: string) => {
     try {
-      const response = await fetch(`/api/v1/schedule/${id}/publish`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/schedule/${id}/publish`, {
         method: "PUT",
       });
       if (response.ok) {

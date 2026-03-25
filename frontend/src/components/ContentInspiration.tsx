@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Lightbulb, BookOpen, Copy, CheckCircle } from "lucide-react";
 import { useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 interface ContentAngle {
   type: string;
@@ -54,7 +55,7 @@ export default function ContentInspiration() {
         platform: selectedPlatform,
       });
 
-      const response = await fetch(`/api/v1/content/angles`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/content/angles`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: params,
@@ -74,7 +75,7 @@ export default function ContentInspiration() {
   const fetchTemplates = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/v1/templates/library/${selectedPlatform}`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/templates/library/${selectedPlatform}`);
       const data = await response.json();
       if (data.success) {
         setTemplates(data.templates || {});

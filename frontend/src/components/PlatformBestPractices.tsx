@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Lightbulb, Clock, Hash, MessageSquare } from "lucide-react";
 import { useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 interface PlatformPractices {
   name: string;
@@ -55,7 +56,7 @@ export default function PlatformBestPractices({ initialPlatform = "xiaohongshu" 
   const fetchPractices = async (platform: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/v1/best-practices/${platform}`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/best-practices/${platform}`);
       const data = await response.json();
       if (data.success) {
         setPractices(data.practices);
