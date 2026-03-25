@@ -105,18 +105,33 @@
 
 按照 Vox 核心竞争力思考：
 
-| 组件 | 是否必要 | 原因 |
-|------|---------|------|
+| 组件 | 必要性 | 原因 |
+|------|--------|------|
 | ProductInput | ✅ 必要 | 产品信息输入是起点 |
 | PlatformSelect | ✅ 必要 | 多平台选择是核心功能 |
 | CopyOutput | ✅ 必要 | 文案输出展示 |
 | ImagePreview | ✅ 必要 | 配图建议是输出的一部分 |
-| MarketInsights | ✅ 必要 | 市场调研是核心竞争力 |
+| MarketInsights | ✅ 必要 | 从 store 获取数据，市场调研是核心竞争力 |
 | ExportPanel | ✅ 必要 | 导出是核心流程 |
-| VideoGenerator | ⚠️ 待定 | 视频生成是扩展功能，非 MVP 必需 |
+| VideoGenerator | ⚠️ 争议 | 可能是阶段3功能，但作为扩展展示合理 |
 | LoadingSpinner | ✅ 必要 | 加载状态必须要有 |
 
-### 3. 版本管理思考
+### 3. 市场调研数据流分析
+
+MarketInsights 组件数据来源：
+- 从 `useContentStore()` 获取 `marketResearch` 状态
+- 在内容生成 API 返回时一起返回，存储在 store 中
+- 这是合理的设计，因为市场调研是生成内容时一起做的
+
+### 4. VideoGenerator 定位思考
+
+VideoGenerator 使用文案（script）生成视频，这是：
+- 参考 MoneyPrinterTurbo 的功能
+- Vox 阶段3功能（短视频脚本：口播文案+分镜）
+- 当前阶段1是"多平台文案生成"，视频是延伸功能
+- 但在内容页面展示是合理的，因为可以利用生成的文案
+
+### 5. 版本管理思考
 
 - 提交信息应该清晰记录改动内容
 - PROGRESS.md 应该按轮次记录
