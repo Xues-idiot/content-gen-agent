@@ -10,6 +10,7 @@ import ExportPanel from "@/components/ExportPanel";
 import MarketInsights from "@/components/MarketInsights";
 import VideoGenerator from "@/components/VideoGenerator";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import SidebarNav from "@/components/SidebarNav";
 import { useContentStore } from "@/store/content-store";
 import { ToastProvider, useToast } from "@/components/Toast";
 import { API_BASE_URL } from "@/lib/api";
@@ -203,42 +204,6 @@ function ContentPageContent() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FFF8F0" }}>
-      {/* Header */}
-      <motion.header
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="bg-white shadow-sm"
-      >
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold" style={{ color: "#FF6B35" }}>
-                📢 Vox 内容生成
-              </h1>
-              <p className="text-gray-600 text-sm mt-1">
-                多平台营销内容一键生成 - 小红书、抖音、公众号、朋友圈
-              </p>
-            </div>
-            {/* Status Indicator */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5" title="MiniMax API">
-                <span
-                  className={`w-2 h-2 rounded-full ${backendStatus.api ? "bg-green-500" : "bg-red-500"}`}
-                />
-                <span className="text-xs text-gray-500">API</span>
-              </div>
-              <div className="flex items-center gap-1.5" title="Tavily API">
-                <span
-                  className={`w-2 h-2 rounded-full ${backendStatus.tavily ? "bg-green-500" : "bg-yellow-500"}`}
-                />
-                <span className="text-xs text-gray-500">调研</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.header>
-
       {/* Progress Bar */}
       <AnimatePresence>
         {isLoading && progress > 0 && (
@@ -345,26 +310,16 @@ function ContentPageContent() {
           </motion.div>
         </div>
       </main>
-
-      {/* Footer */}
-      <motion.footer
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="bg-white border-t border-gray-200 mt-8"
-      >
-        <div className="max-w-6xl mx-auto px-4 py-4 text-center text-gray-500 text-sm">
-          Vox 内容生成 Agent v0.1.0 | 基于 AI 的多平台营销内容生成工具
-        </div>
-      </motion.footer>
     </div>
   );
 }
 
 export default function ContentPage() {
   return (
-    <ToastProvider>
-      <ContentPageContent />
-    </ToastProvider>
+    <SidebarNav>
+      <ToastProvider>
+        <ContentPageContent />
+      </ToastProvider>
+    </SidebarNav>
   );
 }

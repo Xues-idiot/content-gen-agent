@@ -92,6 +92,8 @@ interface ContentState {
   addToHistory: () => void;
   clearHistory: () => void;
   reset: () => void;
+  saveVersion: (platform: string) => void;
+  getVersions: (platform: string) => CopyResult[];
 }
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -186,12 +188,12 @@ export const useContentStore = create<ContentState>()(
       getVersions: (platform: string) => {
         return get().versions[platform] || [];
       },
-
     }),
     {
       name: "vox-content-storage",
       partialize: (state) => ({
         history: state.history.slice(-10),
+        versions: state.versions,
       }),
     }
   )
