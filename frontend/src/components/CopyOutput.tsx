@@ -48,7 +48,7 @@ function XiaohongshuPreview({ result }: { result: CopyResult }) {
       </div>
       {result.title && <h3 className="font-bold text-gray-900 mb-2">{result.title}</h3>}
       <div className="text-sm text-gray-700 whitespace-pre-wrap mb-3">
-        {result.content.slice(0, 200)}{result.content.length > 200 && "..."}
+        {result.content ? result.content.slice(0, 200) : ""}{result.content && result.content.length > 200 && "..."}
       </div>
       {result.tags && result.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
@@ -91,7 +91,7 @@ function OfficialPreview({ result }: { result: CopyResult }) {
         {result.title && <h2 className="text-xl font-bold text-gray-900 mb-2">{result.title}</h2>}
         <div className="text-sm text-gray-500 mb-3">公众号名称 · 日期</div>
         <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
-          {result.content.slice(0, 300)}{result.content.length > 300 && "..."}
+          {result.content ? result.content.slice(0, 300) : ""}{result.content && result.content.length > 300 && "..."}
         </div>
       </div>
       <div className="border-t border-gray-200 p-3 bg-gray-50">
@@ -113,7 +113,7 @@ function FriendCirclePreview({ result }: { result: CopyResult }) {
           <p className="text-xs text-gray-500">刚刚</p>
         </div>
       </div>
-      <div className="text-gray-800 text-sm whitespace-pre-wrap mb-3">{result.content}</div>
+      <div className="text-gray-800 text-sm whitespace-pre-wrap mb-3">{result.content || ""}</div>
       {result.cta && <div className="bg-green-50 rounded-lg p-3 text-sm text-green-700 mb-3">{result.cta}</div>}
       <div className="border-t border-gray-200 pt-2">
         <div className="text-xs text-gray-400 flex gap-4">
