@@ -430,7 +430,7 @@ D:/PM-AI-Workstation/01-ai-agents/
 | 市场调研模块 | 完成 | Tavily API 集成 |
 | API 接口 | 完成 | CORS, 限流, 验证 |
 | 前端组件 | 完成 | Motion 动画, MarketInsights |
-| 违规词库 | 完成 | 扩展至 60+ 词汇 |
+| 违规词库 | 完成 | 扩展至 350+ 词汇，10个分类 |
 | 测试用例 | 进行中 | pytest 覆盖率提升 |
 | Sigma Skills | 持续跟踪 | 动态学习新技能 |
 
