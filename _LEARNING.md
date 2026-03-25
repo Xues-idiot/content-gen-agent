@@ -137,7 +137,20 @@ VideoGenerator 使用文案（script）生成视频，这是：
 - PROGRESS.md 应该按轮次记录
 - GitHub push 需要有效的远程仓库配置
 
-### 4. 下一步自主迭代方向
+### 6. 代码重复发现：PLATFORM_INFO
+
+**发现**：
+- `PLATFORM_INFO` 在多个组件中重复定义：
+  - `ImagePreview.tsx`: `{ name, icon, color }`
+  - `CopyOutput.tsx`: `{ name, icon, color, bgColor }`
+- 两者略有不同（CopyOutput 多了 bgColor）
+- 可以抽象到一个共享的常量文件中
+
+**决策**：
+- 当前不是关键问题，暂不处理
+- 如需重构，可创建 `frontend/src/lib/constants.ts`
+
+### 7. 下一步自主迭代方向
 
 1. **前后端联调验证**：检查前端页面是否真正调用后端 API
 2. **组件必要性审查**：按产品思维判断每个组件是否需要
