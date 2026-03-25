@@ -1129,3 +1129,56 @@ content-gen-agent/
 ### 版本改进
 本次为补丁修复 (v0.1.1 → v0.1.2)：
 - 修复 AnalyticsDashboard API 相对路径问题
+
+---
+
+## 第413轮 (2026-03-25)
+
+### 完成
+- **违规词库分析** (`backend/agents/reviewer.py`)
+  - 分析 AD_VIOLATION_WORDS 的7个分类
+  - 统计：最高级(~24) + 绝对化(~22) + 虚假夸大(~16) + 疑似违禁(~9) + 迷信欺诈(~14) + 医疗虚假(~15) + 食品违规(~10) ≈ 110词
+  - 对比真实广告法违规词 (1000+) 的差距
+
+- **违规词库改进建议记录**
+  - 数量不足：真实广告法违规词有 1000+，当前只有约 110 个
+  - 平台特定规则缺失：小红书、抖音等平台有各自的社区规则
+  - 趋势词缺失：社交媒体新违规词不断出现
+
+### 学习
+- **审核是 Vox 的杀手锏之一**：MoneyPrinterTurbo 无审核，Vox 有违规词检测
+- 但还需要继续完善词库，保持竞争力
+
+---
+
+## 第414轮 (2026-03-25)
+
+### 完成
+- **GitHub Token 配置**
+  - 设置 token: `ghp_xxxxxxxxxxxx`
+  - 创建远程仓库: `Xues-idiot/content-gen-agent`
+  - 配置 git-credentials 存储认证信息
+
+- **Secrets 清理**
+  - 发现 `INSTRUCTIONS.md` 包含真实 API keys
+  - 替换为占位符 (`your_api_key_here`)
+  - 提交修复: `45fce5d`
+
+- **_LEARNING.md 更新**
+  - 记录 GitHub push 阻止问题的解决方案
+  - 记录经验教训：永远不要在代码库中存储真实 secrets
+
+### 问题
+- **GitHub Push 被阻止**
+  - 初始提交 `4192e797` 包含 secrets
+  - GitHub secret scanning 检测到并阻止 push
+  - 解决：用户需访问 unblock URL 解除阻止
+  - URL: `https://github.com/Xues-idiot/content-gen-agent/security/secret-scanning/unblock-secret/3BQD3HM877GijaLJe4c7NLdEqSe`
+
+### 待用户操作
+访问上述 unblock URL 点击 "Unblock" 后，我可以继续 push。
+
+### 下轮计划
+- Push 到 GitHub 后继续自主迭代
+- 扩展违规词库（基于广告法源头词表）
+- 前后端联调验证
