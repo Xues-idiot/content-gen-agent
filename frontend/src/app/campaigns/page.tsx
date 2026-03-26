@@ -132,8 +132,11 @@ function CampaignsPageContent() {
         name: formData.name,
         description: formData.description,
         campaign_type: formData.campaign_type,
-        tags: formData.tags,
       });
+      // Append tags individually for proper array handling (backend expects tags=tag1&tags=tag2)
+      if (formData.tags) {
+        formData.tags.split(",").forEach(tag => params.append("tags", tag.trim()));
+      }
       if (formData.start_date) params.append("start_date", formData.start_date);
       if (formData.end_date) params.append("end_date", formData.end_date);
 

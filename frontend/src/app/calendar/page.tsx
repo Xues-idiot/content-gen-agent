@@ -44,9 +44,12 @@ function CalendarPageContent() {
         platform: formData.platform,
         title: formData.title,
         content: formData.content,
-        tags: formData.tags,
         scheduled_time: formData.scheduled_time || new Date().toISOString(),
       });
+      // Append tags individually for proper array handling (backend expects tags=tag1&tags=tag2)
+      if (formData.tags) {
+        formData.tags.split(",").forEach(tag => params.append("tags", tag.trim()));
+      }
 
       const response = await fetch(`${API_BASE_URL}/api/v1/schedule?${params}`, {
         method: "POST",
