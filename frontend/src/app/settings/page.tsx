@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import SidebarNav from "@/components/SidebarNav";
 import { ToastProvider, useToast } from "@/components/Toast";
@@ -55,12 +55,15 @@ function SettingsPageContent() {
   const [providerModel, setProviderModel] = useState("");
   const [testingProvider, setTestingProvider] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; response: string } | null>(null);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     checkBackendHealth();
     if (activeTab === "llm") {
       loadLLMConfig();
     }
+    return () => { isMountedRef.current = false; };
   }, [activeTab]);
 
   const checkBackendHealth = async () => {
@@ -68,11 +71,13 @@ function SettingsPageContent() {
       const response = await fetch(`${API_BASE_URL}/health`);
       if (response.ok) {
         const data = await response.json();
-        setBackendStatus({
-          api: data.api_key_configured || false,
-          tavily: data.tavily_api_configured || false,
-          version: data.version || "",
-        });
+        if (isMountedRef.current) {
+          setBackendStatus({
+            api: data.api_key_configured || false,
+            tavily: data.tavily_api_configured || false,
+            version: data.version || "",
+          });
+        }
       }
     } catch {
       // Backend not available
@@ -84,17 +89,21 @@ function SettingsPageContent() {
       const response = await fetch(`${API_BASE_URL}/llm/config`);
       if (response.ok) {
         const data = await response.json();
-        setLlmConfig(data);
-        setSelectedProvider(data.current_provider);
+        if (isMountedRef.current) {
+          setLlmConfig(data);
+          setSelectedProvider(data.current_provider);
+        }
 
         // Load providers list
         const providersResponse = await fetch(`${API_BASE_URL}/llm/providers`);
-        if (providersResponse.ok) {
+        if (providersResponse.ok && isMountedRef.current) {
           setLlmProviders(await providersResponse.json());
         }
       }
     } catch {
-      showToast("加载 LLM 配置失败", "error");
+      if (isMountedRef.current) {
+        showToast("加载 LLM 配置失败", "error");
+      }
     }
   };
 
@@ -116,20 +125,27 @@ function SettingsPageContent() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        showToast(data.message, "success");
-        loadLLMConfig();
-        setProviderApiKey("");
-        setProviderBaseUrl("");
-        setProviderModel("");
+        if (isMountedRef.current) {
+          showToast(data.message, "success");
+          loadLLMConfig();
+          setProviderApiKey("");
+          setProviderBaseUrl("");
+          setProviderModel("");
+        }
       } else {
-        showToast(data.detail || "切换失败", "error");
+        if (isMountedRef.current) {
+          showToast(data.detail || "切换失败", "error");
+        }
       }
     } catch {
-      showToast("切换 LLM Provider 失败", "error");
+      if (isMountedRef.current) {
+        showToast("切换 LLM Provider 失败", "error");
+      }
     }
   };
 
   const testConnection = async () => {
+    if (!isMountedRef.current) return;
     setTestingProvider(true);
     setTestResult(null);
 
@@ -137,21 +153,25 @@ function SettingsPageContent() {
       const response = await fetch(`${API_BASE_URL}/llm/test?prompt=${encodeURIComponent("请回复'连接成功'")}`);
       const data = await response.json();
 
-      setTestResult({
-        success: data.success,
-        response: data.success ? data.response : data.error || data.response,
-      });
+      if (isMountedRef.current) {
+        setTestResult({
+          success: data.success,
+          response: data.success ? data.response : data.error || data.response,
+        });
 
-      if (data.success) {
-        showToast("连接测试成功", "success");
-      } else {
-        showToast("连接测试失败", "error");
+        if (data.success) {
+          showToast("连接测试成功", "success");
+        } else {
+          showToast("连接测试失败", "error");
+        }
       }
     } catch {
-      setTestResult({ success: false, response: "请求失败" });
-      showToast("连接测试失败", "error");
+      if (isMountedRef.current) {
+        setTestResult({ success: false, response: "请求失败" });
+        showToast("连接测试失败", "error");
+      }
     } finally {
-      setTestingProvider(false);
+      if (isMountedRef.current) setTestingProvider(false);
     }
   };
 
