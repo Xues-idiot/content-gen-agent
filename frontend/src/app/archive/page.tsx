@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import SidebarNav from "@/components/SidebarNav";
 import { ToastProvider, useToast } from "@/components/Toast";
@@ -41,12 +41,16 @@ function ArchivePageContent() {
   const [loading, setLoading] = useState(false);
   const [selectedArchive, setSelectedArchive] = useState<ArchiveDetail | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     fetchArchives();
+    return () => { isMountedRef.current = false; };
   }, [filterCategory]);
 
   const fetchArchives = async () => {
+    if (!isMountedRef.current) return;
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -58,14 +62,16 @@ function ArchivePageContent() {
         throw new Error(`API error: ${response.status}`);
       }
       const data = await response.json();
-      if (data.archives) {
+      if (isMountedRef.current && data.archives) {
         setArchives(data.archives);
       }
     } catch (error) {
       console.error("Failed to fetch archives:", error);
-      showToast("获取归档列表失败", "error");
+      if (isMountedRef.current) {
+        showToast("获取归档列表失败", "error");
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) setLoading(false);
     }
   };
 
@@ -74,6 +80,7 @@ function ArchivePageContent() {
       fetchArchives();
       return;
     }
+    if (!isMountedRef.current) return;
     setLoading(true);
     try {
       const response = await fetch(
@@ -83,47 +90,55 @@ function ArchivePageContent() {
         throw new Error(`API error: ${response.status}`);
       }
       const data = await response.json();
-      if (data.results) {
+      if (isMountedRef.current && data.results) {
         setArchives(data.results);
       }
     } catch (error) {
       console.error("Failed to search archives:", error);
-      showToast("搜索失败", "error");
+      if (isMountedRef.current) {
+        showToast("搜索失败", "error");
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) setLoading(false);
     }
   };
 
   const viewArchive = async (archiveId: string) => {
+    if (!isMountedRef.current) return;
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/archive/${archiveId}`);
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
       const data = await response.json();
-      if (data.archive) {
+      if (isMountedRef.current && data.archive) {
         setSelectedArchive(data.archive);
         setShowDetailModal(true);
       }
     } catch (error) {
       console.error("Failed to view archive:", error);
-      showToast("获取详情失败", "error");
+      if (isMountedRef.current) {
+        showToast("获取详情失败", "error");
+      }
     }
   };
 
   const deleteArchive = async (archiveId: string) => {
     if (!confirm("确定要删除这个归档吗？")) return;
+    if (!isMountedRef.current) return;
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/archive/${archiveId}`, {
         method: "DELETE",
       });
-      if (response.ok) {
+      if (isMountedRef.current && response.ok) {
         setArchives((prev) => prev.filter((a) => a.id !== archiveId));
         showToast("归档已删除", "success");
       }
     } catch {
-      showToast("删除失败", "error");
+      if (isMountedRef.current) {
+        showToast("删除失败", "error");
+      }
     }
   };
 

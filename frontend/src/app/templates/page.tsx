@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import SidebarNav from "@/components/SidebarNav";
 import { ToastProvider, useToast } from "@/components/Toast";
@@ -62,13 +62,17 @@ function TemplatesPageContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     fetchTemplateLibrary();
     fetchSavedTemplates();
+    return () => { isMountedRef.current = false; };
   }, [activeTab]);
 
   const fetchTemplateLibrary = async () => {
+    if (!isMountedRef.current) return;
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/templates/library/${activeTab}`);
@@ -76,44 +80,52 @@ function TemplatesPageContent() {
         throw new Error(`API error: ${response.status}`);
       }
       const data = await response.json();
-      if (data.success) {
+      if (isMountedRef.current && data.success) {
         setLibraryTemplates(data.templates || {});
       }
     } catch (error) {
       console.error("Failed to fetch template library:", error);
-      showToast("获取模板库失败", "error");
+      if (isMountedRef.current) {
+        showToast("获取模板库失败", "error");
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) setLoading(false);
     }
   };
 
   const fetchSavedTemplates = async () => {
+    if (!isMountedRef.current) return;
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/templates/${activeTab}`);
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
       const data = await response.json();
-      if (data.templates) {
+      if (isMountedRef.current && data.templates) {
         setSavedTemplates(data.templates);
       }
     } catch (error) {
       console.error("Failed to fetch saved templates:", error);
-      showToast("获取模板列表失败", "error");
+      if (isMountedRef.current) {
+        showToast("获取模板列表失败", "error");
+      }
     }
   };
 
   const deleteTemplate = async (templateId: string) => {
+    if (!isMountedRef.current) return;
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/templates/${activeTab}/${templateId}`, {
         method: "DELETE",
       });
-      if (response.ok) {
+      if (isMountedRef.current && response.ok) {
         setSavedTemplates((prev) => prev.filter((t) => t.id !== templateId));
         showToast("模板已删除", "success");
       }
     } catch (error) {
-      showToast("删除失败", "error");
+      if (isMountedRef.current) {
+        showToast("删除失败", "error");
+      }
     }
   };
 
