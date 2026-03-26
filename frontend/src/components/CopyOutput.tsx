@@ -226,11 +226,11 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                       transition={{ type: "spring", delay: 0.2 }}
                       className="text-xs px-2 py-1 rounded-full font-medium"
                       style={{
-                        backgroundColor: result.review.passed ? "#DCFCE7" : "#FEE2E2",
-                        color: result.review.passed ? "#166534" : "#DC2626",
+                        backgroundColor: result.review?.passed ? "#DCFCE7" : "#FEE2E2",
+                        color: result.review?.passed ? "#166534" : "#DC2626",
                       }}
                     >
-                      {result.review.passed ? "✓ 审核通过" : "⚠ 有问题"}
+                      {result.review?.passed ? "✓ 审核通过" : "⚠ 有问题"}
                     </motion.span>
                   )}
                 </div>
@@ -253,7 +253,7 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() =>
-                          handleCopy(result.platform, `${result.title}\n\n${result.content}`)
+                          handleCopy(result.platform, `${result.title || ""}\n\n${result.content || ""}`)
                         }
                         className="text-sm px-4 py-1.5 rounded-lg font-medium transition-all"
                         style={{
@@ -435,17 +435,17 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                               >
                                 <motion.div
                                   initial={{ width: 0 }}
-                                  animate={{ width: `${result.review.qualityScore * 10}%` }}
+                                  animate={{ width: `${(result.review?.qualityScore || 0) * 10}%` }}
                                   transition={{ delay: 0.8, duration: 0.5 }}
                                   className="h-full rounded-full"
-                                  style={{ backgroundColor: getScoreColor(result.review.qualityScore) }}
+                                  style={{ backgroundColor: getScoreColor(result.review?.qualityScore || 0) }}
                                 />
                               </div>
                               <span
                                 className="font-bold text-sm"
-                                style={{ color: getScoreColor(result.review.qualityScore) }}
+                                style={{ color: getScoreColor(result.review?.qualityScore || 0) }}
                               >
-                                {result.review.qualityScore.toFixed(1)}/10
+                                {(result.review?.qualityScore || 0).toFixed(1)}/10
                               </span>
                             </motion.div>
                           </div>

@@ -294,7 +294,7 @@ class LLMClient:
             response = self.anthropic_client.messages.create(**params)
             if not response.content or not response.content[0].text:
                 return "Error: Empty response from LLM"
-            return response.content[0].text
+            return response.content[0].text or "Error: Empty response from LLM"
         except Exception as e:
             logger.error(f"MiniMax generation error: {e}")
             return f"Error: {str(e)}"
@@ -324,7 +324,7 @@ class LLMClient:
             response = client.chat.completions.create(**params)
             if not response.choices or not response.choices[0].message.content:
                 return "Error: Empty response from LLM"
-            return response.choices[0].message.content
+            return response.choices[0].message.content or "Error: Empty response from LLM"
         except Exception as e:
             logger.error(f"OpenAI format generation error: {e}")
             return f"Error: {str(e)}"
@@ -349,7 +349,7 @@ class LLMClient:
             )
             if not response.choices or not response.choices[0].message.content:
                 return "Error: Empty response from LLM"
-            return response.choices[0].message.content
+            return response.choices[0].message.content or "Error: Empty response from LLM"
         except Exception as e:
             logger.error(f"Azure generation error: {e}")
             return f"Error: {str(e)}"
@@ -392,7 +392,7 @@ class LLMClient:
             if response.candidates and len(response.candidates) > 0:
                 candidate = response.candidates[0]
                 if candidate.content and candidate.content.parts:
-                    return candidate.content.parts[0].text
+                    return candidate.content.parts[0].text or "Error: Empty response from Gemini"
 
             return "Error: Empty response from Gemini"
         except ImportError:
@@ -430,7 +430,8 @@ class LLMClient:
             result = response.json()
 
             if result and "choices" in result and len(result["choices"]) > 0:
-                return result["choices"][0]["message"]["content"].replace("\n", "")
+                content = result["choices"][0]["message"]["content"]
+                return (content or "").replace("\n", "")
             else:
                 return "Error: Invalid response from Pollinations"
         except requests.exceptions.RequestException as e:
