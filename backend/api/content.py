@@ -4921,3 +4921,85 @@ async def condense_content(request: ContentCondenseRequest):
             original_length=len(request.content),
             condensed_length=request.max_length,
         )
+
+
+# ==================== 内容简报接口 ====================
+
+class ContentBriefingRequest(BaseModel):
+    """内容简报请求"""
+    product_name: str = Field(default="", description="产品名称")
+    product_description: str = Field(default="", description="产品描述")
+    selling_points: List[str] = Field(default_factory=list, description="卖点列表")
+    target_users: List[str] = Field(default_factory=list, description="目标用户列表")
+    category: str = Field(default="", description="产品类别")
+    competitors: str = Field(default="", description="竞品信息")
+    goals: str = Field(default="", description="内容目标")
+
+
+class ContentBriefingResponse(BaseModel):
+    """内容简报响应"""
+    success: bool
+    title: str
+    summary: str
+    target_audience: List[str]
+    key_messages: List[str]
+    recommended_angles: List[str]
+    platform_recommendations: Dict[str, str]
+    content_formats: List[str]
+    hashtags_suggestions: List[str]
+    posting_time_suggestions: str
+    competitors_analysis: str
+    call_to_action: str
+
+
+@router.post("/content/briefing", response_model=ContentBriefingResponse)
+async def generate_content_briefing(request: ContentBriefingRequest):
+    """
+    生成内容简报
+
+    基于产品信息生成完整的内容营销简报
+    """
+    try:
+        from backend.services.content_briefing import content_briefing_service
+
+        briefing = await content_briefing_service.generate_briefing(
+            product_name=request.product_name,
+            product_description=request.product_description,
+            selling_points=request.selling_points,
+            target_users=request.target_users,
+            category=request.category,
+            competitors=request.competitors,
+            goals=request.goals,
+        )
+
+        return ContentBriefingResponse(
+            success=True,
+            title=briefing.title,
+            summary=briefing.summary,
+            target_audience=briefing.target_audience,
+            key_messages=briefing.key_messages,
+            recommended_angles=briefing.recommended_angles,
+            platform_recommendations=briefing.platform_recommendations,
+            content_formats=briefing.content_formats,
+            hashtags_suggestions=briefing.hashtags_suggestions,
+            posting_time_suggestions=briefing.posting_time_suggestions,
+            competitors_analysis=briefing.competitors_analysis,
+            call_to_action=briefing.call_to_action,
+        )
+
+    except Exception as e:
+        logger.error(f"生成内容简报失败: {e}")
+        return ContentBriefingResponse(
+            success=False,
+            title="",
+            summary="生成失败",
+            target_audience=[],
+            key_messages=[],
+            recommended_angles=[],
+            platform_recommendations={},
+            content_formats=[],
+            hashtags_suggestions=[],
+            posting_time_suggestions="",
+            competitors_analysis="",
+            call_to_action="",
+        )
