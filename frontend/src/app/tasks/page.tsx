@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import SidebarNav from "@/components/SidebarNav";
 import { ToastProvider, useToast } from "@/components/Toast";
@@ -35,12 +35,16 @@ function TasksPageContent() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const pageSize = 20;
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     fetchTasks();
+    return () => { isMountedRef.current = false; };
   }, [filterState, page]);
 
   const fetchTasks = async () => {
+    if (!isMountedRef.current) return;
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -54,29 +58,34 @@ function TasksPageContent() {
         throw new Error(`API error: ${response.status}`);
       }
       const data = await response.json();
-      if (data.tasks) {
+      if (isMountedRef.current && data.tasks) {
         setTasks(data.tasks);
         setTotal(data.total);
       }
     } catch (error) {
       console.error("Failed to fetch tasks:", error);
-      showToast("获取任务列表失败", "error");
+      if (isMountedRef.current) {
+        showToast("获取任务列表失败", "error");
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) setLoading(false);
     }
   };
 
   const deleteTask = async (taskId: string) => {
+    if (!isMountedRef.current) return;
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/tasks/${taskId}`, {
         method: "DELETE",
       });
-      if (response.ok) {
+      if (isMountedRef.current && response.ok) {
         setTasks((prev) => prev.filter((t) => t.task_id !== taskId));
         showToast("任务已删除", "success");
       }
     } catch {
-      showToast("删除失败", "error");
+      if (isMountedRef.current) {
+        showToast("删除失败", "error");
+      }
     }
   };
 
