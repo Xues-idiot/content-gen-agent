@@ -8,6 +8,7 @@ from typing import Optional, Dict, Any, List
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
+from loguru import logger
 
 from backend.config import config
 from backend.services.llm import llm_client, LLM_PROVIDERS

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Calendar, Clock, Trash2, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { API_BASE_URL } from "@/lib/api";
 
 interface ScheduledContent {
@@ -39,8 +39,10 @@ export default function ContentCalendar({ onScheduleNew }: ContentCalendarProps)
   const [scheduledContent, setScheduledContent] = useState<ScheduledContent[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterPlatform, setFilterPlatform] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
 
   const fetchCalendar = async () => {
+    if (!isMountedRef.current) return;
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -51,17 +53,18 @@ export default function ContentCalendar({ onScheduleNew }: ContentCalendarProps)
         throw new Error(`API error: ${response.status}`);
       }
       const data = await response.json();
-      if (data.success) {
+      if (isMountedRef.current && data.success) {
         setScheduledContent(data.scheduled_content || []);
       }
     } catch (error) {
       console.error("Failed to fetch calendar:", error);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) setLoading(false);
     }
   };
 
   const deleteSchedule = async (id: string) => {
+    if (!isMountedRef.current) return;
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/schedule/${id}`, {
         method: "DELETE",
@@ -69,13 +72,16 @@ export default function ContentCalendar({ onScheduleNew }: ContentCalendarProps)
       if (!response.ok) {
         throw new Error(`删除失败: ${response.status}`);
       }
-      setScheduledContent((prev) => prev.filter((c) => c.id !== id));
+      if (isMountedRef.current) {
+        setScheduledContent((prev) => prev.filter((c) => c.id !== id));
+      }
     } catch (error) {
       console.error("Failed to delete schedule:", error);
     }
   };
 
   const markPublished = async (id: string) => {
+    if (!isMountedRef.current) return;
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/schedule/${id}/publish`, {
         method: "PUT",
@@ -83,13 +89,20 @@ export default function ContentCalendar({ onScheduleNew }: ContentCalendarProps)
       if (!response.ok) {
         throw new Error(`标记发布失败: ${response.status}`);
       }
-      setScheduledContent((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, status: "published" } : c))
-      );
+      if (isMountedRef.current) {
+        setScheduledContent((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, status: "published" } : c))
+        );
+      }
     } catch (error) {
       console.error("Failed to mark published:", error);
     }
   };
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const filteredContent = filterPlatform
     ? scheduledContent.filter((c) => c.platform === filterPlatform)
