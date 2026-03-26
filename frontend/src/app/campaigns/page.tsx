@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SidebarNav from "@/components/SidebarNav";
 import { ToastProvider, useToast } from "@/components/Toast";
@@ -49,6 +49,7 @@ function CampaignsPageContent() {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [campaignContents, setCampaignContents] = useState<CampaignContent[]>([]);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -62,7 +63,9 @@ function CampaignsPageContent() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    isMountedRef.current = true;
     fetchCampaigns();
+    return () => { isMountedRef.current = false; };
   }, [filterStatus]);
 
   useEffect(() => {
@@ -72,6 +75,7 @@ function CampaignsPageContent() {
   }, [selectedCampaign]);
 
   const fetchCampaigns = async () => {
+    if (!isMountedRef.current) return;
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -82,30 +86,35 @@ function CampaignsPageContent() {
         throw new Error(`API error: ${response.status}`);
       }
       const data = await response.json();
-      if (data.campaigns) {
+      if (isMountedRef.current && data.campaigns) {
         setCampaigns(data.campaigns);
       }
     } catch (error) {
       console.error("Failed to fetch campaigns:", error);
-      showToast("获取营销活动列表失败", "error");
+      if (isMountedRef.current) {
+        showToast("获取营销活动列表失败", "error");
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) setLoading(false);
     }
   };
 
   const fetchCampaignContents = async (campaignId: string) => {
+    if (!isMountedRef.current) return;
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/campaigns/${campaignId}`);
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
       const data = await response.json();
-      if (data.contents) {
+      if (isMountedRef.current && data.contents) {
         setCampaignContents(data.contents);
       }
     } catch (error) {
       console.error("Failed to fetch campaign contents:", error);
-      showToast("获取活动内容失败", "error");
+      if (isMountedRef.current) {
+        showToast("获取活动内容失败", "error");
+      }
     }
   };
 
@@ -115,6 +124,7 @@ function CampaignsPageContent() {
       showToast("请填写活动名称", "error");
       return;
     }
+    if (!isMountedRef.current) return;
 
     setSubmitting(true);
     try {
@@ -132,43 +142,54 @@ function CampaignsPageContent() {
       });
 
       if (response.ok) {
-        showToast("活动创建成功", "success");
-        setShowCreateModal(false);
-        setFormData({
-          name: "",
-          description: "",
-          campaign_type: "product_launch",
-          start_date: "",
-          end_date: "",
-          tags: "",
-        });
-        fetchCampaigns();
+        if (isMountedRef.current) {
+          showToast("活动创建成功", "success");
+          setShowCreateModal(false);
+          setFormData({
+            name: "",
+            description: "",
+            campaign_type: "product_launch",
+            start_date: "",
+            end_date: "",
+            tags: "",
+          });
+          fetchCampaigns();
+        }
       } else {
-        showToast("创建失败", "error");
+        if (isMountedRef.current) {
+          showToast("创建失败", "error");
+        }
       }
     } catch {
-      showToast("网络错误", "error");
+      if (isMountedRef.current) {
+        showToast("网络错误", "error");
+      }
     } finally {
-      setSubmitting(false);
+      if (isMountedRef.current) setSubmitting(false);
     }
   };
 
   const deleteCampaign = async (campaignId: string) => {
     if (!confirm("确定要删除这个活动吗？")) return;
+    if (!isMountedRef.current) return;
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/campaigns/${campaignId}`, {
         method: "DELETE",
       });
       if (response.ok) {
-        setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
-        if (selectedCampaign?.id === campaignId) {
-          setSelectedCampaign(null);
+        if (isMountedRef.current) {
+          setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
+          if (selectedCampaign?.id === campaignId) {
+            setSelectedCampaign(null);
+          }
+          showToast("活动已删除", "success");
         }
-        showToast("活动已删除", "success");
       }
     } catch {
-      showToast("删除失败", "error");
+      if (isMountedRef.current) {
+        showToast("删除失败", "error");
+      }
     }
   };
 
