@@ -4764,3 +4764,160 @@ async def get_content_history_stats():
     except Exception as e:
         logger.error(f"获取内容历史统计失败: {e}")
         raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
+
+
+# ==================== 内容再利用接口 ====================
+
+class ContentRepurposeRequest(BaseModel):
+    """内容再利用请求"""
+    content: str = Field(..., min_length=1, max_length=10000, description="原始内容")
+    source_platform: str = Field(default="xiaohongshu", description="来源平台")
+    target_platforms: List[str] = Field(..., description="目标平台列表")
+    content_type: str = Field(default="auto", description="内容类型: auto/thread/article/script")
+    preserve_key_points: bool = Field(default=True, description="是否保留关键点")
+
+
+class RepurposedContentModel(BaseModel):
+    """再利用后的内容模型"""
+    platform: str
+    content_type: str
+    title: str
+    content: str
+    key_points: List[str]
+    adaptations: List[str]
+
+
+class ContentRepurposeResponse(BaseModel):
+    """内容再利用响应"""
+    success: bool
+    repurposed_contents: List[RepurposedContentModel]
+    total: int
+
+
+class ContentToThreadRequest(BaseModel):
+    """内容扩展为Thread请求"""
+    content: str = Field(..., min_length=1, max_length=5000, description="原始内容")
+    platform: str = Field(default="weibo", description="目标平台")
+
+
+class ContentToThreadResponse(BaseModel):
+    """内容扩展为Thread响应"""
+    success: bool
+    tweets: List[str]
+    total: int
+
+
+class ContentCondenseRequest(BaseModel):
+    """内容压缩请求"""
+    content: str = Field(..., min_length=1, max_length=10000, description="原始内容")
+    max_length: int = Field(default=150, ge=50, le=500, description="最大长度")
+
+
+class ContentCondenseResponse(BaseModel):
+    """内容压缩响应"""
+    success: bool
+    condensed: str
+    original_length: int
+    condensed_length: int
+
+
+@router.post("/content/repurpose", response_model=ContentRepurposeResponse)
+async def repurpose_content(request: ContentRepurposeRequest):
+    """
+    内容跨平台再利用
+
+    将一篇内容改写成适合不同平台的版本
+    """
+    try:
+        from backend.services.content_repurposer import content_repurposer_service
+
+        results = await content_repurposer_service.repurpose_content(
+            content=request.content,
+            source_platform=request.source_platform,
+            target_platforms=request.target_platforms,
+            content_type=request.content_type,
+            preserve_key_points=request.preserve_key_points,
+        )
+
+        return ContentRepurposeResponse(
+            success=True,
+            repurposed_contents=[RepurposedContentModel(
+                platform=r.platform,
+                content_type=r.content_type,
+                title=r.title,
+                content=r.content,
+                key_points=r.key_points,
+                adaptations=r.adaptations,
+            ) for r in results],
+            total=len(results),
+        )
+
+    except Exception as e:
+        logger.error(f"内容再利用失败: {e}")
+        return ContentRepurposeResponse(
+            success=False,
+            repurposed_contents=[],
+            total=0,
+        )
+
+
+@router.post("/content/expand-thread", response_model=ContentToThreadResponse)
+async def expand_to_thread(request: ContentToThreadRequest):
+    """
+    将内容扩展为 Thread
+
+    将一篇内容改写为一个Thread（多条推文）
+    """
+    try:
+        from backend.services.content_repurposer import content_repurposer_service
+
+        tweets = content_repurposer_service.expand_to_thread(
+            content=request.content,
+            platform=request.platform,
+        )
+
+        return ContentToThreadResponse(
+            success=True,
+            tweets=tweets,
+            total=len(tweets),
+        )
+
+    except Exception as e:
+        logger.error(f"扩展为Thread失败: {e}")
+        return ContentToThreadResponse(
+            success=False,
+            tweets=[],
+            total=0,
+        )
+
+
+@router.post("/content/condense", response_model=ContentCondenseResponse)
+async def condense_content(request: ContentCondenseRequest):
+    """
+    压缩内容
+
+    将长内容压缩为简短版本
+    """
+    try:
+        from backend.services.content_repurposer import content_repurposer_service
+
+        condensed = content_repurposer_service.condense_to_brief(
+            content=request.content,
+            max_length=request.max_length,
+        )
+
+        return ContentCondenseResponse(
+            success=True,
+            condensed=condensed,
+            original_length=len(request.content),
+            condensed_length=len(condensed),
+        )
+
+    except Exception as e:
+        logger.error(f"压缩内容失败: {e}")
+        return ContentCondenseResponse(
+            success=False,
+            condensed=request.content[:request.max_length],
+            original_length=len(request.content),
+            condensed_length=request.max_length,
+        )

@@ -7,6 +7,8 @@ Vox Title A/B Test Service 模块
 - 帮助选择最佳标题
 """
 
+import json
+import re
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
@@ -240,9 +242,6 @@ class TitleABTestService:
                 return self._get_fallback_variations(content, amount)
 
             # 解析响应
-            import json
-            import re
-
             try:
                 variations_data = json.loads(response)
             except json.JSONDecodeError:
