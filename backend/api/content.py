@@ -3679,3 +3679,1088 @@ async def delete_task(task_id: str):
     except Exception as e:
         logger.error("Delete task error")
         raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
+
+
+# ==================== Hashtag 推荐接口 ====================
+
+class HashtagRequest(BaseModel):
+    """Hashtag 推荐请求"""
+    content: str = Field(..., min_length=1, max_length=5000, description="内容文本（标题+正文）")
+    platform: str = Field(default="xiaohongshu", description="目标平台")
+    amount: int = Field(default=10, ge=1, le=30, description="推荐数量")
+    product_info: Optional[Dict[str, Any]] = Field(default=None, description="产品信息")
+
+    @field_validator("platform")
+    @classmethod
+    def validate_platform(cls, v):
+        valid_platforms = {"xiaohongshu", "tiktok", "official", "friend_circle"}
+        if v not in valid_platforms:
+            raise ValueError(f"Invalid platform: {v}")
+        return v
+
+
+class HashtagInfoModel(BaseModel):
+    """Hashtag 信息模型"""
+    tag: str
+    category: str  # brand, industry, trending, emotional
+    heat_score: int  # 0-100
+    exposure: str  # 低/中/高
+    reason: str  # 推荐理由
+
+
+class HashtagCombinationModel(BaseModel):
+    """Hashtag 组合方案模型"""
+    name: str
+    description: str
+    hashtags: List[str]
+    expected_exposure: str
+    best_for: str
+
+
+class HashtagRecommendResponse(BaseModel):
+    """Hashtag 推荐响应"""
+    success: bool
+    hashtags: List[HashtagInfoModel]
+    combinations: List[HashtagCombinationModel] = Field(default_factory=list, description="推荐组合方案")
+    detected_industry: str = Field(default="", description="检测到的行业")
+
+
+class TrendingHashtagRequest(BaseModel):
+    """热门 Hashtag 请求"""
+    platform: str = Field(default="xiaohongshu", description="目标平台")
+    industry: Optional[str] = Field(default=None, description="行业分类")
+    amount: int = Field(default=10, ge=1, le=50, description="推荐数量")
+
+
+@router.post("/hashtags/recommend", response_model=HashtagRecommendResponse)
+async def recommend_hashtags(request: HashtagRequest):
+    """
+    智能推荐 Hashtag
+
+    根据内容分析自动推荐最佳 hashtag，支持：
+    - 小红书 hashtag 推荐
+    - 抖音 hashtag 推荐
+    - 公众号 hashtag 推荐
+    - 多语言混搭推荐
+    """
+    try:
+        from backend.services.hashtag import hashtag_service
+
+        # 调用服务获取推荐
+        hashtags = await hashtag_service.recommend_hashtags(
+            content=request.content,
+            platform=request.platform,
+            amount=request.amount,
+            product_info=request.product_info,
+        )
+
+        # 获取组合方案
+        tag_strings = [h.tag for h in hashtags]
+        combinations = hashtag_service.suggest_hashtag_combinations(
+            hashtags=tag_strings,
+            platform=request.platform,
+        )
+
+        # 检测行业
+        from backend.services.hashtag import hashtag_service as hs
+        industry = hs._detect_industry(request.content, request.product_info) if hasattr(hs, '_detect_industry') else ""
+
+        return HashtagRecommendResponse(
+            success=True,
+            hashtags=[HashtagInfoModel(
+                tag=h.tag,
+                category=h.category,
+                heat_score=h.heat_score,
+                exposure=h.exposure,
+                reason=h.reason,
+            ) for h in hashtags],
+            combinations=[HashtagCombinationModel(**c) for c in combinations],
+            detected_industry=industry,
+        )
+
+    except Exception as e:
+        logger.error(f"Hashtag 推荐失败: {e}")
+        return HashtagRecommendResponse(
+            success=False,
+            hashtags=[],
+            combinations=[],
+            detected_industry="",
+        )
+
+
+@router.post("/hashtags/trending", response_model=HashtagRecommendResponse)
+async def get_trending_hashtags(request: TrendingHashtagRequest):
+    """
+    获取平台热门 Hashtag
+
+    返回当前平台上最热门的 hashtag 列表
+    """
+    try:
+        from backend.services.hashtag import hashtag_service
+
+        hashtags = hashtag_service.get_trending_hashtags(
+            platform=request.platform,
+            industry=request.industry,
+            amount=request.amount,
+        )
+
+        # 获取组合方案
+        tag_strings = [h.tag for h in hashtags]
+        combinations = hashtag_service.suggest_hashtag_combinations(
+            hashtags=tag_strings,
+            platform=request.platform,
+        )
+
+        return HashtagRecommendResponse(
+            success=True,
+            hashtags=[HashtagInfoModel(
+                tag=h.tag,
+                category=h.category,
+                heat_score=h.heat_score,
+                exposure=h.exposure,
+                reason=h.reason,
+            ) for h in hashtags],
+            combinations=[HashtagCombinationModel(**c) for c in combinations],
+            detected_industry=request.industry or "通用",
+        )
+
+    except Exception as e:
+        logger.error(f"获取热门 Hashtag 失败: {e}")
+        return HashtagRecommendResponse(
+            success=False,
+            hashtags=[],
+            combinations=[],
+            detected_industry="",
+        )
+
+
+# ==================== 最佳发布时间接口 ====================
+
+class PostingTimeRequest(BaseModel):
+    """发布时间建议请求"""
+    platform: str = Field(default="xiaohongshu", description="目标平台")
+    industry: str = Field(default="通用", description="所属行业")
+    days_ahead: int = Field(default=7, ge=1, le=30, description="提前多少天建议")
+
+
+class TimeSlotModel(BaseModel):
+    """时间段模型"""
+    time: str
+    day_of_week: str
+    score: int
+    exposure: str
+    engagement: str
+    reason: str
+
+
+class PostingTimeResponse(BaseModel):
+    """发布时间建议响应"""
+    success: bool
+    platform: str
+    industry: str
+    best_times: List[TimeSlotModel]
+    worst_times: List[TimeSlotModel]
+    tips: List[str]
+
+
+class WeeklySummaryRequest(BaseModel):
+    """每周汇总请求"""
+    platform: str = Field(default="xiaohongshu", description="目标平台")
+    industry: str = Field(default="通用", description="所属行业")
+
+
+class WeeklySummaryDayModel(BaseModel):
+    """每周每日汇总模型"""
+    best_hour: str
+    best_hour_name: str
+    score: int
+    is_weekend: bool
+
+
+class WeeklySummaryResponse(BaseModel):
+    """每周汇总响应"""
+    success: bool
+    platform: str
+    industry: str
+    weekly_data: Dict[str, WeeklySummaryDayModel]
+
+
+@router.post("/posting-time/suggest", response_model=PostingTimeResponse)
+async def get_posting_time_suggestions(request: PostingTimeRequest):
+    """
+    获取最佳发布时间建议
+
+    基于平台特性和行业规律，计算并返回最佳发布时间建议
+    """
+    try:
+        from backend.services.posting_time import posting_time_service
+
+        result = posting_time_service.get_suggestions(
+            platform=request.platform,
+            industry=request.industry,
+            days_ahead=request.days_ahead,
+        )
+
+        return PostingTimeResponse(
+            success=True,
+            platform=result.platform,
+            industry=result.industry,
+            best_times=[TimeSlotModel(
+                time=slot.time,
+                day_of_week=slot.day_of_week,
+                score=slot.score,
+                exposure=slot.exposure,
+                engagement=slot.engagement,
+                reason=slot.reason,
+            ) for slot in result.best_times],
+            worst_times=[TimeSlotModel(
+                time=slot.time,
+                day_of_week=slot.day_of_week,
+                score=slot.score,
+                exposure=slot.exposure,
+                engagement=slot.engagement,
+                reason=slot.reason,
+            ) for slot in result.worst_times],
+            tips=result.tips,
+        )
+
+    except Exception as e:
+        logger.error(f"获取发布时间建议失败: {e}")
+        return PostingTimeResponse(
+            success=False,
+            platform=request.platform,
+            industry=request.industry,
+            best_times=[],
+            worst_times=[],
+            tips=["服务器错误，请稍后重试"],
+        )
+
+
+@router.post("/posting-time/weekly", response_model=WeeklySummaryResponse)
+async def get_weekly_summary(request: WeeklySummaryRequest):
+    """
+    获取每周时段汇总
+
+    返回周一到周日每天的最佳发布时间
+    """
+    try:
+        from backend.services.posting_time import posting_time_service
+
+        result = posting_time_service.get_weekly_summary(
+            platform=request.platform,
+            industry=request.industry,
+        )
+
+        return WeeklySummaryResponse(
+            success=True,
+            platform=request.platform,
+            industry=request.industry,
+            weekly_data={
+                day: WeeklySummaryDayModel(**info)
+                for day, info in result.items()
+            },
+        )
+
+    except Exception as e:
+        logger.error(f"获取每周汇总失败: {e}")
+        return WeeklySummaryResponse(
+            success=False,
+            platform=request.platform,
+            industry=request.industry,
+            weekly_data={},
+        )
+
+
+# ==================== 标题 A/B 测试接口 ====================
+
+class TitleABTestRequest(BaseModel):
+    """标题A/B测试请求"""
+    content: str = Field(..., min_length=1, max_length=5000, description="原始内容")
+    platform: str = Field(default="xiaohongshu", description="目标平台")
+    amount: int = Field(default=6, ge=3, le=12, description="生成数量")
+    product_info: Optional[Dict[str, Any]] = Field(default=None, description="产品信息")
+
+
+class TitleVariationModel(BaseModel):
+    """标题变体模型"""
+    title: str
+    style: str
+    emoji_used: bool
+    length: int
+    ctr_score: int
+    engagement_score: int
+    strengths: List[str]
+    weaknesses: List[str]
+
+
+class TitleABTestResponse(BaseModel):
+    """标题A/B测试响应"""
+    success: bool
+    variations: List[TitleVariationModel]
+    best_title: Optional[TitleVariationModel] = None
+    recommendation: str = ""
+
+
+@router.post("/title/abtest", response_model=TitleABTestResponse)
+async def generate_title_abtest(request: TitleABTestRequest):
+    """
+    生成标题 A/B 测试变体
+
+    为同一内容生成多个不同风格的标题，并提供点击率和互动率预估
+    """
+    try:
+        from backend.services.title_generator import title_abtest_service
+
+        variations = await title_abtest_service.generate_variations(
+            content=request.content,
+            platform=request.platform,
+            amount=request.amount,
+            product_info=request.product_info,
+        )
+
+        # 获取最佳标题推荐
+        comparison = title_abtest_service.compare_variations(variations)
+
+        return TitleABTestResponse(
+            success=True,
+            variations=[TitleVariationModel(
+                title=v.title,
+                style=v.style,
+                emoji_used=v.emoji_used,
+                length=v.length,
+                ctr_score=v.ctr_score,
+                engagement_score=v.engagement_score,
+                strengths=v.strengths,
+                weaknesses=v.weaknesses,
+            ) for v in variations],
+            best_title=TitleVariationModel(
+                title=comparison["best_title"].title,
+                style=comparison["best_title"].style,
+                emoji_used=comparison["best_title"].emoji_used,
+                length=comparison["best_title"].length,
+                ctr_score=comparison["best_title"].ctr_score,
+                engagement_score=comparison["best_title"].engagement_score,
+                strengths=comparison["best_title"].strengths,
+                weaknesses=comparison["best_title"].weaknesses,
+            ) if comparison.get("best_title") else None,
+            recommendation=comparison.get("recommendation", ""),
+        )
+
+    except Exception as e:
+        logger.error(f"标题A/B测试生成失败: {e}")
+        return TitleABTestResponse(
+            success=False,
+            variations=[],
+            recommendation="服务器错误，请稍后重试",
+        )
+
+
+# ==================== 内容改写/仿写接口 ====================
+
+class ContentRewriteRequest(BaseModel):
+    """内容改写请求"""
+    content: str = Field(..., min_length=1, max_length=5000, description="原始内容")
+    platform: str = Field(default="xiaohongshu", description="目标平台")
+    rewrite_style: str = Field(
+        default="variation",
+        description="改写风格: variation(变换句式), expand(扩展内容), shorten(精简内容), formal(正式化), casual(口语化)"
+    )
+    product_info: Optional[Dict[str, Any]] = Field(default=None, description="产品信息")
+
+
+class ContentRewriteResponse(BaseModel):
+    """内容改写响应"""
+    success: bool
+    original_content: str
+    rewritten_content: str
+    style_applied: str
+    changes_made: List[str]
+
+
+@router.post("/content/rewrite", response_model=ContentRewriteResponse)
+async def rewrite_content(request: ContentRewriteRequest):
+    """
+    改写/仿写内容
+
+    支持多种改写风格：变换句式、扩展内容、精简内容、正式化、口语化
+    """
+    try:
+        from backend.services.llm import llm_service
+
+        product_context = ""
+        if request.product_info:
+            product_context = f"""
+产品信息：
+- 名称：{request.product_info.get('name', '')}
+- 卖点：{', '.join(request.product_info.get('selling_points', []))}
+"""
+
+        style_descriptions = {
+            "variation": "保持相同意思但完全不同的表达方式",
+            "expand": "在原有内容基础上增加细节和描述",
+            "shorten": "精简内容，保留核心要点",
+            "formal": "改为更正式、专业的表达",
+            "casual": "改为更口语化、亲切的表达",
+        }
+
+        prompt = f"""请将以下内容进行改写。
+
+原始内容：
+{request.content}
+{product_context}
+
+改写风格：{style_descriptions.get(request.rewrite_style, '变换句式')}
+
+要求：
+1. 保持原有内容的核心信息不变
+2. 完全改变表达方式，避免重复
+3. 适合在{request.platform}平台发布
+4. 返回JSON格式，包含以下字段：
+   - rewritten_content: 改写后的内容
+   - changes_made: 说明做了哪些改变（数组形式）
+
+输出格式：
+{{"rewritten_content": "...", "changes_made": ["改变1", "改变2", ...]}}"""
+
+        response = llm_service.generate(prompt)
+
+        if response.startswith("Error:"):
+            raise Exception(response)
+
+        import json
+        import re
+
+        try:
+            result = json.loads(response)
+        except json.JSONDecodeError:
+            match = re.search(r'\{.*}', response, re.DOTALL)
+            if match:
+                result = json.loads(match.group())
+            else:
+                raise Exception("无法解析响应")
+
+        return ContentRewriteResponse(
+            success=True,
+            original_content=request.content,
+            rewritten_content=result.get("rewritten_content", request.content),
+            style_applied=request.rewrite_style,
+            changes_made=result.get("changes_made", []),
+        )
+
+    except Exception as e:
+        logger.error(f"内容改写失败: {e}")
+        return ContentRewriteResponse(
+            success=False,
+            original_content=request.content,
+            rewritten_content=request.content,
+            style_applied=request.rewrite_style,
+            changes_made=["改写失败，请稍后重试"],
+        )
+
+
+# ==================== 图片生成接口 ====================
+
+class ImageGenerateRequest(BaseModel):
+    """图片生成请求"""
+    prompt: str = Field(..., min_length=1, max_length=500, description="图片描述")
+    style: str = Field(default="modern", description="风格: modern/minimal/lifestyle/product/natural/vivid")
+    size: str = Field(default="square", description="尺寸: square/portrait/landscape/wide")
+    save_local: bool = Field(default=False, description="是否保存到本地")
+
+
+class ImageGenerateResponse(BaseModel):
+    """图片生成响应"""
+    success: bool
+    url: str
+    local_path: str = ""
+    prompt: str
+    style: str
+    width: int
+    height: int
+
+
+@router.post("/image/generate", response_model=ImageGenerateResponse)
+async def generate_image(request: ImageGenerateRequest):
+    """
+    使用 Pollinations AI 生成图片
+
+    Pollinations 是一个免费的 AI 图片生成服务
+    """
+    try:
+        from backend.tools.image_gen import ImageGenerator
+
+        generator = ImageGenerator()
+
+        if request.save_local:
+            result = generator.save_image(request.prompt, request.style, request.size)
+        else:
+            result = generator.generate_image(request.prompt, request.style, request.size)
+
+        return ImageGenerateResponse(
+            success=result.success,
+            url=result.url,
+            local_path=result.local_path,
+            prompt=result.prompt,
+            style=result.style,
+            width=result.width,
+            height=result.height,
+        )
+
+    except Exception as e:
+        logger.error(f"图片生成失败: {e}")
+        return ImageGenerateResponse(
+            success=False,
+            url="",
+            prompt=request.prompt,
+            style=request.style,
+            width=1024,
+            height=1024,
+        )
+
+
+# ==================== 多语言翻译接口 ====================
+
+class TranslationRequest(BaseModel):
+    """翻译请求"""
+    content: str = Field(..., min_length=1, max_length=5000, description="待翻译内容")
+    target_lang: str = Field(default="en", description="目标语言: en/ja/ko/es/fr/de")
+    source_lang: str = Field(default="auto", description="源语言: auto/zh/en/ja/ko")
+
+
+class TranslationResponse(BaseModel):
+    """翻译响应"""
+    success: bool
+    original: str
+    translated: str
+    source_lang: str
+    target_lang: str
+
+
+@router.post("/translate", response_model=TranslationResponse)
+async def translate_content(request: TranslationRequest):
+    """
+    多语言翻译接口
+
+    支持中文、英文、日语、韩语、西班牙语、法语、德语等
+    """
+    try:
+        from backend.services.llm import llm_service
+
+        lang_names = {
+            "en": "英文",
+            "ja": "日文",
+            "ko": "韩文",
+            "es": "西班牙文",
+            "fr": "法文",
+            "de": "德文",
+            "zh": "中文",
+        }
+
+        prompt = f"""请将以下内容翻译成{lang_names.get(request.target_lang, request.target_lang)}。
+
+原文：
+{request.content}
+
+要求：
+1. 保持原文风格和语气
+2. 符合目标语言的表达习惯
+3. 只返回翻译结果，不要解释
+
+直接输出翻译后的内容："""
+
+        translated = llm_service.generate(prompt)
+
+        if translated.startswith("Error:"):
+            raise Exception(translated)
+
+        return TranslationResponse(
+            success=True,
+            original=request.content,
+            translated=translated.strip(),
+            source_lang=request.source_lang,
+            target_lang=request.target_lang,
+        )
+
+    except Exception as e:
+        logger.error(f"翻译失败: {e}")
+        return TranslationResponse(
+            success=False,
+            original=request.content,
+            translated=request.content,
+            source_lang=request.source_lang,
+            target_lang=request.target_lang,
+        )
+
+
+# ==================== 内容模板接口 ====================
+
+class ContentTemplateRequest(BaseModel):
+    """内容模板请求"""
+    platform: str = Field(default="xiaohongshu", description="目标平台")
+    content_type: str = Field(default="product", description="内容类型: product/promotion/story/tips")
+    product_info: Optional[Dict[str, Any]] = Field(default=None, description="产品信息")
+    tone: str = Field(default="friendly", description="语气: friendly/professional/casual/humorous")
+
+
+class ContentTemplateResponse(BaseModel):
+    """内容模板响应"""
+    success: bool
+    platform: str
+    content_type: str
+    template: str
+    placeholders: List[str]
+    examples: List[str]
+
+
+@router.post("/content/template", response_model=ContentTemplateResponse)
+async def get_content_template(request: ContentTemplateRequest):
+    """
+    获取内容模板
+
+    返回适合特定平台和内容类型的文案模板
+    """
+    try:
+        from backend.services.llm import llm_service
+
+        product_context = ""
+        if request.product_info:
+            product_context = f"""
+产品信息：
+- 名称：{request.product_info.get('name', '')}
+- 描述：{request.product_info.get('description', '')}
+- 卖点：{', '.join(request.product_info.get('selling_points', []))}
+"""
+
+        tone_descriptions = {
+            "friendly": "友好、亲切、像朋友推荐",
+            "professional": "专业、正式、有权威感",
+            "casual": "轻松、随意、生活化",
+            "humorous": "幽默、风趣、有梗",
+        }
+
+        content_type_descriptions = {
+            "product": "产品种草/推荐",
+            "promotion": "促销活动/优惠信息",
+            "story": "品牌故事/用户故事",
+            "tips": "使用技巧/干货分享",
+        }
+
+        prompt = f"""请为以下场景生成一个文案模板。
+
+平台：{request.platform}
+内容类型：{content_type_descriptions.get(request.content_type, request.content_type)}
+语气风格：{tone_descriptions.get(request.tone, request.tone)}
+{product_context}
+
+要求：
+1. 提供一个完整的文案模板
+2. 用 {{placeholder}} 标记需要替换的内容
+3. 模板要适合在{request.platform}发布
+4. 提供2个使用该模板的示例
+
+返回JSON格式：
+{{"template": "模板内容...", "placeholders": ["placeholder1", "placeholder2"], "examples": ["示例1", "示例2"]}}"""
+
+        response = llm_service.generate(prompt)
+
+        if response.startswith("Error:"):
+            raise Exception(response)
+
+        import json
+        import re
+
+        try:
+            result = json.loads(response)
+        except json.JSONDecodeError:
+            match = re.search(r'\{.*}', response, re.DOTALL)
+            if match:
+                result = json.loads(match.group())
+            else:
+                raise Exception("无法解析响应")
+
+        return ContentTemplateResponse(
+            success=True,
+            platform=request.platform,
+            content_type=request.content_type,
+            template=result.get("template", ""),
+            placeholders=result.get("placeholders", []),
+            examples=result.get("examples", []),
+        )
+
+    except Exception as e:
+        logger.error(f"获取内容模板失败: {e}")
+        return ContentTemplateResponse(
+            success=False,
+            platform=request.platform,
+            content_type=request.content_type,
+            template="",
+            placeholders=[],
+            examples=[],
+        )
+
+
+# ==================== 内容质量评分接口 ====================
+
+class ContentScoreRequest(BaseModel):
+    """内容评分请求"""
+    content: str = Field(..., min_length=1, max_length=5000, description="文案内容")
+    platform: str = Field(default="xiaohongshu", description="目标平台")
+    title: str = Field(default="", description="标题")
+    tags: Optional[List[str]] = Field(default=None, description="标签列表")
+
+
+class ContentScoreResponse(BaseModel):
+    """内容评分响应"""
+    success: bool
+    overall_score: int
+    engagement_score: int
+    compliance_score: int
+    readability_score: int
+    seo_score: int
+    platform_fit_score: int
+    score_level: str  # 优秀/良好/一般/较差
+    strengths: List[str]
+    weaknesses: List[str]
+    suggestions: List[str]
+
+
+@router.post("/content/score", response_model=ContentScoreResponse)
+async def score_content(request: ContentScoreRequest):
+    """
+    内容质量评分
+
+    对文案进行多维度分析并评分：
+    - 吸引力 (engagement)
+    - 合规性 (compliance)
+    - 可读性 (readability)
+    - SEO友好度 (seo)
+    - 平台适配 (platform_fit)
+    """
+    try:
+        from backend.services.content_scorer import content_scorer_service
+
+        result = await content_scorer_service.score_content(
+            content=request.content,
+            platform=request.platform,
+            title=request.title,
+            tags=request.tags,
+        )
+
+        return ContentScoreResponse(
+            success=True,
+            overall_score=result.overall_score,
+            engagement_score=result.engagement_score,
+            compliance_score=result.compliance_score,
+            readability_score=result.readability_score,
+            seo_score=result.seo_score,
+            platform_fit_score=result.platform_fit_score,
+            score_level=content_scorer_service.get_score_level(result.overall_score),
+            strengths=result.strengths,
+            weaknesses=result.weaknesses,
+            suggestions=result.suggestions,
+        )
+
+    except Exception as e:
+        logger.error(f"内容评分失败: {e}")
+        return ContentScoreResponse(
+            success=False,
+            overall_score=0,
+            engagement_score=0,
+            compliance_score=0,
+            readability_score=0,
+            seo_score=0,
+            platform_fit_score=0,
+            score_level="错误",
+            strengths=[],
+            weaknesses=["评分服务异常"],
+            suggestions=["请稍后重试"],
+        )
+
+
+# ==================== 内容历史记录接口 ====================
+
+class ContentHistoryAddRequest(BaseModel):
+    """添加内容历史请求"""
+    platform: str = Field(..., description="平台")
+    title: str = Field(..., description="标题")
+    content: str = Field(..., description="内容")
+    tags: List[str] = Field(default_factory=list, description="标签列表")
+    product_name: str = Field(default="", description="产品名称")
+    metadata: Optional[Dict[str, Any]] = Field(default=None, description="元数据")
+    is_draft: bool = Field(default=False, description="是否为草稿")
+
+
+class ContentHistoryUpdateRequest(BaseModel):
+    """更新内容历史请求"""
+    title: Optional[str] = None
+    content: Optional[str] = None
+    tags: Optional[List[str]] = None
+    is_draft: Optional[bool] = None
+
+
+class ContentHistorySearchRequest(BaseModel):
+    """搜索内容历史请求"""
+    keyword: str = Field(default="", description="关键词")
+    platform: str = Field(default="", description="平台筛选")
+    is_draft: Optional[bool] = Field(default=None, description="草稿筛选")
+    limit: int = Field(default=20, ge=1, le=100, description="返回数量")
+
+
+class ContentHistoryRecord(BaseModel):
+    """内容历史记录模型"""
+    id: str
+    platform: str
+    title: str
+    content: str
+    tags: List[str]
+    created_at: str
+    updated_at: str
+    is_draft: bool
+    product_name: str
+    metadata: Dict[str, Any]
+
+
+class ContentHistoryResponse(BaseModel):
+    """内容历史响应"""
+    success: bool
+    records: List[ContentHistoryRecord] = Field(default_factory=list)
+    total: int = 0
+    stats: Optional[Dict[str, Any]] = None
+
+
+@router.post("/content/history", response_model=ContentHistoryResponse)
+async def add_content_history(request: ContentHistoryAddRequest):
+    """
+    添加内容历史记录
+
+    将生成的内容保存到历史记录中
+    """
+    try:
+        from backend.services.content_history import content_history_service
+
+        record_id = content_history_service.add_record(
+            platform=request.platform,
+            title=request.title,
+            content=request.content,
+            tags=request.tags,
+            product_name=request.product_name,
+            metadata=request.metadata,
+            is_draft=request.is_draft,
+        )
+
+        return ContentHistoryResponse(
+            success=True,
+            records=[ContentHistoryRecord(
+                id=record_id,
+                platform=request.platform,
+                title=request.title,
+                content=request.content,
+                tags=request.tags,
+                created_at=datetime.now().isoformat(),
+                updated_at=datetime.now().isoformat(),
+                is_draft=request.is_draft,
+                product_name=request.product_name,
+                metadata=request.metadata or {},
+            )],
+            total=1,
+        )
+
+    except Exception as e:
+        logger.error(f"添加内容历史失败: {e}")
+        return ContentHistoryResponse(
+            success=False,
+            records=[],
+            total=0,
+        )
+
+
+@router.get("/content/history", response_model=ContentHistoryResponse)
+async def get_content_history(
+    keyword: str = Query(default="", description="关键词搜索"),
+    platform: str = Query(default="", description="平台筛选"),
+    is_draft: Optional[bool] = Query(default=None, description="草稿筛选"),
+    limit: int = Query(default=20, ge=1, le=100, description="返回数量"),
+):
+    """
+    获取内容历史记录
+
+    支持关键词搜索、平台筛选、草稿筛选
+    """
+    try:
+        from backend.services.content_history import content_history_service
+
+        records = content_history_service.search_records(
+            keyword=keyword,
+            platform=platform,
+            is_draft=is_draft,
+            limit=limit,
+        )
+
+        return ContentHistoryResponse(
+            success=True,
+            records=[ContentHistoryRecord(
+                id=r.id,
+                platform=r.platform,
+                title=r.title,
+                content=r.content,
+                tags=r.tags,
+                created_at=r.created_at,
+                updated_at=r.updated_at,
+                is_draft=r.is_draft,
+                product_name=r.product_name,
+                metadata=r.metadata or {},
+            ) for r in records],
+            total=len(records),
+            stats=content_history_service.get_stats(),
+        )
+
+    except Exception as e:
+        logger.error(f"获取内容历史失败: {e}")
+        return ContentHistoryResponse(
+            success=False,
+            records=[],
+            total=0,
+        )
+
+
+@router.get("/content/history/{record_id}", response_model=ContentHistoryResponse)
+async def get_content_history_record(record_id: str):
+    """
+    获取单条内容历史记录
+
+    根据ID获取详细内容
+    """
+    try:
+        from backend.services.content_history import content_history_service
+
+        record = content_history_service.get_record(record_id)
+
+        if not record:
+            raise HTTPException(status_code=404, detail="记录不存在")
+
+        return ContentHistoryResponse(
+            success=True,
+            records=[ContentHistoryRecord(
+                id=record.id,
+                platform=record.platform,
+                title=record.title,
+                content=record.content,
+                tags=record.tags,
+                created_at=record.created_at,
+                updated_at=record.updated_at,
+                is_draft=record.is_draft,
+                product_name=record.product_name,
+                metadata=record.metadata or {},
+            )],
+            total=1,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取内容历史记录失败: {e}")
+        return ContentHistoryResponse(
+            success=False,
+            records=[],
+            total=0,
+        )
+
+
+@router.put("/content/history/{record_id}", response_model=ContentHistoryResponse)
+async def update_content_history_record(
+    record_id: str,
+    request: ContentHistoryUpdateRequest,
+):
+    """
+    更新内容历史记录
+
+    更新指定记录的标题、内容、标签等
+    """
+    try:
+        from backend.services.content_history import content_history_service
+
+        success = content_history_service.update_record(
+            record_id=record_id,
+            title=request.title,
+            content=request.content,
+            tags=request.tags,
+            is_draft=request.is_draft,
+        )
+
+        if not success:
+            raise HTTPException(status_code=404, detail="记录不存在")
+
+        record = content_history_service.get_record(record_id)
+
+        return ContentHistoryResponse(
+            success=True,
+            records=[ContentHistoryRecord(
+                id=record.id,
+                platform=record.platform,
+                title=record.title,
+                content=record.content,
+                tags=record.tags,
+                created_at=record.created_at,
+                updated_at=record.updated_at,
+                is_draft=record.is_draft,
+                product_name=record.product_name,
+                metadata=record.metadata or {},
+            )] if record else [],
+            total=1 if record else 0,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"更新内容历史失败: {e}")
+        return ContentHistoryResponse(
+            success=False,
+            records=[],
+            total=0,
+        )
+
+
+@router.delete("/content/history/{record_id}")
+async def delete_content_history_record(record_id: str):
+    """
+    删除内容历史记录
+
+    删除指定的 历史记录
+    """
+    try:
+        from backend.services.content_history import content_history_service
+
+        success = content_history_service.delete_record(record_id)
+
+        if not success:
+            raise HTTPException(status_code=404, detail="记录不存在")
+
+        return {"success": True, "message": "记录已删除"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"删除内容历史失败: {e}")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
+
+
+@router.get("/content/history/stats/summary")
+async def get_content_history_stats():
+    """
+    获取内容历史统计信息
+
+    返回总数、草稿数、已发布数、各平台统计
+    """
+    try:
+        from backend.services.content_history import content_history_service
+
+        stats = content_history_service.get_stats()
+
+        return {
+            "success": True,
+            "stats": stats,
+        }
+
+    except Exception as e:
+        logger.error(f"获取内容历史统计失败: {e}")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")

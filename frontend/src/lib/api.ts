@@ -474,3 +474,321 @@ export const generateSubtitle = (request: SubtitleGenerateRequest) => api.genera
 export const combineVideos = (request: VideoCombineRequest) => api.combineVideos(request);
 export const generateVideo = (request: VideoGenerateRequest) => api.generateVideo(request);
 export const getAvailableVoices = () => api.getAvailableVoices();
+
+// ============= Hashtag Types =============
+
+export interface HashtagInfo {
+  tag: string;
+  category: 'brand' | 'industry' | 'trending' | 'emotional';
+  heat_score: number;
+  exposure: '低' | '中' | '高';
+  reason: string;
+}
+
+export interface HashtagCombination {
+  name: string;
+  description: string;
+  hashtags: string[];
+  expected_exposure: '低' | '中' | '高';
+  best_for: string;
+}
+
+export interface HashtagRecommendRequest {
+  content: string;
+  platform: string;
+  amount?: number;
+  product_info?: ProductInput;
+}
+
+export interface HashtagRecommendResponse {
+  success: boolean;
+  hashtags: HashtagInfo[];
+  combinations: HashtagCombination[];
+  detected_industry: string;
+}
+
+export interface TrendingHashtagRequest {
+  platform: string;
+  industry?: string;
+  amount?: number;
+}
+
+// ============= Hashtag API Methods =============
+
+export const recommendHashtags = async (request: HashtagRecommendRequest): Promise<HashtagRecommendResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/hashtags/recommend`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
+};
+
+export const getTrendingHashtags = async (request: TrendingHashtagRequest): Promise<HashtagRecommendResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/hashtags/trending`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
+};
+
+// ============= Image Generation Types =============
+
+export interface ImageGenerateRequest {
+  prompt: string;
+  style?: string;
+  size?: string;
+  save_local?: boolean;
+}
+
+export interface ImageGenerateResponse {
+  success: boolean;
+  url: string;
+  local_path: string;
+  prompt: string;
+  style: string;
+  width: number;
+  height: number;
+}
+
+// ============= Image Generation API =============
+
+export const generateImage = async (request: ImageGenerateRequest): Promise<ImageGenerateResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/image/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
+};
+
+// ============= Translation Types =============
+
+export interface TranslationRequest {
+  content: string;
+  target_lang: string;
+  source_lang?: string;
+}
+
+export interface TranslationResponse {
+  success: boolean;
+  original: string;
+  translated: string;
+  source_lang: string;
+  target_lang: string;
+}
+
+// ============= Translation API =============
+
+export const translateContent = async (request: TranslationRequest): Promise<TranslationResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/translate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
+};
+
+// ============= Content Template Types =============
+
+export interface ContentTemplateRequest {
+  platform: string;
+  content_type: string;
+  tone?: string;
+  product_info?: ProductInput;
+}
+
+export interface ContentTemplateResponse {
+  success: boolean;
+  platform: string;
+  content_type: string;
+  template: string;
+  placeholders: string[];
+  examples: string[];
+}
+
+// ============= Content Template API =============
+
+export const getContentTemplate = async (request: ContentTemplateRequest): Promise<ContentTemplateResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/content/template`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
+};
+
+// ============= Content Score Types =============
+
+export interface ContentScoreRequest {
+  content: string;
+  platform?: string;
+  title?: string;
+  tags?: string[];
+}
+
+export interface ContentScoreResponse {
+  success: boolean;
+  overall_score: number;
+  engagement_score: number;
+  compliance_score: number;
+  readability_score: number;
+  seo_score: number;
+  platform_fit_score: number;
+  score_level: string;
+  strengths: string[];
+  weaknesses: string[];
+  suggestions: string[];
+}
+
+// ============= Content Score API =============
+
+export const scoreContent = async (request: ContentScoreRequest): Promise<ContentScoreResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/content/score`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
+};
+
+// ============= Content History Types =============
+
+export interface ContentHistoryRecord {
+  id: string;
+  platform: string;
+  title: string;
+  content: string;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+  is_draft: boolean;
+  product_name: string;
+  metadata: Record<string, any>;
+}
+
+export interface ContentHistoryStats {
+  total: number;
+  drafts: number;
+  published: number;
+  platforms: string[];
+}
+
+export interface ContentHistoryAddRequest {
+  platform: string;
+  title: string;
+  content: string;
+  tags?: string[];
+  product_name?: string;
+  metadata?: Record<string, any>;
+  is_draft?: boolean;
+}
+
+export interface ContentHistoryUpdateRequest {
+  title?: string;
+  content?: string;
+  tags?: string[];
+  is_draft?: boolean;
+}
+
+export interface ContentHistoryResponse {
+  success: boolean;
+  records: ContentHistoryRecord[];
+  total: number;
+  stats?: ContentHistoryStats;
+}
+
+// ============= Content History API =============
+
+export const addContentHistory = async (request: ContentHistoryAddRequest): Promise<ContentHistoryResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/content/history`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
+};
+
+export const getContentHistory = async (params?: {
+  keyword?: string;
+  platform?: string;
+  is_draft?: boolean;
+  limit?: number;
+}): Promise<ContentHistoryResponse> => {
+  const searchParams = new URLSearchParams();
+  if (params?.keyword) searchParams.append("keyword", params.keyword);
+  if (params?.platform) searchParams.append("platform", params.platform);
+  if (params?.is_draft !== undefined && params?.is_draft !== null) {
+    searchParams.append("is_draft", String(params.is_draft));
+  }
+  if (params?.limit) searchParams.append("limit", String(params.limit));
+
+  const response = await fetch(`${API_BASE_URL}/api/v1/content/history?${searchParams}`);
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
+};
+
+export const getContentHistoryRecord = async (recordId: string): Promise<ContentHistoryResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/content/history/${recordId}`);
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
+};
+
+export const updateContentHistoryRecord = async (
+  recordId: string,
+  request: ContentHistoryUpdateRequest
+): Promise<ContentHistoryResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/content/history/${recordId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
+};
+
+export const deleteContentHistoryRecord = async (recordId: string): Promise<{ success: boolean; message: string }> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/content/history/${recordId}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
+};
+
+export const getContentHistoryStats = async (): Promise<{ success: boolean; stats: ContentHistoryStats }> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/content/history/stats/summary`);
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
+};

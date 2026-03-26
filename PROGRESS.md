@@ -1477,3 +1477,63 @@ content-gen-agent/
 - 前端页面: 10个 ✓
 - 组件: 13个 ✓
 - TypeScript: 无错误 ✓
+
+---
+
+## CRIS 循环 #2 (2026-03-26)
+
+### 巡检结果
+- [hashtag.py] ✅ 正常
+- [posting_time.py] ✅ 正常
+- [title_generator.py] ✅ 正常
+- [content_scorer.py] ✅ 正常
+- [content_history.py] ✅ 正常 (新增)
+- [image_gen.py] ✅ Pollinations API 已支持
+
+### Bug 发现
+- 无新 Bug 发现
+- 原有功能检查通过
+
+### 优化项
+- content_scorer.py: 将 `import json` 和 `import re` 从函数级移到模块级
+
+### 新功能
+- [内容历史记录服务] backend/services/content_history.py - ContentHistoryService
+  - add_record: 添加内容记录
+  - search_records: 关键词/平台/草稿筛选
+  - update_record: 更新记录
+  - delete_record: 删除记录
+  - get_stats: 统计信息
+- [内容历史 API] backend/api/content.py (新增6个端点)
+  - POST /api/v1/content/history - 添加记录
+  - GET /api/v1/content/history - 搜索记录
+  - GET /api/v1/content/history/{id} - 获取单条
+  - PUT /api/v1/content/history/{id} - 更新记录
+  - DELETE /api/v1/content/history/{id} - 删除记录
+  - GET /api/v1/content/history/stats/summary - 统计
+- [内容历史组件] frontend/src/components/ContentHistory.tsx
+  - 搜索过滤 (关键词/平台/草稿状态)
+  - 统计概览 (总计/草稿/已发布)
+  - 记录列表展示
+  - 编辑/删除/加载到编辑器功能
+- [前端 API] frontend/src/lib/api.ts
+  - ContentHistory API 方法
+
+### 结论
+- 继续下一轮
+
+---
+
+## CRIS 循环 #3 (2026-03-26)
+
+### Phase 1: 巡检
+
+#### 代码质量检查
+- API URL 硬编码检查: ✅ 无重复 (已统一使用 API_BASE_URL)
+- isMountedRef 保护检查: ✅ 11个组件已添加
+- Python 导入检查: ✅ 模块级导入正常
+
+#### 审查结论
+- 代码质量: 良好
+- 无紧急 Bug
+- 继续下一阶段
