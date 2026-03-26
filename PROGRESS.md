@@ -1537,3 +1537,29 @@ content-gen-agent/
 - 代码质量: 良好
 - 无紧急 Bug
 - 继续下一阶段
+
+### Phase 2: Bug Hunt
+- 检查新添加的组件: ContentHistory.tsx ✅ 有 isMountedRef 和 response.ok 检查
+- 检查新添加的服务: content_history.py ✅ 无明显 Bug
+
+### Phase 3: 优化
+- title_generator.py: 将 `import json` 和 `import re` 从函数级移到模块级
+
+### Phase 4: 新功能
+- [内容再利用服务] backend/services/content_repurposer.py
+  - repurpose_content: 跨平台内容改写
+  - expand_to_thread: 扩展为Thread
+  - condense_to_brief: 内容压缩
+- [再利用 API] backend/api/content.py (新增3个端点)
+  - POST /api/v1/content/repurpose: 内容的跨平台再利用
+  - POST /api/v1/content/expand-thread: 将内容扩展为Thread
+  - POST /api/v1/content/condense: 压缩内容
+
+### 结论
+- 继续下一轮
+
+---
+
+## CRIS 循环 #4 (2026-03-26)
+
+### Phase 1: 巡检
