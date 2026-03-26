@@ -360,8 +360,9 @@ class ApiClient {
       platform,
       title,
       content,
-      tags: tags.join(","),
     });
+    // Append tags individually for proper array handling
+    tags.forEach(tag => params.append("tags", tag));
     if (scheduledTime) params.append("scheduled_time", scheduledTime);
 
     const response = await fetch(`${this.baseUrl}/api/v1/schedule?${params}`, {
