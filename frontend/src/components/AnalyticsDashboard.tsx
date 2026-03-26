@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { BarChart3, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { API_BASE_URL } from "@/lib/api";
 
 interface PlatformStats {
@@ -49,8 +49,10 @@ export default function AnalyticsDashboard() {
   const [comparison, setComparison] = useState<PlatformComparison[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "trends" | "compare">("overview");
+  const isMountedRef = useRef(true);
 
   const fetchAnalytics = async () => {
+    if (!isMountedRef.current) return;
     setLoading(true);
     try {
       const [statsRes, trendsRes, compareRes] = await Promise.all([
@@ -63,32 +65,38 @@ export default function AnalyticsDashboard() {
         throw new Error(`API error: ${statsRes.status || trendsRes.status || compareRes.status}`);
       }
 
+      if (!isMountedRef.current) return;
+
       const statsData = await statsRes.json();
       const trendsData = await trendsRes.json();
       const compareData = await compareRes.json();
 
-      if (statsData.success) {
-        setPlatformStats(statsData);
-      }
-      if (trendsData.success) {
-        setTrends(trendsData.trends || []);
-      }
-      if (compareData.success) {
-        const { best_platform, ...rest } = compareData;
-        setComparison(Object.entries(rest).map(([platform, data]) => ({
-          platform,
-          ...(data as object),
-        })) as PlatformComparison[]);
+      if (isMountedRef.current) {
+        if (statsData.success) {
+          setPlatformStats(statsData);
+        }
+        if (trendsData.success) {
+          setTrends(trendsData.trends || []);
+        }
+        if (compareData.success) {
+          const { best_platform, ...rest } = compareData;
+          setComparison(Object.entries(rest).map(([platform, data]) => ({
+            platform,
+            ...(data as object),
+          })) as PlatformComparison[]);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch analytics:", error);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) setLoading(false);
     }
   };
 
   useEffect(() => {
+    isMountedRef.current = true;
     fetchAnalytics();
+    return () => { isMountedRef.current = false; };
   }, []);
 
   const container = {
