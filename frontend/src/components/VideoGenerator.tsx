@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   searchVideoMaterials,
@@ -86,13 +86,20 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
   const [bgmVolume, setBgmVolume] = useState(0.3);
   const [finalVideoPath, setFinalVideoPath] = useState<string>("");
 
+  // Unmount protection
+  const isMountedRef = useRef(true);
+
   // Load voices on mount
   React.useEffect(() => {
+    isMountedRef.current = true;
     let ignore = false;
     getAvailableVoices().then((res) => {
       if (!ignore && res.success) setVoices(res.voices);
     }).catch(() => {});
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+      isMountedRef.current = false;
+    };
   }, []);
 
   const handleSearch = async () => {
@@ -100,6 +107,7 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
       setError("请输入至少一个搜索关键词");
       return;
     }
+    if (!isMountedRef.current) return;
     setLoading(true);
     setError(null);
     try {
@@ -109,14 +117,18 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
         source: videoSource,
       };
       const response = await searchVideoMaterials(request);
-      setSearchResults(response.videos);
-      if (response.videos.length === 0) {
-        setError("未找到相关视频素材");
+      if (isMountedRef.current) {
+        setSearchResults(response.videos);
+        if (response.videos.length === 0) {
+          setError("未找到相关视频素材");
+        }
       }
     } catch (e) {
-      setError(`搜索失败: ${e instanceof Error ? e.message : "未知错误"}`);
+      if (isMountedRef.current) {
+        setError(`搜索失败: ${e instanceof Error ? e.message : "未知错误"}`);
+      }
     }
-    setLoading(false);
+    if (isMountedRef.current) setLoading(false);
   };
 
   const handleDownload = async () => {
@@ -124,20 +136,25 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
       setError("请选择至少一个视频");
       return;
     }
+    if (!isMountedRef.current) return;
     setLoading(true);
     setError(null);
     try {
       const response = await downloadVideos({ video_urls: selectedVideos });
-      if (response.success && response.video_paths.length > 0) {
-        setDownloadedVideoPaths(response.video_paths);
-        setStep("audio");
-      } else {
-        setError("视频下载失败");
+      if (isMountedRef.current) {
+        if (response.success && response.video_paths.length > 0) {
+          setDownloadedVideoPaths(response.video_paths);
+          setStep("audio");
+        } else {
+          setError("视频下载失败");
+        }
       }
     } catch (e) {
-      setError(`下载失败: ${e instanceof Error ? e.message : "未知错误"}`);
+      if (isMountedRef.current) {
+        setError(`下载失败: ${e instanceof Error ? e.message : "未知错误"}`);
+      }
     }
-    setLoading(false);
+    if (isMountedRef.current) setLoading(false);
   };
 
   const handleGenerateAudio = async () => {
@@ -145,6 +162,7 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
       setError("请提供要转换的文本脚本");
       return;
     }
+    if (!isMountedRef.current) return;
     setLoading(true);
     setError(null);
     try {
@@ -153,16 +171,20 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
         voice_name: selectedVoice,
         voice_rate: voiceRate,
       });
-      setAudioResult(response);
-      if (response.success) {
-        setStep("combine");
-      } else {
-        setError("音频生成失败");
+      if (isMountedRef.current) {
+        setAudioResult(response);
+        if (response.success) {
+          setStep("combine");
+        } else {
+          setError("音频生成失败");
+        }
       }
     } catch (e) {
-      setError(`音频生成失败: ${e instanceof Error ? e.message : "未知错误"}`);
+      if (isMountedRef.current) {
+        setError(`音频生成失败: ${e instanceof Error ? e.message : "未知错误"}`);
+      }
     }
-    setLoading(false);
+    if (isMountedRef.current) setLoading(false);
   };
 
   const handleCombine = async () => {
@@ -170,6 +192,7 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
       setError("缺少视频或音频");
       return;
     }
+    if (!isMountedRef.current) return;
     setLoading(true);
     setError(null);
     try {
@@ -182,16 +205,20 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
         concat_mode: concatMode,
         transition_mode: transitionMode,
       });
-      if (response.success && response.video_path) {
-        setCombinedVideoPath(response.video_path);
-        setStep("generate");
-      } else {
-        setError("视频合并失败");
+      if (isMountedRef.current) {
+        if (response.success && response.video_path) {
+          setCombinedVideoPath(response.video_path);
+          setStep("generate");
+        } else {
+          setError("视频合并失败");
+        }
       }
     } catch (e) {
-      setError(`合并失败: ${e instanceof Error ? e.message : "未知错误"}`);
+      if (isMountedRef.current) {
+        setError(`合并失败: ${e instanceof Error ? e.message : "未知错误"}`);
+      }
     }
-    setLoading(false);
+    if (isMountedRef.current) setLoading(false);
   };
 
   const handleGenerateFinal = async () => {
@@ -199,6 +226,7 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
       setError("缺少视频或音频");
       return;
     }
+    if (!isMountedRef.current) return;
     setLoading(true);
     setError(null);
     try {
@@ -226,16 +254,20 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
         bgm_type: bgmType,
         bgm_volume: bgmVolume,
       });
-      if (response.success) {
-        setFinalVideoPath(response.video_path);
-        setStep("done");
-      } else {
-        setError(response.error || "视频生成失败");
+      if (isMountedRef.current) {
+        if (response.success) {
+          setFinalVideoPath(response.video_path);
+          setStep("done");
+        } else {
+          setError(response.error || "视频生成失败");
+        }
       }
     } catch (e) {
-      setError(`生成失败: ${e instanceof Error ? e.message : "未知错误"}`);
+      if (isMountedRef.current) {
+        setError(`生成失败: ${e instanceof Error ? e.message : "未知错误"}`);
+      }
     }
-    setLoading(false);
+    if (isMountedRef.current) setLoading(false);
   };
 
   const toggleVideoSelection = (url: string) => {
