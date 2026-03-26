@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 type ToastType = "success" | "error" | "warning" | "info";
@@ -27,15 +27,26 @@ export function useToast() {
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const timeoutIdsRef = useRef<NodeJS.Timeout[]>([]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach(clearTimeout);
+      timeoutIdsRef.current = [];
+    };
+  }, []);
 
   const showToast = useCallback((message: string, type: ToastType = "info") => {
     const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     setToasts((prev) => [...prev, { id, message, type }]);
 
-    // Auto remove after 3 seconds
-    setTimeout(() => {
+    // Auto remove after 3 seconds - track the timeout ID for cleanup
+    const timeoutId = setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
+      timeoutIdsRef.current = timeoutIdsRef.current.filter(t => t !== timeoutId);
     }, 3000);
+    timeoutIdsRef.current.push(timeoutId);
   }, []);
 
   const removeToast = useCallback((id: string) => {

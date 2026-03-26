@@ -77,6 +77,7 @@ export interface HealthStatus {
   version: string;
   api_key_configured: boolean;
   tavily_api_configured?: boolean;
+  llm_provider?: string;
 }
 
 export interface ApiError {
@@ -144,6 +145,8 @@ export interface VideoCombineRequest {
   audio_path: string;
   output_path?: string;
   video_aspect: string;
+  video_length?: string;
+  video_clip_duration?: number;
   concat_mode: string;
   transition_mode: string;
 }
@@ -159,6 +162,8 @@ export interface VideoGenerateRequest {
   subtitle_path?: string;
   output_path?: string;
   video_aspect: string;
+  video_length?: string;
+  video_clip_duration?: number;
   subtitle_enabled: boolean;
   bgm_type: string;
   bgm_volume: number;
@@ -195,7 +200,11 @@ class ApiClient {
       const error: ApiError = await response.json().catch(() => ({ error: "Unknown error" }));
       throw new Error(error.error || `API Error: ${response.status}`);
     }
-    return response.json();
+    const text = await response.text();
+    if (!text) {
+      return {} as T;
+    }
+    return JSON.parse(text) as T;
   }
 
   async generateContent(request: ContentRequest): Promise<ContentResponse> {
@@ -237,7 +246,9 @@ class ApiClient {
         method: "GET",
         signal: AbortSignal.timeout(3000),
       });
-      return response.ok;
+      if (!response.ok) return false;
+      const data = await response.json();
+      return data.status === "healthy";
     } catch {
       return false;
     }

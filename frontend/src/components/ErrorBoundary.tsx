@@ -40,12 +40,27 @@ export default class ErrorBoundary extends Component<Props, State> {
             <p className="text-gray-500 mb-4">
               {this.state.error?.message || "发生了未知错误"}
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-            >
-              刷新页面
-            </button>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  // Clear session storage to avoid corrupted state, then reload
+                  try { sessionStorage.clear(); } catch {}
+                  window.location.reload();
+                }}
+                className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+              >
+                刷新页面
+              </button>
+              <button
+                onClick={() => {
+                  // Navigate to home instead of reload to break potential infinite loops
+                  window.location.href = "/";
+                }}
+                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                返回首页
+              </button>
+            </div>
           </div>
         </div>
       );

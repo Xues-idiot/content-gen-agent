@@ -50,13 +50,32 @@ class VideoTransitionMode(Enum):
     SHUFFLE = "shuffle"
 
 
+class VideoLengthPreset(Enum):
+    """视频长度预设"""
+    SHORT = "short"      # 15-30秒
+    MEDIUM = "medium"    # 30-60秒
+    LONG = "long"        # 60-120秒
+    CUSTOM = "custom"    # 自定义
+
+    def get_clip_duration(self) -> int:
+        """根据预设返回片段时长（秒）"""
+        if self == VideoLengthPreset.SHORT:
+            return 3
+        elif self == VideoLengthPreset.MEDIUM:
+            return 5
+        elif self == VideoLengthPreset.LONG:
+            return 8
+        return 5  # 默认
+
+
 @dataclass
 class VideoParams:
     """视频生成参数"""
     video_aspect: VideoAspect = VideoAspect.PORTRAIT
     video_concat_mode: VideoConcatMode = VideoConcatMode.RANDOM
     video_transition_mode: VideoTransitionMode = VideoTransitionMode.FADE_IN
-    video_clip_duration: int = 5  # 每个片段最大时长
+    video_length_preset: VideoLengthPreset = VideoLengthPreset.MEDIUM  # 视频长度预设
+    video_clip_duration: int = 5  # 每个片段最大时长（当 video_length_preset 为 CUSTOM 时使用）
     n_threads: int = 2
     # 字幕参数
     subtitle_enabled: bool = True
@@ -174,7 +193,7 @@ class VideoGenerator:
             return result, len(wrapped_lines) * height
 
         except Exception as e:
-            logger.warning(f"Text wrapping failed, using original text: {e}")
+            logger.warning("Text wrapping failed, using original text")
             return text, 30
 
     def _close_clip(self, clip) -> None:
@@ -205,7 +224,7 @@ class VideoGenerator:
                 clip.clips = []
 
         except Exception as e:
-            logger.error(f"Failed to close clip: {str(e)}")
+            logger.error("Failed to close clip")
 
         del clip
         gc.collect()
@@ -259,8 +278,11 @@ class VideoGenerator:
             audio_duration = audio_clip.duration
             video_width, video_height = params.video_aspect.to_resolution()
 
-            # 每个片段的最大时长
-            max_clip_duration = params.video_clip_duration
+            # 每个片段的最大时长 - 根据预设或自定义值
+            if params.video_length_preset != VideoLengthPreset.CUSTOM:
+                max_clip_duration = params.video_length_preset.get_clip_duration()
+            else:
+                max_clip_duration = params.video_clip_duration
 
             subclipped_items = []
             for video_path in video_paths:
@@ -286,7 +308,7 @@ class VideoGenerator:
                             break
 
                 except Exception as e:
-                    logger.error(f"Failed to process video {video_path}: {e}")
+                    logger.error(f"Failed to process video {video_path}")
 
             # 随机打乱顺序
             if params.video_concat_mode == VideoConcatMode.RANDOM:
@@ -332,6 +354,21 @@ class VideoGenerator:
                         clip = clip.fadein(1.0)
                     elif transition == VideoTransitionMode.FADE_OUT:
                         clip = clip.fadeout(1.0)
+                    elif transition == VideoTransitionMode.SLIDE_IN:
+                        from moviepy.video.fx import slide_in as slide_in_fx
+                        side = random.choice(["left", "right", "top", "bottom"])
+                        clip = clip.with_effects([slide_in_fx(1.0, side)])
+                    elif transition == VideoTransitionMode.SLIDE_OUT:
+                        from moviepy.video.fx import slide_out as slide_out_fx
+                        side = random.choice(["left", "right", "top", "bottom"])
+                        clip = clip.with_effects([slide_out_fx(1.0, side)])
+                    elif transition == VideoTransitionMode.SHUFFLE:
+                        transition_funcs = [
+                            lambda c: c.fadein(1.0),
+                            lambda c: c.fadeout(1.0),
+                        ]
+                        shuffle_transition = random.choice(transition_funcs)
+                        clip = shuffle_transition(clip)
 
                     if clip.duration > max_clip_duration:
                         clip = clip.subclipped(0, max_clip_duration)
@@ -348,7 +385,7 @@ class VideoGenerator:
                     video_duration += clip.duration
 
                 except Exception as e:
-                    logger.error(f"Failed to process clip {i+1}: {e}")
+                    logger.error(f"Failed to process clip {i+1}")
 
             # 循环填充直到音频结束
             if video_duration < audio_duration and processed_clips:
@@ -392,7 +429,7 @@ class VideoGenerator:
                     os.rename(temp_next, temp_merged)
 
                 except Exception as e:
-                    logger.error(f"Failed to merge clip {i}: {e}")
+                    logger.error(f"Failed to merge clip {i}")
 
             os.rename(temp_merged, output_path)
             self._delete_files([c["path"] for c in processed_clips])
@@ -401,10 +438,10 @@ class VideoGenerator:
             return output_path
 
         except ImportError as e:
-            logger.error(f"MoviePy not installed: {e}")
+            logger.error("MoviePy not installed")
             return ""
         except Exception as e:
-            logger.error(f"Failed to combine videos: {e}")
+            logger.error("Failed to combine videos")
             return ""
 
     def generate_video(
@@ -514,7 +551,7 @@ class VideoGenerator:
                     text_clips = [create_text_clip(item) for item in sub.subtitles]
                     video_clip = CompositeVideoClip([video_clip, *text_clips])
                 except Exception as e:
-                    logger.warning(f"Failed to add subtitles: {e}")
+                    logger.warning("Failed to add subtitles")
 
             # 添加背景音乐
             bgm_file = self._get_bgm_file(params.bgm_type, params.bgm_file)
@@ -529,7 +566,7 @@ class VideoGenerator:
                     )
                     audio_clip = CompositeAudioClip([audio_clip, bgm_clip])
                 except Exception as e:
-                    logger.warning(f"Failed to add BGM: {e}")
+                    logger.warning("Failed to add BGM")
 
             # 添加音频
             video_clip = video_clip.with_audio(audio_clip)
@@ -558,11 +595,11 @@ class VideoGenerator:
             )
 
         except ImportError as e:
-            logger.error(f"MoviePy not installed: {e}")
-            return VideoResult(success=False, error=f"Missing dependency: {e}")
+            logger.error("MoviePy not installed")
+            return VideoResult(success=False, error="视频处理组件缺失，请联系管理员")
         except Exception as e:
-            logger.error(f"Failed to generate video: {e}")
-            return VideoResult(success=False, error=str(e))
+            logger.error("Failed to generate video")
+            return VideoResult(success=False, error="视频生成失败，请稍后重试")
 
     def preprocess_video_materials(
         self,
@@ -619,7 +656,7 @@ class VideoGenerator:
                     logger.success(f"Image processed: {video_file}")
 
                 except Exception as e:
-                    logger.warning(f"Failed to process image {material.url}: {e}")
+                    logger.warning(f"Failed to process image")
 
         return materials
 

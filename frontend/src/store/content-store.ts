@@ -192,6 +192,12 @@ export const useContentStore = create<ContentState>()(
     {
       name: "vox-content-storage",
       partialize: (state) => ({
+        // Persist critical state so data survives page refresh
+        product: state.product,
+        selectedPlatforms: state.selectedPlatforms,
+        copyResults: state.copyResults,
+        imageSuggestions: state.imageSuggestions,
+        marketResearch: state.marketResearch,
         history: state.history.slice(-10),
         versions: state.versions,
       }),

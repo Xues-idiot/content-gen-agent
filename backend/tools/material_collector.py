@@ -145,7 +145,7 @@ class MaterialCollector:
             logger.warning("requests library not available")
             return []
         except Exception as e:
-            logger.error(f"Pexels search failed: {e}")
+            logger.error("Pexels search failed")
             return []
 
     def search_videos_pixabay(
@@ -232,7 +232,7 @@ class MaterialCollector:
             logger.warning("requests library not available")
             return []
         except Exception as e:
-            logger.error(f"Pixabay search failed: {e}")
+            logger.error("Pixabay search failed")
             return []
 
     def search_videos(
@@ -322,7 +322,7 @@ class MaterialCollector:
         except ImportError:
             logger.warning("requests or moviepy not available")
         except Exception as e:
-            logger.error(f"Failed to download video: {e}")
+            logger.error("Failed to download video")
 
         # 下载失败，清理文件
         if os.path.exists(video_path):

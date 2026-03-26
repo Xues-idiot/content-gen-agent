@@ -105,7 +105,7 @@ class Exporter:
             json_str = json.dumps(content, ensure_ascii=False, indent=2)
             return ExportResult(success=True, content=json_str)
         except Exception as e:
-            return ExportResult(success=False, error=str(e))
+            return ExportResult(success=False, error="导出失败，请稍后重试")
 
     def export_markdown(self, content: Dict[str, Any]) -> ExportResult:
         """导出为 Markdown 格式"""
@@ -187,7 +187,7 @@ class Exporter:
             return ExportResult(success=True, content="\n".join(md_lines))
 
         except Exception as e:
-            return ExportResult(success=False, error=str(e))
+            return ExportResult(success=False, error="导出失败，请稍后重试")
 
     def export_html(self, content: Dict[str, Any]) -> ExportResult:
         """导出为 HTML 格式"""
@@ -224,7 +224,7 @@ class Exporter:
             return ExportResult(success=True, content=html)
 
         except Exception as e:
-            return ExportResult(success=False, error=str(e))
+            return ExportResult(success=False, error="导出失败，请稍后重试")
 
     def export_text(self, content: Dict[str, Any]) -> ExportResult:
         """导出为纯文本格式"""
@@ -269,7 +269,7 @@ class Exporter:
             return ExportResult(success=True, content="\n".join(lines))
 
         except Exception as e:
-            return ExportResult(success=False, error=str(e))
+            return ExportResult(success=False, error="导出失败，请稍后重试")
 
     def export(
         self,
@@ -612,7 +612,7 @@ class AdvancedExporter(Exporter):
 
             return ExportResult(success=True, content=output.getvalue())
         except Exception as e:
-            return ExportResult(success=False, error=str(e))
+            return ExportResult(success=False, error="导出失败，请稍后重试")
 
     def export_xml(self, content: Dict[str, Any]) -> ExportResult:
         """导出为 XML 格式"""
@@ -647,7 +647,7 @@ class AdvancedExporter(Exporter):
 
             return ExportResult(success=True, content="\n".join(lines))
         except Exception as e:
-            return ExportResult(success=False, error=str(e))
+            return ExportResult(success=False, error="导出失败，请稍后重试")
 
     def export_pdf_html(self, content: Dict[str, Any]) -> ExportResult:
         """导出为适合打印的HTML格式"""
@@ -687,7 +687,7 @@ class AdvancedExporter(Exporter):
             """
             return ExportResult(success=True, content=html)
         except Exception as e:
-            return ExportResult(success=False, error=str(e))
+            return ExportResult(success=False, error="导出失败，请稍后重试")
 
     def export_email_html(self, content: Dict[str, Any]) -> ExportResult:
         """导出为邮件HTML格式"""
@@ -725,7 +725,7 @@ class AdvancedExporter(Exporter):
 
             return ExportResult(success=True, content="\n".join(lines))
         except Exception as e:
-            return ExportResult(success=False, error=str(e))
+            return ExportResult(success=False, error="导出失败，请稍后重试")
 
     def _escape_xml(self, text: str) -> str:
         """转义XML特殊字符"""

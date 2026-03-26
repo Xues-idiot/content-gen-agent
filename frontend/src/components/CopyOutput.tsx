@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { copyToClipboard } from "@/lib/utils";
 
@@ -127,12 +127,25 @@ function FriendCirclePreview({ result }: { result: CopyResult }) {
 export default function CopyOutput({ results }: CopyOutputProps) {
   const [copiedPlatform, setCopiedPlatform] = useState<string | null>(null);
   const [previewPlatform, setPreviewPlatform] = useState<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleCopy = async (platform: string, text: string) => {
     const success = await copyToClipboard(text);
     if (success) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
       setCopiedPlatform(platform);
-      setTimeout(() => setCopiedPlatform(null), 2000);
+      timeoutRef.current = setTimeout(() => setCopiedPlatform(null), 2000);
     }
   };
 
@@ -277,7 +290,7 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                 {!result.success ? (
                   <div className="text-red-500 flex items-center gap-2">
                     <span>✕</span>
-                    <span>生成失败: {result.error}</span>
+                    <span>生成失败: {result.error || "未知错误"}</span>
                   </div>
                 ) : (
                   <>
@@ -438,7 +451,7 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                           </div>
 
                           {/* Violations */}
-                          {result.review.violations &&
+                          {result.review?.violations &&
                             result.review.violations.length > 0 && (
                               <div className="pt-2 border-t border-gray-200">
                                 <div className="text-sm font-medium text-red-600 mb-2 flex items-center gap-1">
@@ -461,7 +474,7 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                             )}
 
                           {/* Suggestions */}
-                          {result.review.suggestions &&
+                          {result.review?.suggestions &&
                             result.review.suggestions.length > 0 && (
                               <div className="pt-2 border-t border-gray-200">
                                 <div className="text-sm font-medium text-blue-600 mb-2 flex items-center gap-1">

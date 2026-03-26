@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { copyToClipboard } from "@/lib/utils";
 
@@ -24,12 +24,25 @@ const PLATFORM_INFO: Record<string, { name: string; icon: string; color: string 
 export default function ImagePreview({ suggestions }: ImagePreviewProps) {
   const hasSuggestions = Object.keys(suggestions).length > 0;
   const [copiedIdx, setCopiedIdx] = useState<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const copyPrompt = async (prompt: string, idx: string) => {
     const success = await copyToClipboard(prompt);
     if (success) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
       setCopiedIdx(idx);
-      setTimeout(() => setCopiedIdx(null), 2000);
+      timeoutRef.current = setTimeout(() => setCopiedIdx(null), 2000);
     }
   };
 

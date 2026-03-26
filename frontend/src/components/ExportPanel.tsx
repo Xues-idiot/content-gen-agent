@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { ToastProvider, useToast } from "@/components/Toast";
 
 interface ExportPanelProps {
   content: Record<string, any>;
@@ -17,10 +18,21 @@ const FORMAT_INFO: Record<ExportFormat, { name: string; icon: string; ext: strin
   text: { name: "纯文本", icon: "📄", ext: ".txt" },
 };
 
-export default function ExportPanel({ content, disabled = false }: ExportPanelProps) {
+function ExportPanelContent({ content, disabled }: ExportPanelProps) {
+  const { showToast } = useToast();
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("markdown");
   const [exportedContent, setExportedContent] = useState<string | null>(null);
   const [isExported, setIsExported] = useState(false);
+
+  // HTML escape utility
+  const escapeHtml = (str: string) => {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
 
   const handleExport = () => {
     if (!content || Object.keys(content).length === 0) return;
@@ -68,7 +80,25 @@ export default function ExportPanel({ content, disabled = false }: ExportPanelPr
         });
       }
     } else if (selectedFormat === "html") {
-      contentStr = `<html><body><h1>内容生成报告</h1><pre>${JSON.stringify(content, null, 2)}</pre></body></html>`;
+      // HTML export with proper escaping
+      const escapedJson = escapeHtml(JSON.stringify(content, null, 2));
+      contentStr = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>内容生成报告</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; }
+    pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>内容生成报告</h1>
+  <p><strong>生成时间:</strong> ${new Date().toLocaleString("zh-CN")}</p>
+  <h2>报告内容 (JSON)</h2>
+  <pre>${escapedJson}</pre>
+</body>
+</html>`;
     } else {
       contentStr = JSON.stringify(content, null, 2);
     }
@@ -95,9 +125,9 @@ export default function ExportPanel({ content, disabled = false }: ExportPanelPr
     if (!exportedContent) return;
     try {
       await navigator.clipboard.writeText(exportedContent);
-      alert("已复制到剪贴板");
+      showToast("已复制到剪贴板", "success");
     } catch (err) {
-      console.error("Failed to copy:", err);
+      showToast("复制失败", "error");
     }
   };
 
@@ -272,4 +302,8 @@ export default function ExportPanel({ content, disabled = false }: ExportPanelPr
       </div>
     </motion.div>
   );
+}
+
+export default function ExportPanel(props: ExportPanelProps) {
+  return <ExportPanelContent {...props} />;
 }

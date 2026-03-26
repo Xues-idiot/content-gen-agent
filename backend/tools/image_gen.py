@@ -83,8 +83,8 @@ class ImageGenerator:
                 style=style,
             )
         except Exception as e:
-            logger.error(f"Image generation failed: {e}")
-            return ImageResult(success=False, error=str(e))
+            logger.error("Image generation failed")
+            return ImageResult(success=False, error="图片生成失败，请稍后重试")
 
     def suggest_images(
         self,

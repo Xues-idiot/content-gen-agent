@@ -134,8 +134,8 @@ class ContentGraph:
             logger.info("Content generation workflow completed")
 
         except Exception as e:
-            logger.error(f"Workflow error: {e}")
-            self.state.errors.append(str(e))
+            logger.error("Workflow error")
+            self.state.errors.append("工作流执行失败，请稍后重试")
             self.state.state = WorkflowState.FAILED
 
         return self.state

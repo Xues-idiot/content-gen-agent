@@ -5,14 +5,14 @@ import { motion, AnimatePresence } from "motion/react";
 import { useContentStore } from "@/store/content-store";
 
 export default function MarketInsights() {
-  const { marketResearch, copyResults } = useContentStore();
+  const { marketResearch } = useContentStore();
 
   const hasData =
     marketResearch.insights.length > 0 ||
     marketResearch.trends.length > 0 ||
     marketResearch.competitors.length > 0;
 
-  if (!hasData || copyResults.length === 0) {
+  if (!hasData) {
     return null;
   }
 

@@ -28,6 +28,13 @@ const VIDEO_SOURCES = [
   { value: "pixabay", label: "Pixabay" },
 ];
 
+const VIDEO_LENGTH_PRESETS = [
+  { value: "short", label: "短 (15-30秒)", duration: "3秒片段" },
+  { value: "medium", label: "中 (30-60秒)", duration: "5秒片段" },
+  { value: "long", label: "长 (60-120秒)", duration: "8秒片段" },
+  { value: "custom", label: "自定义", duration: "可调片段" },
+];
+
 const TRANSITION_MODES = [
   { value: "none", label: "无" },
   { value: "fade_in", label: "淡入" },
@@ -56,8 +63,11 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
   const [searchTerms, setSearchTerms] = useState<string[]>([]);
   const [videoAspect, setVideoAspect] = useState("9:16");
   const [videoSource, setVideoSource] = useState("pexels");
+  const [videoLength, setVideoLength] = useState("medium");
+  const [videoClipDuration, setVideoClipDuration] = useState(5);
   const [searchResults, setSearchResults] = useState<VideoSearchResponse["videos"]>([]);
   const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
+  const [downloadedVideoPaths, setDownloadedVideoPaths] = useState<string[]>([]);
 
   // Audio state
   const [voices, setVoices] = useState<Voice[]>([]);
@@ -78,9 +88,11 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
 
   // Load voices on mount
   React.useEffect(() => {
+    let ignore = false;
     getAvailableVoices().then((res) => {
-      if (res.success) setVoices(res.voices);
+      if (!ignore && res.success) setVoices(res.voices);
     }).catch(() => {});
+    return () => { ignore = true; };
   }, []);
 
   const handleSearch = async () => {
@@ -117,6 +129,7 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
     try {
       const response = await downloadVideos({ video_urls: selectedVideos });
       if (response.success && response.video_paths.length > 0) {
+        setDownloadedVideoPaths(response.video_paths);
         setStep("audio");
       } else {
         setError("视频下载失败");
@@ -153,7 +166,7 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
   };
 
   const handleCombine = async () => {
-    if (selectedVideos.length === 0 || !audioResult?.audio_path) {
+    if (downloadedVideoPaths.length === 0 || !audioResult?.audio_path) {
       setError("缺少视频或音频");
       return;
     }
@@ -161,9 +174,11 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
     setError(null);
     try {
       const response = await combineVideos({
-        video_paths: selectedVideos,
+        video_paths: downloadedVideoPaths,
         audio_path: audioResult.audio_path,
         video_aspect: videoAspect,
+        video_length: videoLength,
+        video_clip_duration: videoClipDuration,
         concat_mode: concatMode,
         transition_mode: transitionMode,
       });
@@ -205,6 +220,8 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
         audio_path: audioResult.audio_path,
         subtitle_path: subtitlePath,
         video_aspect: videoAspect,
+        video_length: videoLength,
+        video_clip_duration: videoClipDuration,
         subtitle_enabled: subtitleEnabled,
         bgm_type: bgmType,
         bgm_volume: bgmVolume,
@@ -472,6 +489,43 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
             </div>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">视频时长</label>
+            <select
+              value={videoLength}
+              onChange={(e) => {
+                setVideoLength(e.target.value);
+                if (e.target.value !== "custom") {
+                  const presetMap: Record<string, number> = { short: 3, medium: 5, long: 8 };
+                  setVideoClipDuration(presetMap[e.target.value] || 5);
+                }
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+            >
+              {VIDEO_LENGTH_PRESETS.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {videoLength === "custom" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                片段时长: {videoClipDuration}秒
+              </label>
+              <input
+                type="range"
+                min="1"
+                max="30"
+                value={videoClipDuration}
+                onChange={(e) => setVideoClipDuration(parseInt(e.target.value))}
+                className="w-full"
+              />
+            </div>
+          )}
+
           <div className="bg-gray-50 rounded-lg p-3">
             <p className="text-sm text-gray-600">
               <span className="font-medium">音频时长:</span> {audioResult?.duration?.toFixed(1)}s
@@ -576,6 +630,7 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
               setStep("search");
               setFinalVideoPath("");
               setSelectedVideos([]);
+              setDownloadedVideoPaths([]);
               setSearchResults([]);
               setError(null);
             }}

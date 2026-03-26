@@ -187,16 +187,16 @@ export default function AnalyticsDashboard() {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium text-gray-700">{trend.date}</span>
                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                  trend.avg_score >= 8 ? "bg-green-100 text-green-700" :
-                  trend.avg_score >= 6 ? "bg-yellow-100 text-yellow-700" :
+                  (trend.avg_score ?? 0) >= 8 ? "bg-green-100 text-green-700" :
+                  (trend.avg_score ?? 0) >= 6 ? "bg-yellow-100 text-yellow-700" :
                   "bg-red-100 text-red-700"
                 }`}>
-                  {trend.avg_score.toFixed(1)}分
+                  {(trend.avg_score ?? 0).toFixed(1)}分
                 </span>
               </div>
               <div className="flex gap-4 text-xs text-gray-500">
                 <span>内容数: {trend.content_count}</span>
-                <span>违规率: {(trend.violation_rate * 100).toFixed(1)}%</span>
+                <span>违规率: {((trend.violation_rate ?? 0) * 100).toFixed(1)}%</span>
               </div>
               {/* Simple bar visualization */}
               <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -241,7 +241,7 @@ export default function AnalyticsDashboard() {
                     </span>
                   </div>
                   <span className="text-lg font-bold text-gray-900">
-                    {item.avg_quality.toFixed(1)}
+                    {(item.avg_quality ?? 0).toFixed(1)}
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-4 text-xs text-gray-500">
@@ -251,7 +251,7 @@ export default function AnalyticsDashboard() {
                   </div>
                   <div>
                     <span className="block text-gray-400">最高分</span>
-                    <span className="font-medium text-gray-700">{item.max_quality.toFixed(1)}</span>
+                    <span className="font-medium text-gray-700">{(item.max_quality ?? 0).toFixed(1)}</span>
                   </div>
                   <div>
                     <span className="block text-gray-400">违规数</span>
@@ -261,7 +261,7 @@ export default function AnalyticsDashboard() {
                 <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full ${colors.bg}`}
-                    style={{ width: `${item.avg_quality * 10}%` }}
+                    style={{ width: `${(item.avg_quality ?? 0) * 10}%` }}
                   />
                 </div>
               </motion.div>

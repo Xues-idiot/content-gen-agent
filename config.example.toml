@@ -7,8 +7,43 @@ version = "0.1.0"
 debug = true
 
 [llm]
+# LLM Provider: minimax, deepseek, moonshot, openai, azure, ollama, gemini, pollinations
 provider = "minimax"
 model = "MiniMax-M2.7"
+
+# DeepSeek
+deepseek_api_key = ""
+deepseek_model = "deepseek-chat"
+deepseek_base_url = "https://api.deepseek.com"
+
+# Moonshot
+moonshot_api_key = ""
+moonshot_model = "moonshot-v1-8k"
+moonshot_base_url = "https://api.moonshot.cn/v1"
+
+# OpenAI
+openai_api_key = ""
+openai_model = "gpt-4o"
+openai_base_url = "https://api.openai.com/v1"
+
+# Azure OpenAI
+azure_api_key = ""
+azure_model = "gpt-4o"
+azure_base_url = ""
+azure_api_version = "2024-02-15-preview"
+
+# Ollama (本地)
+ollama_api_key = "ollama"
+ollama_model = "llama3"
+ollama_base_url = "http://localhost:11434/v1"
+
+# Google Gemini
+gemini_api_key = ""
+gemini_model = "gemini-1.5-flash"
+
+# Pollinations (免费，无需 API Key)
+pollinations_model = "openai-fast"
+pollinations_base_url = "https://text.pollinations.ai/openai"
 
 [minimax]
 # API Key 从环境变量 MINIMAX_API_KEY 读取
@@ -18,3 +53,10 @@ base_url = "https://api.minimaxi.com/anthropic"
 [tavily]
 # Tavily API Key 从环境变量 TAVILY_API_KEY 读取
 api_key = ""
+
+# Pexels API Keys (支持多个 key 轮询使用)
+# 可以是单个字符串或字符串数组
+pexels_api_keys = ["your_pexels_api_key_here"]
+
+# Pixabay API Keys (支持多个 key 轮询使用)
+pixabay_api_keys = ["your_pixabay_api_key_here"]

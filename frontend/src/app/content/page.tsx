@@ -37,11 +37,21 @@ function ContentPageContent() {
 
   const { showToast } = useToast();
 
+  // Track mounted state to prevent setInterval updates after unmount
+  const isMountedRef = React.useRef(true);
+
   // Fetch health status on mount
   const [backendStatus, setBackendStatus] = React.useState<{
     api: boolean;
     tavily: boolean;
   }>({ api: false, tavily: false });
+
+  React.useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Loading steps for detailed progress
   const loadingSteps = [
@@ -81,16 +91,18 @@ function ContentPageContent() {
     setMarketResearch({ insights: [], trends: [], competitors: [] }); // Clear previous research
     setProgress(5);
 
-    try {
-      setProgress(10);
-      setCurrentLoadingStep(0);
+    setProgress(10);
+    setCurrentLoadingStep(0);
 
-      // Simulate progress for better UX
-      const progressInterval = setInterval(() => {
+    // Simulate progress for better UX
+    const progressInterval = setInterval(() => {
+      if (isMountedRef.current) {
         setProgress((prev) => Math.min(prev + 5, 90));
         setCurrentLoadingStep((prev) => Math.min(prev + 1, loadingSteps.length - 1));
-      }, 800);
+      }
+    }, 800);
 
+    try {
       setProgress(15);
       setCurrentLoadingStep(1);
 
@@ -111,6 +123,10 @@ function ContentPageContent() {
           platforms: selectedPlatforms,
         }),
       });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
 
       clearInterval(progressInterval);
       setProgress(80);
@@ -150,6 +166,7 @@ function ContentPageContent() {
         showToast("内容生成失败", "error");
       }
     } catch (err) {
+      clearInterval(progressInterval);
       setError(err instanceof Error ? err.message : "请求失败，请检查后端服务");
       showToast("网络错误，请检查后端服务是否运行", "error");
     } finally {

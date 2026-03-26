@@ -116,11 +116,11 @@ class Copywriter:
                 p = Platform(platform) if isinstance(platform, str) else platform
                 results[p] = self.generate(product, plan, p)
             except Exception as e:
-                logger.error(f"Failed to generate copy for {platform}: {e}")
+                logger.error(f"Failed to generate copy for {platform}")
                 results[platform] = CopyResult(
                     platform=str(platform),
                     success=False,
-                    error=str(e)
+                    error="文案生成失败，请稍后重试"
                 )
         return results
 
@@ -135,11 +135,11 @@ class Copywriter:
         try:
             return self.generate(product, plan, platform)
         except Exception as e:
-            logger.error(f"Failed to regenerate copy for {platform}: {e}")
+            logger.error(f"Failed to regenerate copy for {platform}")
             return CopyResult(
                 platform=str(platform),
                 success=False,
-                error=str(e)
+                error="文案生成失败，请稍后重试"
             )
 
     def write_xiaohongshu(

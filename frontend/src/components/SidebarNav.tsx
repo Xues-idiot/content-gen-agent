@@ -156,6 +156,7 @@ export default function SidebarNav({ children }: SidebarNavProps) {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => setMobileOpen(false)}
                 className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-colors ${
                   isActive ? "text-orange-500" : "text-gray-500"
                 }`}

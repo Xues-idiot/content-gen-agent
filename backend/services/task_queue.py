@@ -228,11 +228,11 @@ class AsyncTaskQueue:
             logger.success(f"Task completed: {task_id}")
 
         except Exception as e:
-            logger.error(f"Task failed: {task_id} - {e}")
+            logger.error(f"Task failed: {task_id}")
             self._queue.update_task(
                 task_id,
                 state=TaskState.FAILED,
-                error=str(e),
+                error="任务执行失败，请稍后重试",
             )
         finally:
             self._running_tasks.pop(task_id, None)
@@ -293,7 +293,7 @@ async def video_generate_task(
             from backend.agents.planner import ProductInfo
 
             product = ProductInfo(**params.get("product", {}))
-            copy_result = await copywriter.write_tiktok(product, params.get("plan", {}), params.get("user_profile", {}))
+            copy_result = copywriter.write_tiktok(product, params.get("plan", {}), params.get("user_profile", {}))
             video_script = copy_result.script or copy_result.content
 
         update_callback(10, step="脚本生成完成", script=video_script)
@@ -402,7 +402,7 @@ async def video_generate_task(
         }
 
     except Exception as e:
-        logger.error(f"Video generate task error: {e}")
+        logger.error("Video generate task error")
         raise
 
 
@@ -481,7 +481,7 @@ async def batch_generate_task(
         return {"results": results, "total": len(results)}
 
     except Exception as e:
-        logger.error(f"Batch generate task error: {e}")
+        logger.error("Batch generate task error")
         raise
 
 

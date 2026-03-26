@@ -10,7 +10,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 from dataclasses import asdict
 
-from fastapi import APIRouter, HTTPException, Query, Request, Body
+from fastapi import APIRouter, HTTPException, Query, Request, Body, UploadFile, File
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 
@@ -105,6 +105,7 @@ class HealthResponse(BaseModel):
     version: str
     api_key_configured: bool
     tavily_api_configured: bool = False
+    llm_provider: str = "minimax"
 
 
 class PlatformsResponse(BaseModel):
@@ -317,6 +318,7 @@ async def health():
         version=VERSION,
         api_key_configured=llm_client.validate_config(),
         tavily_api_configured=bool(config.tavily_api_key),
+        llm_provider=llm_client.provider,
     )
 
 
@@ -457,42 +459,38 @@ async def generate_content(request: Request, body: ContentRequest):
         )
 
     except ValueError as e:
-        logger.warning(f"Validation error: {e}")
+        logger.warning("Validation error")
         raise HTTPException(
             status_code=400,
             detail={
                 "error": "参数验证错误",
-                "detail": str(e),
                 "type": "validation"
             }
         )
     except TimeoutError as e:
-        logger.error(f"Generation timeout: {e}")
+        logger.error("Generation timeout")
         raise HTTPException(
             status_code=504,
             detail={
                 "error": "生成超时，请稍后重试",
-                "detail": str(e),
                 "type": "timeout"
             }
         )
     except ConnectionError as e:
-        logger.error(f"Connection error: {e}")
+        logger.error("Connection error")
         raise HTTPException(
             status_code=503,
             detail={
                 "error": "服务暂时不可用，请稍后重试",
-                "detail": str(e),
                 "type": "connection"
             }
         )
     except Exception as e:
-        logger.error(f"Generate content error: {e}")
+        logger.exception("Generate content error")
         raise HTTPException(
             status_code=500,
             detail={
                 "error": "内容生成失败，请稍后重试",
-                "detail": str(e),
                 "type": "internal"
             }
         )
@@ -571,13 +569,13 @@ async def batch_generate_content(request: Request, body: BatchGenerateRequest):
             })
 
         except Exception as e:
-            logger.error(f"Batch generate error for product {i}: {e}")
-            errors.append(f"产品{i+1}: {str(e)}")
+            logger.error("Batch generate error")
+            errors.append(f"产品{i+1}: 生成失败")
             results.append({
                 "product_index": i,
                 "product_name": product_input.name,
                 "success": False,
-                "error": str(e),
+                "error": "生成失败，请稍后重试",
             })
 
     return {
@@ -608,8 +606,8 @@ async def review_content(content: str = Body(..., embed=True)):
             "analysis": result.analysis,
         }
     except Exception as e:
-        logger.error(f"Review content error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Review content error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/stats", response_model=StatsResponse)
@@ -697,11 +695,11 @@ async def regenerate_content(body: RegenerateRequest):
         }
 
     except ValueError as e:
-        logger.warning(f"Validation error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.warning("Validation error")
+        raise HTTPException(status_code=400, detail="参数验证错误")
     except Exception as e:
-        logger.error(f"Regenerate content error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Regenerate content error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/content/ab-suggestions")
@@ -716,8 +714,8 @@ async def get_ab_test_suggestions(body: PerformanceRequest):
         suggestions = reviewer.suggest_ab_tests(body.content, body.platform)
         return suggestions
     except Exception as e:
-        logger.error(f"A/B test suggestions error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("A/B test suggestions error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/suggestions/{platform}")
@@ -727,6 +725,12 @@ async def get_platform_suggestions(platform: str, content: str):
 
     根据内容特点和目标平台返回个性化优化建议
     """
+    valid_platforms = {"xiaohongshu", "tiktok", "official", "friend_circle"}
+    if platform not in valid_platforms:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid platform. Must be one of: {', '.join(valid_platforms)}"
+        )
     try:
         reviewer = get_reviewer()
         suggestions = reviewer.suggest_platform_optimization(content, platform)
@@ -735,8 +739,8 @@ async def get_platform_suggestions(platform: str, content: str):
             "suggestions": suggestions,
         }
     except Exception as e:
-        logger.error(f"Get platform suggestions error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get platform suggestions error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/scheduling/{platform}")
@@ -746,6 +750,12 @@ async def get_scheduling_suggestions(platform: str, content_type: str = "general
 
     根据平台特性和内容类型返回最佳发布时段
     """
+    valid_platforms = {"xiaohongshu", "tiktok", "official", "friend_circle"}
+    if platform not in valid_platforms:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid platform. Must be one of: {', '.join(valid_platforms)}"
+        )
     try:
         reviewer = get_reviewer()
         scheduling = reviewer.suggest_scheduling(platform, content_type)
@@ -755,8 +765,8 @@ async def get_scheduling_suggestions(platform: str, content_type: str = "general
             "scheduling": scheduling,
         }
     except Exception as e:
-        logger.error(f"Get scheduling suggestions error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get scheduling suggestions error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/content/analytics")
@@ -771,8 +781,8 @@ async def get_content_analytics(body: AnalyticsRequest):
         summary = reviewer.generate_analytics_summary(body.copies)
         return summary
     except Exception as e:
-        logger.error(f"Get content analytics error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get content analytics error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/content/convert")
@@ -791,8 +801,8 @@ async def convert_content_format(body: ConvertFormatRequest):
         )
         return result
     except Exception as e:
-        logger.error(f"Convert content format error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Convert content format error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/content/check-duplicate")
@@ -807,8 +817,8 @@ async def check_content_duplicate(body: DuplicateCheckRequest):
         result = reviewer.check_duplicate_in_batch(body.content, body.existing_contents)
         return result
     except Exception as e:
-        logger.error(f"Check duplicate error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Check duplicate error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/seo/keywords")
@@ -823,8 +833,8 @@ async def get_seo_keywords(body: SeoKeywordsRequest):
         keywords = reviewer.extract_seo_keywords(body.content, body.platform)
         return keywords
     except Exception as e:
-        logger.error(f"Get SEO keywords error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get SEO keywords error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/content/compare")
@@ -839,8 +849,8 @@ async def compare_contents(body: CompareRequest):
         comparison = reviewer.compare_contents(body.content1, body.content2)
         return comparison
     except Exception as e:
-        logger.error(f"Compare contents error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Compare contents error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/hashtags/suggest")
@@ -858,8 +868,8 @@ async def suggest_hashtags(body: HashtagRequest):
             "hashtags": tags,
         }
     except Exception as e:
-        logger.error(f"Suggest hashtags error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Suggest hashtags error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/content/predict")
@@ -874,8 +884,8 @@ async def predict_performance(body: PerformanceRequest):
         prediction = reviewer.predict_performance(body.content, body.platform)
         return prediction
     except Exception as e:
-        logger.error(f"Predict performance error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Predict performance error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/templates")
@@ -899,8 +909,8 @@ async def save_template(body: SaveTemplateRequest):
             },
         }
     except Exception as e:
-        logger.error(f"Save template error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Save template error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/templates/{platform}")
@@ -924,8 +934,8 @@ async def get_templates(platform: str):
             ],
         }
     except Exception as e:
-        logger.error(f"Get templates error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get templates error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.delete("/templates/{platform}/{template_id}")
@@ -936,8 +946,8 @@ async def delete_template(platform: str, template_id: str):
         success = exporter.delete_template(platform, template_id)
         return {"success": success}
     except Exception as e:
-        logger.error(f"Delete template error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Delete template error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/trending/{platform}")
@@ -947,6 +957,12 @@ async def get_trending_topics(platform: str, category: str = "general"):
 
     搜索平台热门话题和趋势
     """
+    valid_platforms = {"xiaohongshu", "tiktok", "official", "friend_circle"}
+    if platform not in valid_platforms:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid platform. Must be one of: {', '.join(valid_platforms)}"
+        )
     try:
         from backend.tools.web_search import web_search_tool
         result = web_search_tool.search_trending_topics(category, platform, max_results=10)
@@ -961,8 +977,8 @@ async def get_trending_topics(platform: str, category: str = "general"):
             "error": result.error,
         }
     except Exception as e:
-        logger.error(f"Get trending topics error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get trending topics error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/hot-keywords")
@@ -977,8 +993,8 @@ async def get_hot_keywords(category: str = "general"):
         result = web_search_tool.get_hot_keywords(category, max_results=10)
         return result
     except Exception as e:
-        logger.error(f"Get hot keywords error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get hot keywords error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Content Calendar & Scheduling =====
@@ -1024,8 +1040,8 @@ async def schedule_content(
             total=len(_scheduled_content_store),
         )
     except Exception as e:
-        logger.error(f"Schedule content error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Schedule content error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/calendar", response_model=CalendarResponse)
@@ -1051,8 +1067,8 @@ async def get_content_calendar(
             total=len(filtered),
         )
     except Exception as e:
-        logger.error(f"Get calendar error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get calendar error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.delete("/schedule/{schedule_id}")
@@ -1076,8 +1092,8 @@ async def delete_scheduled_content(schedule_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Delete schedule error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Delete schedule error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.put("/schedule/{schedule_id}/publish")
@@ -1097,8 +1113,8 @@ async def mark_as_published(schedule_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Mark published error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Mark published error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Content Version Management =====
@@ -1142,8 +1158,8 @@ async def save_content_version(
 
         return {"success": True, "version": version}
     except Exception as e:
-        logger.error(f"Save version error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Save version error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/versions/{content_id}")
@@ -1162,8 +1178,8 @@ async def get_content_versions(content_id: str):
             "total": len(versions),
         }
     except Exception as e:
-        logger.error(f"Get versions error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get versions error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/versions/{content_id}/v/{version_number}")
@@ -1183,8 +1199,8 @@ async def get_specific_version(content_id: str, version_number: int):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Get specific version error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get specific version error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Platform Best Practices =====
@@ -1317,8 +1333,8 @@ async def record_content_analytics(
             "message": "Content recorded successfully",
         }
     except Exception as e:
-        logger.error(f"Record analytics error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Record analytics error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/analytics/platform")
@@ -1334,8 +1350,8 @@ async def get_analytics_by_platform(platform: Optional[str] = None):
         result = content_analytics.get_platform_analytics(platform)
         return {"success": True, **result}
     except Exception as e:
-        logger.error(f"Get platform analytics error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get platform analytics error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/analytics/trends")
@@ -1362,8 +1378,8 @@ async def get_quality_trends(days: int = 7):
             ],
         }
     except Exception as e:
-        logger.error(f"Get quality trends error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get quality trends error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/analytics/compare")
@@ -1379,8 +1395,8 @@ async def compare_platform_analytics():
         result = content_analytics.compare_platforms()
         return {"success": True, **result}
     except Exception as e:
-        logger.error(f"Compare platforms error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Compare platforms error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/analytics/health/{content_id}")
@@ -1401,8 +1417,8 @@ async def get_content_health(content_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Get content health error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get content health error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Content Improvement & Inspiration =====
@@ -1422,8 +1438,8 @@ async def get_improvement_suggestions(
         suggestions = reviewer.generate_improvement_suggestions(content, platform)
         return {"success": True, **suggestions}
     except Exception as e:
-        logger.error(f"Get improvement suggestions error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get improvement suggestions error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/content/angles")
@@ -1448,8 +1464,8 @@ async def suggest_content_angles(
         angles = reviewer.suggest_content_angles(product_info, platform)
         return {"success": True, "angles": angles}
     except Exception as e:
-        logger.error(f"Suggest content angles error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Suggest content angles error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/content/batch-review")
@@ -1472,8 +1488,8 @@ async def batch_review_contents(
             "needs_improvement": len([r for r in results if r.get("needs_improvement", False)]),
         }
     except Exception as e:
-        logger.error(f"Batch review error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Batch review error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Keyword Research =====
@@ -1507,8 +1523,8 @@ async def get_platform_keywords(
             "hot_keywords": keywords.get("hot_keywords", [])[:limit],
         }
     except Exception as e:
-        logger.error(f"Get platform keywords error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get platform keywords error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Content Template Library =====
@@ -1608,8 +1624,8 @@ async def archive_content(
         result = _content_archive.archive_content(content, name, category)
         return result
     except Exception as e:
-        logger.error(f"Archive content error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Archive content error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/archive")
@@ -1643,8 +1659,8 @@ async def get_archives(
             "summary": summary,
         }
     except Exception as e:
-        logger.error(f"Get archives error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get archives error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/archive/{archive_id}")
@@ -1665,8 +1681,8 @@ async def get_archive(archive_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Get archive error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get archive error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.delete("/archive/{archive_id}")
@@ -1687,8 +1703,8 @@ async def delete_archive(archive_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Delete archive error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Delete archive error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/archive/search")
@@ -1716,8 +1732,8 @@ async def search_archives(keyword: str):
             "total": len(results),
         }
     except Exception as e:
-        logger.error(f"Search archives error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Search archives error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Advanced Export =====
@@ -1754,8 +1770,8 @@ async def advanced_export_content(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Advanced export error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Advanced export error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Content Collaboration =====
@@ -1799,8 +1815,8 @@ async def add_content_note(
 
         return {"success": True, "note": note_obj}
     except Exception as e:
-        logger.error(f"Add note error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Add note error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/notes/{content_id}")
@@ -1818,8 +1834,8 @@ async def get_content_notes(content_id: str):
             "total": len(notes),
         }
     except Exception as e:
-        logger.error(f"Get notes error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get notes error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.delete("/notes/{note_id}")
@@ -1841,8 +1857,8 @@ async def delete_note(note_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Delete note error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Delete note error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/comments")
@@ -1872,8 +1888,8 @@ async def add_content_comment(
 
         return {"success": True, "comment": comment_obj}
     except Exception as e:
-        logger.error(f"Add comment error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Add comment error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/comments/{content_id}")
@@ -1891,8 +1907,8 @@ async def get_content_comments(content_id: str):
             "total": len(comments),
         }
     except Exception as e:
-        logger.error(f"Get comments error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get comments error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Content Batch Operations =====
@@ -1924,8 +1940,8 @@ async def batch_approve_contents(
             "total": len(results),
         }
     except Exception as e:
-        logger.error(f"Batch approve error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Batch approve error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/batch/reject")
@@ -1956,8 +1972,8 @@ async def batch_reject_contents(
             "total": len(results),
         }
     except Exception as e:
-        logger.error(f"Batch reject error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Batch reject error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/batch/export")
@@ -1996,8 +2012,8 @@ async def batch_export_contents(
             "successful": len([e for e in exported if e.get("exported", False)]),
         }
     except Exception as e:
-        logger.error(f"Batch export error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Batch export error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/batch/delete")
@@ -2027,8 +2043,8 @@ async def batch_delete_contents(
             "successful": len([d for d in deleted if d.get("deleted", False)]),
         }
     except Exception as e:
-        logger.error(f"Batch delete error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Batch delete error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Content Utilities =====
@@ -2069,8 +2085,8 @@ async def validate_content(
             "is_compliant": len([v for v in violations if v.severity == "error"]) == 0,
         }
     except Exception as e:
-        logger.error(f"Validate content error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Validate content error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/summarize")
@@ -2109,8 +2125,8 @@ async def summarize_content(
             "compression_ratio": round(len(summary) / len(content), 2) if content else 0,
         }
     except Exception as e:
-        logger.error(f"Summarize content error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Summarize content error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/expand")
@@ -2148,8 +2164,8 @@ async def expand_content(
             "expansion_ratio": round(len(expanded) / len(content), 2) if content else 0,
         }
     except Exception as e:
-        logger.error(f"Expand content error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Expand content error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/paraphrase")
@@ -2179,8 +2195,8 @@ async def paraphrase_content(
             "style": style,
         }
     except Exception as e:
-        logger.error(f"Paraphrase content error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Paraphrase content error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/word-count")
@@ -2215,8 +2231,8 @@ async def get_word_count(
             "paragraphs": analysis.get("paragraph_count", 0),
         }
     except Exception as e:
-        logger.error(f"Get word count error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get word count error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/extract/hashtags")
@@ -2243,8 +2259,8 @@ async def extract_hashtags(
             "total": len(all_tags),
         }
     except Exception as e:
-        logger.error(f"Extract hashtags error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Extract hashtags error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Style Variations & A/B Testing =====
@@ -2282,8 +2298,8 @@ async def generate_style_variations(
             "variations": variations,
         }
     except Exception as e:
-        logger.error(f"Generate variations error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Generate variations error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/copy/ab-test")
@@ -2327,8 +2343,8 @@ async def generate_ab_copies(
             ],
         }
     except Exception as e:
-        logger.error(f"Generate A/B copies error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Generate A/B copies error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/copy/regenerate-with-feedback")
@@ -2375,8 +2391,8 @@ async def regenerate_with_feedback(
             },
         }
     except Exception as e:
-        logger.error(f"Regenerate with feedback error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Regenerate with feedback error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Seasonal Copy =====
@@ -2419,8 +2435,8 @@ async def generate_seasonal_copy(
             },
         }
     except Exception as e:
-        logger.error(f"Generate seasonal copy error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Generate seasonal copy error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/seasons")
@@ -2474,8 +2490,8 @@ async def generate_summary_report(
             "generated_at": report.generated_at,
         }
     except Exception as e:
-        logger.error(f"Generate summary report error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Generate summary report error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/reports/comparison")
@@ -2500,8 +2516,8 @@ async def generate_comparison_report(
             "generated_at": report.generated_at,
         }
     except Exception as e:
-        logger.error(f"Generate comparison report error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Generate comparison report error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Campaign Management =====
@@ -2544,8 +2560,8 @@ async def create_campaign(
             },
         }
     except Exception as e:
-        logger.error(f"Create campaign error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Create campaign error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/campaigns")
@@ -2581,8 +2597,8 @@ async def get_campaigns(
             "total": len(campaigns),
         }
     except Exception as e:
-        logger.error(f"Get campaigns error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get campaigns error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/campaigns/{campaign_id}")
@@ -2631,8 +2647,8 @@ async def get_campaign(campaign_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Get campaign error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get campaign error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.put("/campaigns/{campaign_id}")
@@ -2685,8 +2701,8 @@ async def update_campaign(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Update campaign error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Update campaign error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.delete("/campaigns/{campaign_id}")
@@ -2707,8 +2723,8 @@ async def delete_campaign(campaign_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Delete campaign error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Delete campaign error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/campaigns/{campaign_id}/contents")
@@ -2751,8 +2767,8 @@ async def add_campaign_content(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Add campaign content error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Add campaign content error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/campaigns/{campaign_id}/timeline")
@@ -2773,8 +2789,8 @@ async def get_campaign_timeline(campaign_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Get campaign timeline error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get campaign timeline error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/campaigns/{campaign_id}/summary")
@@ -2795,8 +2811,8 @@ async def get_campaign_summary(campaign_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Get campaign summary error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get campaign summary error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Performance Prediction =====
@@ -2842,8 +2858,8 @@ async def predict_performance(
             },
         }
     except Exception as e:
-        logger.error(f"Predict performance error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Predict performance error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/predict/platform/{platform}")
@@ -2860,8 +2876,8 @@ async def get_platform_recommendations(platform: str):
 
         return {"success": True, **recommendations}
     except Exception as e:
-        logger.error(f"Get platform recommendations error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get platform recommendations error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.post("/predict/compare")
@@ -2909,8 +2925,8 @@ async def compare_predictions(
             "comparison": comparison,
         }
     except Exception as e:
-        logger.error(f"Compare predictions error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Compare predictions error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Video Generation =====
@@ -2959,8 +2975,8 @@ async def search_video_materials(body: VideoSearchRequest):
             total=len(all_videos),
         )
     except Exception as e:
-        logger.error(f"Search video materials error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Search video materials error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 class VideoDownloadRequest(BaseModel):
@@ -2998,8 +3014,8 @@ async def download_videos(body: VideoDownloadRequest):
             total=len(video_paths),
         )
     except Exception as e:
-        logger.error(f"Download videos error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Download videos error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 class AudioGenerateRequest(BaseModel):
@@ -3040,8 +3056,8 @@ async def generate_audio(body: AudioGenerateRequest):
             duration=duration,
         )
     except Exception as e:
-        logger.error(f"Generate audio error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Generate audio error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 class SubtitleGenerateRequest(BaseModel):
@@ -3076,8 +3092,8 @@ async def generate_subtitle(body: SubtitleGenerateRequest):
             subtitle_path=subtitle_path,
         )
     except Exception as e:
-        logger.error(f"Generate subtitle error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Generate subtitle error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 class VideoCombineRequest(BaseModel):
@@ -3086,6 +3102,8 @@ class VideoCombineRequest(BaseModel):
     audio_path: str = Field(..., description="音频文件路径")
     output_path: str = Field(default="", description="输出路径")
     video_aspect: str = Field(default="9:16", description="视频比例")
+    video_length: str = Field(default="medium", description="视频长度预设 (short/medium/long/custom)")
+    video_clip_duration: int = Field(default=5, description="每个片段最大时长（秒）")
     concat_mode: str = Field(default="random", description="拼接模式 (random/sequential)")
     transition_mode: str = Field(default="fade_in", description="转场模式")
 
@@ -3104,7 +3122,7 @@ async def combine_videos(body: VideoCombineRequest):
     将多个视频片段合并为一个视频
     """
     try:
-        from backend.tools.video_generator import VideoGenerator, VideoAspect, VideoConcatMode, VideoTransitionMode, VideoParams
+        from backend.tools.video_generator import VideoGenerator, VideoAspect, VideoConcatMode, VideoTransitionMode, VideoLengthPreset, VideoParams
 
         aspect_map = {
             "9:16": VideoAspect.PORTRAIT,
@@ -3123,9 +3141,17 @@ async def combine_videos(body: VideoCombineRequest):
             "slide_out": VideoTransitionMode.SLIDE_OUT,
             "shuffle": VideoTransitionMode.SHUFFLE,
         }
+        length_map = {
+            "short": VideoLengthPreset.SHORT,
+            "medium": VideoLengthPreset.MEDIUM,
+            "long": VideoLengthPreset.LONG,
+            "custom": VideoLengthPreset.CUSTOM,
+        }
 
         params = VideoParams(
             video_aspect=aspect_map.get(body.video_aspect, VideoAspect.PORTRAIT),
+            video_length_preset=length_map.get(body.video_length, VideoLengthPreset.MEDIUM),
+            video_clip_duration=body.video_clip_duration,
             video_concat_mode=concat_map.get(body.concat_mode, VideoConcatMode.RANDOM),
             video_transition_mode=transition_map.get(body.transition_mode, VideoTransitionMode.FADE_IN),
         )
@@ -3147,8 +3173,8 @@ async def combine_videos(body: VideoCombineRequest):
             video_path=result,
         )
     except Exception as e:
-        logger.error(f"Combine videos error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Combine videos error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 class VideoGenerateRequest(BaseModel):
@@ -3158,6 +3184,8 @@ class VideoGenerateRequest(BaseModel):
     subtitle_path: str = Field(default="", description="字幕文件路径")
     output_path: str = Field(default="", description="输出路径")
     video_aspect: str = Field(default="9:16", description="视频比例")
+    video_length: str = Field(default="medium", description="视频长度预设 (short/medium/long/custom)")
+    video_clip_duration: int = Field(default=5, ge=1, le=30, description="片段时长（当 video_length 为 custom 时使用）")
     subtitle_enabled: bool = Field(default=True, description="是否启用字幕")
     bgm_type: str = Field(default="none", description="背景音乐类型 (random/none)")
     bgm_volume: float = Field(default=0.3, description="背景音乐音量")
@@ -3179,7 +3207,7 @@ async def generate_video(body: VideoGenerateRequest):
     添加字幕和音频生成最终视频
     """
     try:
-        from backend.tools.video_generator import VideoGenerator, VideoAspect, VideoParams
+        from backend.tools.video_generator import VideoGenerator, VideoAspect, VideoLengthPreset, VideoParams
 
         aspect_map = {
             "9:16": VideoAspect.PORTRAIT,
@@ -3187,8 +3215,17 @@ async def generate_video(body: VideoGenerateRequest):
             "1:1": VideoAspect.SQUARE,
         }
 
+        length_map = {
+            "short": VideoLengthPreset.SHORT,
+            "medium": VideoLengthPreset.MEDIUM,
+            "long": VideoLengthPreset.LONG,
+            "custom": VideoLengthPreset.CUSTOM,
+        }
+
         params = VideoParams(
             video_aspect=aspect_map.get(body.video_aspect, VideoAspect.PORTRAIT),
+            video_length_preset=length_map.get(body.video_length, VideoLengthPreset.MEDIUM),
+            video_clip_duration=body.video_clip_duration,
             subtitle_enabled=body.subtitle_enabled,
             bgm_type=body.bgm_type,
             bgm_volume=body.bgm_volume,
@@ -3214,8 +3251,102 @@ async def generate_video(body: VideoGenerateRequest):
             error=result.error,
         )
     except Exception as e:
-        logger.error(f"Generate video error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Generate video error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
+
+
+class VideoBatchGenerateRequest(BaseModel):
+    """批量视频生成请求"""
+    videos: List[VideoGenerateRequest] = Field(..., description="视频生成请求列表")
+    generate_count: int = Field(default=1, ge=1, le=10, description="每个配置生成的数量")
+
+
+class VideoBatchGenerateResponse(BaseModel):
+    """批量视频生成响应"""
+    success: bool
+    results: List[VideoGenerateResponse]
+    total: int
+    successful: int
+    failed: int
+
+
+@router.post("/video/batch-generate", response_model=VideoBatchGenerateResponse)
+async def batch_generate_videos(body: VideoBatchGenerateRequest):
+    """
+    批量生成视频
+
+    根据一组视频生成请求批量生成多个视频
+    """
+    from backend.tools.video_generator import VideoGenerator, VideoAspect, VideoLengthPreset, VideoParams
+
+    results = []
+    successful = 0
+    failed = 0
+
+    for video_req in body.videos:
+        try:
+            aspect_map = {
+                "9:16": VideoAspect.PORTRAIT,
+                "16:9": VideoAspect.LANDSCAPE,
+                "1:1": VideoAspect.SQUARE,
+            }
+
+            length_map = {
+                "short": VideoLengthPreset.SHORT,
+                "medium": VideoLengthPreset.MEDIUM,
+                "long": VideoLengthPreset.LONG,
+                "custom": VideoLengthPreset.CUSTOM,
+            }
+
+            params = VideoParams(
+                video_aspect=aspect_map.get(video_req.video_aspect, VideoAspect.PORTRAIT),
+                video_length_preset=length_map.get(video_req.video_length, VideoLengthPreset.MEDIUM),
+                video_clip_duration=video_req.video_clip_duration,
+                subtitle_enabled=video_req.subtitle_enabled,
+                bgm_type=video_req.bgm_type,
+                bgm_volume=video_req.bgm_volume,
+            )
+
+            generator = VideoGenerator()
+            output_path = video_req.output_path or os.path.join(
+                generator.output_dir, f"final-{uuid.uuid4().hex[:8]}.mp4"
+            )
+
+            result = generator.generate_video(
+                video_path=video_req.video_path,
+                audio_path=video_req.audio_path,
+                subtitle_path=video_req.subtitle_path,
+                output_path=output_path,
+                params=params,
+            )
+
+            if result.success:
+                successful += 1
+            else:
+                failed += 1
+
+            results.append(VideoGenerateResponse(
+                success=result.success,
+                video_path=result.video_path,
+                duration=result.duration,
+                error=result.error,
+            ))
+        except Exception as e:
+            failed += 1
+            results.append(VideoGenerateResponse(
+                success=False,
+                video_path="",
+                duration=0.0,
+                error="服务器内部错误，请稍后重试",
+            ))
+
+    return VideoBatchGenerateResponse(
+        success=failed == 0,
+        results=results,
+        total=len(results),
+        successful=successful,
+        failed=failed,
+    )
 
 
 @router.get("/video/voices")
@@ -3234,8 +3365,179 @@ async def get_available_voices():
             "total": len(voices),
         }
     except Exception as e:
-        logger.error(f"Get voices error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get voices error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
+
+
+# ===== Local Materials Management =====
+
+class MaterialUploadResponse(BaseModel):
+    """素材上传响应"""
+    success: bool
+    file_path: str
+    file_name: str
+    file_size: int
+    error: str = ""
+
+
+class MaterialListResponse(BaseModel):
+    """素材列表响应"""
+    success: bool
+    files: List[dict]
+    total: int
+
+
+@router.post("/materials/videos/upload", response_model=MaterialUploadResponse)
+async def upload_video_material(file: UploadFile = File(...)):
+    """
+    上传本地视频素材
+
+    支持 mp4, mov, avi 格式
+    """
+    try:
+        # 验证文件类型
+        allowed_types = ["video/mp4", "video/quicktime", "video/x-msvideo"]
+        if file.content_type not in allowed_types:
+            raise HTTPException(status_code=400, detail="不支持的文件类型，仅支持 mp4, mov, avi")
+
+        # 创建上传目录
+        upload_dir = os.path.join(os.getcwd(), "uploads", "videos")
+        os.makedirs(upload_dir, exist_ok=True)
+
+        # 生成安全文件名
+        import uuid as uuid_lib
+        safe_filename = f"{uuid_lib.uuid4().hex[:8]}_{file.filename}"
+        file_path = os.path.join(upload_dir, safe_filename)
+
+        # 保存文件
+        content = await file.read()
+        with open(file_path, "wb") as f:
+            f.write(content)
+
+        return MaterialUploadResponse(
+            success=True,
+            file_path=file_path,
+            file_name=file.filename,
+            file_size=len(content),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Upload material error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
+
+
+@router.get("/materials/videos", response_model=MaterialListResponse)
+async def list_video_materials():
+    """
+    获取本地视频素材列表
+
+    返回 uploads/videos 目录下的所有视频文件
+    """
+    try:
+        upload_dir = os.path.join(os.getcwd(), "uploads", "videos")
+
+        if not os.path.exists(upload_dir):
+            return MaterialListResponse(success=True, files=[], total=0)
+
+        files = []
+        for filename in os.listdir(upload_dir):
+            file_path = os.path.join(upload_dir, filename)
+            if os.path.isfile(file_path):
+                ext = os.path.splitext(filename)[-1].lower()
+                if ext in [".mp4", ".mov", ".avi", ".mkv"]:
+                    stat = os.stat(file_path)
+                    files.append({
+                        "name": filename,
+                        "path": file_path,
+                        "size": stat.st_size,
+                        "modified": stat.st_mtime,
+                    })
+
+        return MaterialListResponse(
+            success=True,
+            files=files,
+            total=len(files),
+        )
+
+    except Exception as e:
+        logger.error("List materials error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
+
+
+@router.delete("/materials/videos/{filename}")
+async def delete_video_material(filename: str):
+    """
+    删除本地视频素材
+    """
+    try:
+        upload_dir = os.path.join(os.getcwd(), "uploads", "videos")
+        file_path = os.path.join(upload_dir, filename)
+
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="文件不存在")
+
+        os.remove(file_path)
+
+        return {"success": True, "message": "文件已删除"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Delete material error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
+
+
+# ===== BGM Management =====
+
+class BgmListResponse(BaseModel):
+    """BGM列表响应"""
+    success: bool
+    files: List[dict]
+    total: int
+
+
+@router.get("/materials/bgm", response_model=BgmListResponse)
+async def list_bgm_materials():
+    """
+    获取背景音乐素材列表
+
+    返回 resource/songs 目录下的所有音频文件
+    """
+    try:
+        song_dirs = [
+            os.path.join(os.getcwd(), "resource", "songs"),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "_reference", "resource", "songs"),
+        ]
+
+        all_files = []
+        for song_dir in song_dirs:
+            if not os.path.exists(song_dir):
+                continue
+
+            for filename in os.listdir(song_dir):
+                file_path = os.path.join(song_dir, filename)
+                if os.path.isfile(file_path):
+                    ext = os.path.splitext(filename)[-1].lower()
+                    if ext in [".mp3", ".wav", ".ogg", ".aac"]:
+                        stat = os.stat(file_path)
+                        all_files.append({
+                            "name": filename,
+                            "path": file_path,
+                            "size": stat.st_size,
+                            "source": "local" if song_dir == song_dirs[0] else "default",
+                        })
+
+        return BgmListResponse(
+            success=True,
+            files=all_files,
+            total=len(all_files),
+        )
+
+    except Exception as e:
+        logger.error("List BGM error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 # ===== Task Queue =====
@@ -3288,8 +3590,8 @@ async def create_task(body: TaskCreateRequest):
             "message": f"任务已创建: {task_id}",
         }
     except Exception as e:
-        logger.error(f"Create task error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Create task error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/tasks/{task_id}", response_model=TaskStatusResponse)
@@ -3318,8 +3620,8 @@ async def get_task_status(task_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Get task error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Get task error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/tasks", response_model=TaskListResponse)
@@ -3351,8 +3653,8 @@ async def list_tasks(
             page_size=page_size,
         )
     except Exception as e:
-        logger.error(f"List tasks error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("List tasks error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.delete("/tasks/{task_id}")
@@ -3375,5 +3677,5 @@ async def delete_task(task_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Delete task error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Delete task error")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")

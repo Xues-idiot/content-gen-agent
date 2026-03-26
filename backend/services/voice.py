@@ -112,7 +112,7 @@ class VoiceService:
             logger.error("edge-tts not installed. Install with: pip install edge-tts")
             return "", 0.0
         except Exception as e:
-            logger.error(f"TTS generation failed: {e}")
+            logger.error("TTS generation failed")
             return "", 0.0
 
     def _get_duration(self, audio_path: str) -> float:
@@ -240,7 +240,7 @@ class VoiceService:
             return True
 
         except Exception as e:
-            logger.error(f"Subtitle creation failed: {e}")
+            logger.error("Subtitle creation failed")
             return False
 
     def _format_srt_line(

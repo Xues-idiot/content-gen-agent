@@ -130,15 +130,15 @@ class WebSearchTool:
                 success=False,
                 results=[],
                 query=query,
-                error=f"HTTP error: {e.response.status_code}"
+                error="搜索服务暂时不可用"
             )
         except Exception as e:
-            logger.error(f"Search error: {e}")
+            logger.error("Search error")
             return SearchResponse(
                 success=False,
                 results=[],
                 query=query,
-                error=str(e)
+                error="搜索服务暂时不可用"
             )
 
     def search_for_content_inspiration(

@@ -66,9 +66,10 @@ export default function ContentCalendar({ onScheduleNew }: ContentCalendarProps)
       const response = await fetch(`${API_BASE_URL}/api/v1/schedule/${id}`, {
         method: "DELETE",
       });
-      if (response.ok) {
-        setScheduledContent((prev) => prev.filter((c) => c.id !== id));
+      if (!response.ok) {
+        throw new Error(`删除失败: ${response.status}`);
       }
+      setScheduledContent((prev) => prev.filter((c) => c.id !== id));
     } catch (error) {
       console.error("Failed to delete schedule:", error);
     }
@@ -79,11 +80,12 @@ export default function ContentCalendar({ onScheduleNew }: ContentCalendarProps)
       const response = await fetch(`${API_BASE_URL}/api/v1/schedule/${id}/publish`, {
         method: "PUT",
       });
-      if (response.ok) {
-        setScheduledContent((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, status: "published" } : c))
-        );
+      if (!response.ok) {
+        throw new Error(`标记发布失败: ${response.status}`);
       }
+      setScheduledContent((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, status: "published" } : c))
+      );
     } catch (error) {
       console.error("Failed to mark published:", error);
     }

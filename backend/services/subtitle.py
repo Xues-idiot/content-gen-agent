@@ -53,7 +53,7 @@ class SubtitleService:
             logger.warning("faster-whisper not installed. Install with: pip install faster-whisper")
             return None
         except Exception as e:
-            logger.error(f"Failed to load Whisper model: {e}")
+            logger.error("Failed to load Whisper model")
             return None
 
     def generate_subtitle(
@@ -144,7 +144,7 @@ class SubtitleService:
             return output_path
 
         except Exception as e:
-            logger.error(f"Subtitle generation failed: {e}")
+            logger.error("Subtitle generation failed")
             return ""
 
     def _is_punctuation(self, char: str) -> bool:
@@ -215,7 +215,7 @@ class SubtitleService:
             return True
 
         except Exception as e:
-            logger.error(f"Subtitle correction failed: {e}")
+            logger.error("Subtitle correction failed")
             return False
 
     def _parse_srt(self, path: str) -> List[Tuple[int, str, str]]:

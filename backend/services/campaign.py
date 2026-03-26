@@ -358,7 +358,7 @@ class CampaignManager:
             start_date = datetime.fromisoformat(start)
             end_date = datetime.fromisoformat(end)
             return (end_date - start_date).days
-        except:
+        except (ValueError, TypeError):
             return 0
 
     def delete_campaign(self, campaign_id: str) -> bool:

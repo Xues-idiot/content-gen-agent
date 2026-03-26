@@ -3,6 +3,7 @@ Vox - 内容生成 Agent
 主入口文件
 """
 
+import os
 import uvicorn
 from contextlib import asynccontextmanager
 
@@ -30,6 +31,7 @@ def create_app() -> uvicorn:
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
     from backend.api.content import router as content_router
+    from backend.api.llm_settings import router as llm_settings_router
 
     app = FastAPI(
         title=f"{APP_NAME} - {APP_DESCRIPTION}",
@@ -41,14 +43,15 @@ def create_app() -> uvicorn:
     # CORS 配置
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
+        allow_origins=["*"],  # 生产环境应替换为具体域名
+        allow_credentials=False,  # 不能与 "*" 同时使用
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
     # 注册 API 路由
     app.include_router(content_router)
+    app.include_router(llm_settings_router)
 
     @app.get("/")
     async def root():
@@ -74,6 +77,6 @@ if __name__ == "__main__":
         "main:app",
         host="0.0.0.0",
         port=8003,
-        reload=True,
+        reload=os.getenv("UVICORN_RELOAD", "false").lower() == "true",
         log_level="info",
     )

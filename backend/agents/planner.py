@@ -186,7 +186,7 @@ class ContentPlanner:
 
         except Exception as e:
             # 静默处理调研错误，不影响主流程
-            logger.warning(f"Market research skipped: {e}")
+            logger.warning("Market research skipped")
 
         return market_insights, trend_topics, competitor_content
     
