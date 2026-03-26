@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SidebarNav from "@/components/SidebarNav";
 import { ToastProvider, useToast } from "@/components/Toast";
@@ -22,6 +22,12 @@ function CalendarPageContent() {
     scheduled_time: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +36,7 @@ function CalendarPageContent() {
       return;
     }
 
+    if (!isMountedRef.current) return;
     setSubmitting(true);
     try {
       const params = new URLSearchParams({
@@ -47,22 +54,24 @@ function CalendarPageContent() {
 
       if (response.ok) {
         showToast("计划已添加", "success");
-        setShowScheduleModal(false);
-        setFormData({
-          product_name: "",
-          platform: "xiaohongshu",
-          title: "",
-          content: "",
-          tags: "",
-          scheduled_time: "",
-        });
+        if (isMountedRef.current) {
+          setShowScheduleModal(false);
+          setFormData({
+            product_name: "",
+            platform: "xiaohongshu",
+            title: "",
+            content: "",
+            tags: "",
+            scheduled_time: "",
+          });
+        }
       } else {
         showToast("添加失败", "error");
       }
     } catch {
       showToast("网络错误", "error");
     } finally {
-      setSubmitting(false);
+      if (isMountedRef.current) setSubmitting(false);
     }
   };
 
