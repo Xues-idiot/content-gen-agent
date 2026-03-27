@@ -98,7 +98,6 @@ export default function ImageGenerator({
       showToast("网络错误，请检查后端服务", "error");
     } finally {
       if (isMountedRef.current) setIsGenerating(false);
-      setIsGenerating(false);
     }
   };
 
