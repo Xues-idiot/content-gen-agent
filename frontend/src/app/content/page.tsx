@@ -9,6 +9,7 @@ import ImagePreview from "@/components/ImagePreview";
 import ExportPanel from "@/components/ExportPanel";
 import MarketInsights from "@/components/MarketInsights";
 import VideoGenerator from "@/components/VideoGenerator";
+import HashtagRecommender from "@/components/HashtagRecommender";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import SidebarNav from "@/components/SidebarNav";
 import { useContentStore } from "@/store/content-store";
@@ -39,6 +40,8 @@ function ContentPageContent() {
 
   // Track mounted state to prevent setInterval updates after unmount
   const isMountedRef = React.useRef(true);
+  // Store timeout IDs for cleanup
+  const progressResetTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Fetch health status on mount
   const [backendStatus, setBackendStatus] = React.useState<{
@@ -50,6 +53,11 @@ function ContentPageContent() {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      // Clear any pending timeouts on unmount
+      if (progressResetTimeoutRef.current) {
+        clearTimeout(progressResetTimeoutRef.current);
+        progressResetTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -171,9 +179,15 @@ function ContentPageContent() {
       showToast("网络错误，请检查后端服务是否运行", "error");
     } finally {
       setIsLoading(false);
-      setTimeout(() => {
-        setProgress(0);
-        setCurrentLoadingStep(0);
+      // Clear any previous pending timeout
+      if (progressResetTimeoutRef.current) {
+        clearTimeout(progressResetTimeoutRef.current);
+      }
+      progressResetTimeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          setProgress(0);
+          setCurrentLoadingStep(0);
+        }
       }, 500);
     }
   };
@@ -310,6 +324,25 @@ function ContentPageContent() {
 
             {/* Market Insights */}
             <MarketInsights />
+
+            {/* Hashtag Recommender */}
+            {copyResults.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+              >
+                <HashtagRecommender
+                  content={`${videoTitle} ${copyResults.map(r => r.content).join(' ')}`}
+                  platform={selectedPlatforms[0] || "xiaohongshu"}
+                  productInfo={product}
+                  onSelectHashtags={(hashtags) => {
+                    // TODO: Integrate selected hashtags into content
+                    console.log("Selected hashtags:", hashtags);
+                  }}
+                />
+              </motion.div>
+            )}
 
             {/* Export Panel */}
             <ExportPanel content={exportContent} disabled={copyResults.length === 0} />

@@ -289,11 +289,22 @@ async def video_generate_task(
         update_callback(5, step="生成脚本")
         video_script = params.get("script", "")
         if not video_script:
-            from backend.agents.copywriter import copywriter
-            from backend.agents.planner import ProductInfo
+            from backend.agents.copywriter import Copywriter
+            from backend.agents.planner import ProductInfo, ContentPlan
 
             product = ProductInfo(**params.get("product", {}))
-            copy_result = copywriter.write_tiktok(product, params.get("plan", {}), params.get("user_profile", {}))
+            plan_data = params.get("plan", {})
+            user_profile_data = params.get("user_profile", {})
+
+            # 构建 user_profile 字符串
+            user_profile_str = user_profile_data.get("occupation", "目标用户") if isinstance(user_profile_data, dict) else str(user_profile_data)
+
+            copywriter_instance = Copywriter()
+            copy_result = copywriter_instance.write_tiktok(
+                product=product,
+                plan=ContentPlan(**plan_data) if plan_data else None,
+                user_profile=user_profile_str,
+            )
             video_script = copy_result.script or copy_result.content
 
         update_callback(10, step="脚本生成完成", script=video_script)

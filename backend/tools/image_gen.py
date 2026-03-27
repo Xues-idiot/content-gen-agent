@@ -2,8 +2,11 @@
 Vox Image Generator 模块
 
 负责图片生成和素材推荐
+支持 Pollinations AI (免费)、DALL-E、MJ 等
 """
 
+import os
+import uuid
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 from enum import Enum
@@ -20,14 +23,19 @@ class ImageStyle(Enum):
     LIFESTYLE = "lifestyle"
     PRODUCT = "product"
     COMPARISON = "comparison"
+    NATURAL = "natural"
+    VIVID = "vivid"
 
 
 @dataclass
 class ImageResult:
     """图片结果"""
     url: str = ""
+    local_path: str = ""
     prompt: str = ""
     style: str = ""
+    width: int = 1024
+    height: int = 1024
     success: bool = True
     error: str = ""
 
@@ -46,45 +54,189 @@ class ImageGenerator:
     图片生成 Agent
 
     支持：
-    - DALL-E/MJ API 生成
+    - Pollinations AI (免费，推荐)
+    - OpenAI DALL-E
     - 素材库推荐
     """
 
+    # Pollinations 模型
+    POLLINATIONS_MODELS = {
+        "fast": "openai",
+        "quality": "stable-diffusion",
+    }
+
+    # Pollinations 尺寸映射
+    SIZE_MAP = {
+        "square": (1024, 1024),
+        "portrait": (896, 1152),
+        "landscape": (1152, 896),
+        "wide": (1280, 720),
+    }
+
     def __init__(self):
-        self.openai_api_key = config.minimax_api_key
-        self.openai_base_url = config.minimax_base_url
+        self.output_dir = os.path.join(os.getcwd(), "output", "images")
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    def _build_pollinations_url(
+        self,
+        prompt: str,
+        model: str = "openai",
+        width: int = 1024,
+        height: int = 1024,
+        seed: int = None,
+    ) -> str:
+        """构建 Pollinations URL"""
+        # Pollinations 公共 API
+        base_url = "https://image.pollinations.ai/prompt"
+
+        # URL 编码 prompt
+        import urllib.parse
+        encoded_prompt = urllib.parse.quote(prompt)
+
+        # 构建 URL 参数
+        params = [
+            f"prompt={encoded_prompt}",
+            f"width={width}",
+            f"height={height}",
+            f"model={model}",
+            "nologo=true",
+        ]
+
+        if seed:
+            params.append(f"seed={seed}")
+
+        return f"{base_url}?{'&'.join(params)}"
 
     def generate_image(
         self,
         prompt: str,
         style: str = "modern",
-        size: str = "1024x1024",
+        size: str = "square",
+        model: str = "openai",
     ) -> ImageResult:
         """
-        使用 DALL-E 生成图片
+        使用 Pollinations AI 生成图片
 
         Args:
             prompt: 图片描述
-            style: 风格
-            size: 图片尺寸
+            style: 风格 (modern/minimal/lifestyle/product/natural/vivid)
+            size: 尺寸 (square/portrait/landscape/wide)
+            model: 模型 (openai/stable-diffusion)
 
         Returns:
             ImageResult: 生成结果
         """
-        logger.info(f"Generating image with prompt: {prompt[:50]}...")
+        logger.info(f"Generating image with Pollinations: {prompt[:50]}...")
 
-        # 注意：这里需要 OpenAI 兼容的 API
-        # MiniMax 可能需要不同的实现
         try:
-            # 预留接口，实际使用时需要根据 API 调整
-            return ImageResult(
-                url=f"https://placeholder.com/image?prompt={prompt[:50]}",
-                prompt=prompt,
-                style=style,
+            # 获取尺寸
+            width, height = self.SIZE_MAP.get(size, (1024, 1024))
+
+            # 构建风格增强 prompt
+            style_prompts = {
+                "modern": "modern design, clean, minimalist, professional",
+                "minimal": "minimalist, simple, clean background, white",
+                "lifestyle": "lifestyle photography, natural lighting, cozy",
+                "product": "product photography, studio lighting, white background",
+                "natural": "natural, realistic, authentic",
+                "vivid": "vivid colors, high saturation, eye-catching",
+            }
+
+            enhanced_prompt = f"{prompt}, {style_prompts.get(style, style_prompts['modern'])}"
+
+            # 生成 URL
+            image_url = self._build_pollinations_url(
+                prompt=enhanced_prompt,
+                model=self.POLLINATIONS_MODELS.get(model, "openai"),
+                width=width,
+                height=height,
             )
+
+            return ImageResult(
+                url=image_url,
+                prompt=enhanced_prompt,
+                style=style,
+                width=width,
+                height=height,
+                success=True,
+            )
+
         except Exception as e:
-            logger.error("Image generation failed")
+            logger.error(f"Image generation failed: {e}")
             return ImageResult(success=False, error="图片生成失败，请稍后重试")
+
+    def generate_image_bytes(
+        self,
+        prompt: str,
+        style: str = "modern",
+        size: str = "square",
+    ) -> bytes:
+        """
+        直接获取图片字节数据（用于保存到本地）
+
+        Args:
+            prompt: 图片描述
+            style: 风格
+            size: 尺寸
+
+        Returns:
+            bytes: 图片数据
+        """
+        try:
+            import requests
+
+            result = self.generate_image(prompt, style, size)
+            if not result.success:
+                raise Exception(result.error)
+
+            response = requests.get(result.url, timeout=60)
+            response.raise_for_status()
+
+            return response.content
+
+        except ImportError:
+            logger.error("requests library not available")
+            raise Exception("缺少 requests 库")
+        except Exception as e:
+            logger.error(f"Failed to get image bytes: {e}")
+            raise
+
+    def save_image(
+        self,
+        prompt: str,
+        style: str = "modern",
+        size: str = "square",
+    ) -> ImageResult:
+        """
+        生成并保存图片到本地
+
+        Args:
+            prompt: 图片描述
+            style: 风格
+            size: 尺寸
+
+        Returns:
+            ImageResult: 包含本地路径的结果
+        """
+        try:
+            image_bytes = self.generate_image_bytes(prompt, style, size)
+
+            # 保存到本地
+            filename = f"img-{uuid.uuid4().hex[:8]}.png"
+            local_path = os.path.join(self.output_dir, filename)
+
+            with open(local_path, "wb") as f:
+                f.write(image_bytes)
+
+            logger.success(f"Image saved: {local_path}")
+
+            result = self.generate_image(prompt, style, size)
+            result.local_path = local_path
+            return result
+
+        except Exception as e:
+            logger.error(f"Failed to save image: {e}")
+            return ImageResult(success=False, error="图片保存失败")
 
     def suggest_images(
         self,
@@ -138,7 +290,7 @@ class ImageGenerator:
                     type="短视频封面",
                     description="吸引眼球的视频封面图",
                     prompt=f"{product_name} 视频封面，大字标题，视觉冲击",
-                    style=ImageStyle.MODERN,
+                    style=ImageStyle.VIVID,
                 ),
                 ImageSuggestion(
                     type="产品展示",
@@ -168,7 +320,7 @@ class ImageGenerator:
                     type="朋友圈配图",
                     description="适合朋友圈分享的产品图",
                     prompt=f"{product_name} 朋友圈分享图，生活化",
-                    style=ImageStyle.LIFESTYLE,
+                    style=ImageStyle.NATURAL,
                 ),
             ]
 

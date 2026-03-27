@@ -92,15 +92,21 @@ class VoiceService:
 
                 return output_path
 
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                # 如果已经在运行中，创建新任务
+            def _do_wrapper():
+                """Wrapper to run async coroutine in executor"""
+                return asyncio.run(_do())
+
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                # No running loop, safe to use asyncio.run
+                result = _do_wrapper()
+            else:
+                # Already inside an async context, use run_in_executor to avoid blocking
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(asyncio.run, _do())
+                    future = loop.run_in_executor(executor, _do_wrapper)
                     result = future.result()
-            else:
-                result = asyncio.run(_do())
 
             # 获取音频时长
             audio_duration = self._get_duration(output_path)

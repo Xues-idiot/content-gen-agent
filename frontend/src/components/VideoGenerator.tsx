@@ -122,6 +122,8 @@ export default function VideoGenerator({ script = "", title = "" }: VideoGenerat
         if (response.videos.length === 0) {
           setError("未找到相关视频素材");
         }
+      } else {
+        return; // Component unmounted, skip state updates
       }
     } catch (e) {
       if (isMountedRef.current) {
