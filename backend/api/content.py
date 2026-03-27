@@ -8421,3 +8421,320 @@ async def estimate_potential(request: ROIPotentialRequest):
             conversion_estimate=0,
             budget_allocation={},
         )
+
+
+# A/B Testing Analyzer Models
+class ABTestDesignRequest(BaseModel):
+    """A/B测试设计请求"""
+    content_type: str = Field(..., description="内容类型")
+    test_variable: str = Field(..., description="测试变量")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class ABTestDesignResponse(BaseModel):
+    """A/B测试设计响应"""
+    success: bool
+    content_type: str
+    test_variable: str
+    platform: str
+    sample_size: int
+    test_duration_days: int
+    metrics_to_track: List[str]
+
+
+class ABTestAnalyzeRequest(BaseModel):
+    """A/B测试分析请求"""
+    control_metrics: Dict[str, float] = Field(..., description="对照组指标")
+    treatment_metrics: Dict[str, float] = Field(..., description="实验组指标")
+    sample_size: int = Field(..., description="样本量")
+
+
+class ABTestAnalyzeResponse(BaseModel):
+    """A/B测试分析响应"""
+    success: bool
+    winner: str
+    confidence_level: float
+    is_significant: bool
+    recommendation: str
+    metrics_comparison: Dict[str, Any]
+
+
+@router.post("/abtest/design", response_model=ABTestDesignResponse)
+async def design_ab_test(request: ABTestDesignRequest):
+    """
+    设计A/B测试
+
+    设计一个A/B测试方案
+    """
+    try:
+        from backend.services.ab_testing_analyzer import ab_testing_analyzer_service
+
+        result = await ab_testing_analyzer_service.design_test(
+            request.content_type, request.test_variable, request.platform
+        )
+
+        return ABTestDesignResponse(
+            success=True,
+            content_type=result["content_type"],
+            test_variable=result["test_variable"],
+            platform=result["platform"],
+            sample_size=result["sample_size"],
+            test_duration_days=result["test_duration_days"],
+            metrics_to_track=result["metrics_to_track"],
+        )
+
+    except Exception as e:
+        logger.error(f"设计A/B测试失败: {e}")
+        return ABTestDesignResponse(
+            success=False,
+            content_type=request.content_type,
+            test_variable=request.test_variable,
+            platform=request.platform,
+            sample_size=1000,
+            test_duration_days=7,
+            metrics_to_track=[],
+        )
+
+
+@router.post("/abtest/analyze", response_model=ABTestAnalyzeResponse)
+async def analyze_ab_test(request: ABTestAnalyzeRequest):
+    """
+    分析A/B测试结果
+
+    分析A/B测试结果并给出建议
+    """
+    try:
+        from backend.services.ab_testing_analyzer import ab_testing_analyzer_service
+
+        result = await ab_testing_analyzer_service.analyze_results(
+            request.control_metrics, request.treatment_metrics, request.sample_size
+        )
+
+        return ABTestAnalyzeResponse(
+            success=True,
+            winner=result.winner,
+            confidence_level=result.confidence_level,
+            is_significant=result.is_significant,
+            recommendation=result.recommendation,
+            metrics_comparison=result.metrics_comparison,
+        )
+
+    except Exception as e:
+        logger.error(f"分析A/B测试失败: {e}")
+        return ABTestAnalyzeResponse(
+            success=False,
+            winner="none",
+            confidence_level=0,
+            is_significant=False,
+            recommendation="分析失败",
+            metrics_comparison={},
+        )
+
+
+# Content Gap Analyzer Models
+class ContentGapRequest(BaseModel):
+    """内容差距分析请求"""
+    existing_content: List[str] = Field(..., description="现有内容")
+    target_topics: List[str] = Field(..., description="目标话题")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class ContentGapResponse(BaseModel):
+    """内容差距分析响应"""
+    success: bool
+    existing_count: int
+    target_count: int
+    covered_dimensions: List[str]
+    gap_dimensions: List[str]
+    opportunities: List[str]
+    priorities: List[str]
+
+
+class ContentOpportunityRequest(BaseModel):
+    """内容机会请求"""
+    industry: str = Field(..., description="行业")
+    platform: str = Field(default="xiaohongshu", description="平台")
+    num: int = Field(default=5, ge=1, le=20, description="数量")
+
+
+class ContentOpportunityResponse(BaseModel):
+    """内容机会响应"""
+    success: bool
+    opportunities: List[Dict[str, Any]]
+
+
+@router.post("/content/gap", response_model=ContentGapResponse)
+async def analyze_content_gap(request: ContentGapRequest):
+    """
+    分析内容差距
+
+    分析现有内容与目标内容的差距
+    """
+    try:
+        from backend.services.content_gap_analyzer import content_gap_analyzer_service
+
+        result = await content_gap_analyzer_service.analyze_gap(
+            request.existing_content, request.target_topics, request.platform
+        )
+
+        return ContentGapResponse(
+            success=True,
+            existing_count=result["existing_count"],
+            target_count=result["target_count"],
+            covered_dimensions=result["covered_dimensions"],
+            gap_dimensions=result["gap_dimensions"],
+            opportunities=result["opportunities"],
+            priorities=result["priorities"],
+        )
+
+    except Exception as e:
+        logger.error(f"分析内容差距失败: {e}")
+        return ContentGapResponse(
+            success=False,
+            existing_count=len(request.existing_content),
+            target_count=len(request.target_topics),
+            covered_dimensions=[],
+            gap_dimensions=[],
+            opportunities=[],
+            priorities=[],
+        )
+
+
+@router.post("/content/opportunities", response_model=ContentOpportunityResponse)
+async def find_content_opportunities(request: ContentOpportunityRequest):
+    """
+    找内容机会
+
+    找出内容创作的机会
+    """
+    try:
+        from backend.services.content_gap_analyzer import content_gap_analyzer_service
+
+        opportunities = await content_gap_analyzer_service.find_content_opportunities(
+            request.industry, request.platform, request.num
+        )
+
+        return ContentOpportunityResponse(success=True, opportunities=opportunities)
+
+    except Exception as e:
+        logger.error(f"找内容机会失败: {e}")
+        return ContentOpportunityResponse(success=False, opportunities=[])
+
+
+# Caption Generator Models
+class CaptionGenerateRequest(BaseModel):
+    """文案生成请求"""
+    content_type: str = Field(..., description="内容类型")
+    topic: str = Field(..., description="话题")
+    platform: str = Field(default="xiaohongshu", description="平台")
+    style: str = Field(default="casual", description="风格")
+    length: str = Field(default="medium", description="长度")
+
+
+class CaptionGenerateResponse(BaseModel):
+    """文案生成响应"""
+    success: bool
+    content_type: str
+    topic: str
+    platform: str
+    style: str
+    main_caption: str
+    short_version: str
+    hashtags: List[str]
+    emojis: List[str]
+
+
+class CaptionAdaptRequest(BaseModel):
+    """文案适配请求"""
+    original_caption: str = Field(..., description="原始文案")
+    from_platform: str = Field(..., description="源平台")
+    to_platform: str = Field(..., description="目标平台")
+
+
+class CaptionAdaptResponse(BaseModel):
+    """文案适配响应"""
+    success: bool
+    original_caption: str
+    from_platform: str
+    to_platform: str
+    adapted_caption: str
+    changes: List[str]
+    tips: List[str]
+
+
+@router.post("/caption/generate", response_model=CaptionGenerateResponse)
+async def generate_caption(request: CaptionGenerateRequest):
+    """
+    生成文案
+
+    生成各平台的文案
+    """
+    try:
+        from backend.services.caption_generator import caption_generator_service
+
+        result = await caption_generator_service.generate_caption(
+            request.content_type, request.topic, request.platform, request.style, request.length
+        )
+
+        return CaptionGenerateResponse(
+            success=True,
+            content_type=result["content_type"],
+            topic=result["topic"],
+            platform=result["platform"],
+            style=result["style"],
+            main_caption=result.get("main_caption", ""),
+            short_version=result.get("short_version", ""),
+            hashtags=result.get("hashtags", []),
+            emojis=result.get("emojis", []),
+        )
+
+    except Exception as e:
+        logger.error(f"生成文案失败: {e}")
+        return CaptionGenerateResponse(
+            success=False,
+            content_type=request.content_type,
+            topic=request.topic,
+            platform=request.platform,
+            style=request.style,
+            main_caption="",
+            short_version="",
+            hashtags=[],
+            emojis=[],
+        )
+
+
+@router.post("/caption/adapt", response_model=CaptionAdaptResponse)
+async def adapt_caption(request: CaptionAdaptRequest):
+    """
+    适配文案
+
+    将文案适配到不同平台
+    """
+    try:
+        from backend.services.caption_generator import caption_generator_service
+
+        result = await caption_generator_service.adapt_caption(
+            request.original_caption, request.from_platform, request.to_platform
+        )
+
+        return CaptionAdaptResponse(
+            success=True,
+            original_caption=result["original_caption"],
+            from_platform=result["from_platform"],
+            to_platform=result["to_platform"],
+            adapted_caption=result.get("adapted_caption", ""),
+            changes=result.get("changes", []),
+            tips=result.get("tips", []),
+        )
+
+    except Exception as e:
+        logger.error(f"适配文案失败: {e}")
+        return CaptionAdaptResponse(
+            success=False,
+            original_caption=request.original_caption,
+            from_platform=request.from_platform,
+            to_platform=request.to_platform,
+            adapted_caption=request.original_caption,
+            changes=[],
+            tips=[],
+        )
