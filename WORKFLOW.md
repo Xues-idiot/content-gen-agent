@@ -422,17 +422,18 @@ D:/PM-AI-Workstation/01-ai-agents/
 待研究：
 - `marketing/viral-marketing/` - 传播激励设计（用于文案结尾行动号召，已读待应用）
 
-### 4.5 项目进展 (2026-03-24)
+### 4.5 项目进展 (2026-03-28)
 
 | 项目 | 状态 | 备注 |
 |------|------|------|
 | 后端 Agent 模块 | 完成 | planner, copywriter, reviewer, exporter |
 | 市场调研模块 | 完成 | Tavily API 集成 |
-| API 接口 | 完成 | CORS, 限流, 验证 |
-| 前端组件 | 完成 | Motion 动画, MarketInsights |
+| API 接口 | 完成 | CORS, 限流, 验证 + Generators统一API |
+| 前端组件 | 完成 | Motion 动画, MarketInsights + GeneratorExplorer |
 | 违规词库 | 完成 | 扩展至 350+ 词汇，10个分类 |
-| 测试用例 | 进行中 | pytest 覆盖率提升 |
+| 生成器服务 | 完成 | 341个服务，自动注册表 |
 | Sigma Skills | 持续跟踪 | 动态学习新技能 |
+| CRIS 循环 | 进行中 | Rounds 401-405 已完成 |
 
 ---
 
