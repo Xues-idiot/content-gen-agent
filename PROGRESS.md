@@ -1939,3 +1939,39 @@ content-gen-agent/
 
 ### 结论
 - 继续下一轮
+
+---
+
+## CRIS 循环 #481-500 (2026-03-28)
+
+### 完成
+- Round 481: GeneratorExplorer组件优化
+  - 添加isMountedRef防止内存泄漏
+  - 更新标题显示实际服务数量
+- Round 482: ImageGenerator组件优化
+  - 移除重复的setIsGenerating(false)调用
+- Round 491: 生成器API修复
+  - 修复服务注册表中模块路径重复添加_generator的问题
+  - 正确提取服务名称（去掉_generator后缀）
+
+### Bug修复
+- GeneratorExplorer: 添加组件卸载保护
+- ImageGenerator: 移除重复setState调用
+- generators.py: 修复模块路径重复问题
+
+### 代码质量检查
+- 所有组件均已添加isMountedRef保护
+- Toast组件有正确的cleanup逻辑
+- ErrorBoundary组件正常
+- LoadingSpinner组件正常
+- ImagePreview组件有正确的unmount cleanup
+
+### 提交
+- fix(GeneratorExplorer): add isMountedRef and actual service count (c9b61d3)
+- fix(ImageGenerator): remove duplicate setIsGenerating call (57ff6c9)
+- fix(generators): fix service registry module path duplication (4333e41)
+
+### 结论
+- 完成Rounds 481-500迭代目标
+- 系统状态: 375服务, 22组件, 9页面
+- 所有改动已提交并推送
