@@ -5318,3 +5318,192 @@ async def compare_topics(request: TopicCompareRequest):
             comparison=[],
             recommendation="",
         )
+
+
+# ==================== 内容表现报告接口 ====================
+
+class PerformanceReportRequest(BaseModel):
+    """内容表现报告请求"""
+    content_data: Dict[str, Any] = Field(..., description="内容数据")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class PerformanceMetricModel(BaseModel):
+    """表现指标模型"""
+    value: Any
+    evaluation: str
+    score: int
+
+
+class PerformanceReportResponse(BaseModel):
+    """内容表现报告响应"""
+    success: bool
+    content_title: str
+    platform: str
+    report_date: str
+    metrics: Dict[str, PerformanceMetricModel]
+    analysis: str
+    highlights: List[str]
+    issues: List[str]
+    suggestions: List[str]
+    overall_score: int
+
+
+class ContentCompareReportRequest(BaseModel):
+    """内容对比报告请求"""
+    content_list: List[Dict[str, Any]] = Field(..., description="内容列表")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class ContentCompareReportResponse(BaseModel):
+    """内容对比报告响应"""
+    success: bool
+    best_performer: Dict[str, Any]
+    worst_performer: Dict[str, Any]
+    common_success_factors: List[str]
+    common_weaknesses: List[str]
+    differentiation_tips: List[str]
+
+
+class PerformanceDashboardRequest(BaseModel):
+    """表现看板请求"""
+    content_list: List[Dict[str, Any]] = Field(..., description="内容列表")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class PerformanceDashboardResponse(BaseModel):
+    """表现看板响应"""
+    success: bool
+    platform: str
+    period: str
+    total_contents: int
+    total_metrics: Dict[str, int]
+    averages: Dict[str, Any]
+    best_content: Dict[str, Any]
+    worst_content: Dict[str, Any]
+    performance_distribution: Dict[str, int]
+
+
+@router.post("/performance/report", response_model=PerformanceReportResponse)
+async def generate_performance_report(request: PerformanceReportRequest):
+    """
+    生成内容表现报告
+
+    基于内容数据生成详细的表现报告
+    """
+    try:
+        from backend.services.performance_report import performance_report_service
+
+        report = await performance_report_service.generate_report(
+            content_data=request.content_data,
+            platform=request.platform,
+        )
+
+        return PerformanceReportResponse(
+            success=True,
+            content_title=report.content_title,
+            platform=report.platform,
+            report_date=report.report_date,
+            metrics={
+                k: PerformanceMetricModel(**v) if isinstance(v, dict) else PerformanceMetricModel(value=v, evaluation="", score=0)
+                for k, v in report.metrics.items()
+            },
+            analysis=report.analysis,
+            highlights=report.highlights,
+            issues=report.issues,
+            suggestions=report.suggestions,
+            overall_score=report.overall_score,
+        )
+
+    except Exception as e:
+        logger.error(f"生成表现报告失败: {e}")
+        return PerformanceReportResponse(
+            success=False,
+            content_title="",
+            platform=request.platform,
+            report_date="",
+            metrics={},
+            analysis="生成失败",
+            highlights=[],
+            issues=["服务异常"],
+            suggestions=["请稍后重试"],
+            overall_score=0,
+        )
+
+
+@router.post("/performance/compare", response_model=ContentCompareReportResponse)
+async def generate_content_comparison(request: ContentCompareReportRequest):
+    """
+    生成内容对比报告
+
+    对比多个内容的表现
+    """
+    try:
+        from backend.services.performance_report import performance_report_service
+
+        result = await performance_report_service.compare_content_report(
+            content_list=request.content_list,
+            platform=request.platform,
+        )
+
+        return ContentCompareReportResponse(
+            success=True,
+            best_performer=result.get("best_performer", {}),
+            worst_performer=result.get("worst_performer", {}),
+            common_success_factors=result.get("common_success_factors", []),
+            common_weaknesses=result.get("common_weaknesses", []),
+            differentiation_tips=result.get("differentiation_tips", []),
+        )
+
+    except Exception as e:
+        logger.error(f"生成对比报告失败: {e}")
+        return ContentCompareReportResponse(
+            success=False,
+            best_performer={},
+            worst_performer={},
+            common_success_factors=[],
+            common_weaknesses=[],
+            differentiation_tips=[],
+        )
+
+
+@router.post("/performance/dashboard", response_model=PerformanceDashboardResponse)
+async def generate_performance_dashboard(request: PerformanceDashboardRequest):
+    """
+    生成表现看板
+
+    汇总多个内容的数据生成看板
+    """
+    try:
+        from backend.services.performance_report import performance_report_service
+
+        result = performance_report_service.generate_summary_dashboard(
+            content_data_list=request.content_list,
+            platform=request.platform,
+        )
+
+        return PerformanceDashboardResponse(
+            success=True,
+            platform=result["platform"],
+            period=result["period"],
+            total_contents=result["total_contents"],
+            total_metrics=result["total_metrics"],
+            averages=result["averages"],
+            best_content=result["best_content"],
+            worst_content=result["worst_content"],
+            performance_distribution=result["performance_distribution"],
+        )
+
+    except Exception as e:
+        logger.error(f"生成看板失败: {e}")
+        return PerformanceDashboardResponse(
+            success=False,
+            platform=request.platform,
+            period="",
+            total_contents=0,
+            total_metrics={},
+            averages={},
+            best_content={},
+            worst_content={},
+            performance_distribution={},
+        )
