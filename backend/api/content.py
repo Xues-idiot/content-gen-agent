@@ -7780,3 +7780,165 @@ async def get_cta_types():
     except Exception as e:
         logger.error(f"获取CTA类型失败: {e}")
         return []
+
+
+# Content Health Checker Models
+class HealthCheckRequest(BaseModel):
+    """内容健康检查请求"""
+    content: str = Field(..., description="内容正文")
+    title: str = Field(default="", description="内容标题")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class HealthCheckResponse(BaseModel):
+    """内容健康检查响应"""
+    success: bool
+    is_healthy: bool
+    health_score: int
+    issues: List[str]
+    warnings: List[str]
+    suggestions: List[str]
+
+
+class HealthReportRequest(BaseModel):
+    """健康报告请求"""
+    content: str = Field(..., description="内容正文")
+    title: str = Field(default="", description="内容标题")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class HealthReportResponse(BaseModel):
+    """健康报告响应"""
+    success: bool
+    is_healthy: bool
+    overall_score: int
+    completeness_score: int
+    issues: List[str]
+    warnings: List[str]
+    suggestions: List[str]
+    completeness_checks: Dict[str, str]
+    platform: str
+
+
+class CompletenessCheckRequest(BaseModel):
+    """完整性检查请求"""
+    content: str = Field(..., description="内容正文")
+    title: str = Field(default="", description="内容标题")
+
+
+class CompletenessCheckResponse(BaseModel):
+    """完整性检查响应"""
+    success: bool
+    score: int
+    issues: List[str]
+    suggestions: List[str]
+    checks: Dict[str, str]
+
+
+@router.post("/health/check", response_model=HealthCheckResponse)
+async def check_content_health(request: HealthCheckRequest):
+    """
+    检查内容健康度
+
+    检查内容完整性、质量、互动性、SEO、合规性
+    """
+    try:
+        from backend.services.content_health_checker import content_health_checker_service
+
+        result = await content_health_checker_service.check_content_health(
+            request.content, request.title, request.platform
+        )
+
+        return HealthCheckResponse(
+            success=True,
+            is_healthy=result.is_healthy,
+            health_score=result.health_score,
+            issues=result.issues,
+            warnings=result.warnings,
+            suggestions=result.suggestions,
+        )
+
+    except Exception as e:
+        logger.error(f"检查内容健康度失败: {e}")
+        return HealthCheckResponse(
+            success=False,
+            is_healthy=True,
+            health_score=70,
+            issues=[],
+            warnings=["检查服务异常"],
+            suggestions=["请人工检查内容"],
+        )
+
+
+@router.post("/health/report", response_model=HealthReportResponse)
+async def get_health_report(request: HealthReportRequest):
+    """
+    获取完整健康报告
+
+    获取详细的内容健康度报告
+    """
+    try:
+        from backend.services.content_health_checker import content_health_checker_service
+
+        result = await content_health_checker_service.get_health_report(
+            request.content, request.title, request.platform
+        )
+
+        return HealthReportResponse(
+            success=True,
+            is_healthy=result["is_healthy"],
+            overall_score=result["overall_score"],
+            completeness_score=result["completeness_score"],
+            issues=result["issues"],
+            warnings=result["warnings"],
+            suggestions=result["suggestions"],
+            completeness_checks=result["completeness_checks"],
+            platform=result["platform"],
+        )
+
+    except Exception as e:
+        logger.error(f"获取健康报告失败: {e}")
+        return HealthReportResponse(
+            success=False,
+            is_healthy=True,
+            overall_score=70,
+            completeness_score=70,
+            issues=[],
+            warnings=["服务异常"],
+            suggestions=["请人工检查"],
+            completeness_checks={},
+            platform=request.platform,
+        )
+
+
+@router.post("/health/completeness", response_model=CompletenessCheckResponse)
+async def check_completeness(request: CompletenessCheckRequest):
+    """
+    检查内容完整性
+
+    检查标题、正文长度、段落、emoji、hashtag等
+    """
+    try:
+        from backend.services.content_health_checker import content_health_checker_service
+
+        result = await content_health_checker_service.check_completeness(
+            request.content, request.title
+        )
+
+        return CompletenessCheckResponse(
+            success=True,
+            score=result["score"],
+            issues=result["issues"],
+            suggestions=result["suggestions"],
+            checks=result["checks"],
+        )
+
+    except Exception as e:
+        logger.error(f"检查完整性失败: {e}")
+        return CompletenessCheckResponse(
+            success=False,
+            score=70,
+            issues=[],
+            suggestions=["检查失败"],
+            checks={},
+        )
