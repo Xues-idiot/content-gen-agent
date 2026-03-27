@@ -25,6 +25,7 @@ interface SidebarNavProps {
 const navItems = [
   { href: "/", icon: Home, label: "首页", color: "#FF6B35" },
   { href: "/content", icon: FileText, label: "内容生成", color: "#FF6B35" },
+  { href: "/generators", icon: Sparkles, label: "生成器", color: "#FF8C61" },
   { href: "/templates", icon: Sparkles, label: "模板库", color: "#FF8C61" },
   { href: "/calendar", icon: Calendar, label: "内容日历", color: "#FFD93D" },
   { href: "/archive", icon: Archive, label: "内容归档", color: "#10B981" },
