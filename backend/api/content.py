@@ -6521,3 +6521,137 @@ async def analyze_seasonal_trends(request: SeasonalTrendRequest):
             seasonal_keywords=[],
             recommendation="",
         )
+
+
+# ==================== Emoji 助手接口 ====================
+
+class EmojiPlatformRequest(BaseModel):
+    """平台emoji请求"""
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class EmojiPlatformResponse(BaseModel):
+    """平台emoji响应"""
+    success: bool
+    platform: str
+    style: str
+    commonly_used: List[str]
+    avoid: List[str]
+
+
+class EmojiSuggestRequest(BaseModel):
+    """emoji推荐请求"""
+    content_type: str = Field(..., description="内容类型")
+    platform: str = Field(default="xiaohongshu", description="平台")
+    num: int = Field(default=5, ge=1, le=20, description="返回数量")
+
+
+class EmojiSuggestResponse(BaseModel):
+    """emoji推荐响应"""
+    success: bool
+    emojis: List[str]
+
+
+class EmojiAnalyzeRequest(BaseModel):
+    """emoji分析请求"""
+    content: str = Field(..., description="内容")
+
+
+class EmojiAnalyzeResponse(BaseModel):
+    """emoji分析响应"""
+    success: bool
+    emoji_count: int
+    emoji_list: List[str]
+    usage_level: str
+    suggestions: List[str]
+
+
+@router.get("/emoji/platform/{platform}", response_model=EmojiPlatformResponse)
+async def get_platform_emojis(platform: str):
+    """
+    获取平台emoji偏好
+
+    获取指定平台的emoji使用偏好
+    """
+    try:
+        from backend.services.emoji_helper import emoji_helper_service
+
+        info = emoji_helper_service.get_platform_emojis(platform)
+
+        return EmojiPlatformResponse(
+            success=True,
+            platform=info["platform"],
+            style=info["style"],
+            commonly_used=info["commonly_used"],
+            avoid=info["avoid"],
+        )
+
+    except Exception as e:
+        logger.error(f"获取平台emoji失败: {e}")
+        return EmojiPlatformResponse(
+            success=False,
+            platform=platform,
+            style="",
+            commonly_used=[],
+            avoid=[],
+        )
+
+
+@router.post("/emoji/suggest", response_model=EmojiSuggestResponse)
+async def suggest_emojis(request: EmojiSuggestRequest):
+    """
+    推荐emoji
+
+    根据内容类型推荐合适的emoji
+    """
+    try:
+        from backend.services.emoji_helper import emoji_helper_service
+
+        emojis = emoji_helper_service.suggest_emojis_for_content(
+            content_type=request.content_type,
+            platform=request.platform,
+            num=request.num,
+        )
+
+        return EmojiSuggestResponse(
+            success=True,
+            emojis=emojis,
+        )
+
+    except Exception as e:
+        logger.error(f"推荐emoji失败: {e}")
+        return EmojiSuggestResponse(
+            success=False,
+            emojis=[],
+        )
+
+
+@router.post("/emoji/analyze", response_model=EmojiAnalyzeResponse)
+async def analyze_emoji_usage(request: EmojiAnalyzeRequest):
+    """
+    分析emoji使用
+
+    分析内容中emoji的使用情况
+    """
+    try:
+        from backend.services.emoji_helper import emoji_helper_service
+
+        result = emoji_helper_service.analyze_emoji_usage(request.content)
+
+        return EmojiAnalyzeResponse(
+            success=True,
+            emoji_count=result["emoji_count"],
+            emoji_list=result["emoji_list"],
+            usage_level=result["usage_level"],
+            suggestions=result["suggestions"],
+        )
+
+    except Exception as e:
+        logger.error(f"分析emoji使用失败: {e}")
+        return EmojiAnalyzeResponse(
+            success=False,
+            emoji_count=0,
+            emoji_list=[],
+            usage_level="未知",
+            suggestions=[],
+        )
