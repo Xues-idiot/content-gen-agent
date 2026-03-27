@@ -7942,3 +7942,173 @@ async def check_completeness(request: CompletenessCheckRequest):
             suggestions=["检查失败"],
             checks={},
         )
+
+
+# Headline Analyzer Models
+class HeadlineAnalyzeRequest(BaseModel):
+    """标题分析请求"""
+    headline: str = Field(..., description="标题")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class HeadlineAnalyzeResponse(BaseModel):
+    """标题分析响应"""
+    success: bool
+    attractiveness_score: int
+    readability_score: int
+    seo_score: int
+    emotional_appeal: str
+    power_words: List[str]
+    issues: List[str]
+    suggestions: List[str]
+
+
+class HeadlineOptimizeRequest(BaseModel):
+    """标题优化请求"""
+    headline: str = Field(..., description="原始标题")
+    platform: str = Field(default="xiaohongshu", description="平台")
+    target_score: int = Field(default=90, ge=50, le=100, description="目标分数")
+
+
+class HeadlineOptimizeResponse(BaseModel):
+    """标题优化响应"""
+    success: bool
+    original_headline: str
+    platform: str
+    target_score: int
+    optimized_headlines: List[Dict[str, Any]]
+
+
+class HeadlineStructureRequest(BaseModel):
+    """标题结构分析请求"""
+    headline: str = Field(..., description="标题")
+
+
+class HeadlineStructureResponse(BaseModel):
+    """标题结构分析响应"""
+    success: bool
+    headline: str
+    length: int
+    has_number: bool
+    has_question: bool
+    has_emoji: bool
+    has_colon: bool
+    has_parentheses: bool
+    numbers: List[str]
+    structure_type: str
+    is_optimal_length: bool
+
+
+@router.post("/headline/analyze", response_model=HeadlineAnalyzeResponse)
+async def analyze_headline(request: HeadlineAnalyzeRequest):
+    """
+    分析标题
+
+    分析标题的吸引力、可读性、SEO效果
+    """
+    try:
+        from backend.services.headline_analyzer import headline_analyzer_service
+
+        result = await headline_analyzer_service.analyze_headline(
+            request.headline, request.platform
+        )
+
+        return HeadlineAnalyzeResponse(
+            success=True,
+            attractiveness_score=result.attractiveness_score,
+            readability_score=result.readability_score,
+            seo_score=result.seo_score,
+            emotional_appeal=result.emotional_appeal,
+            power_words=result.power_words,
+            issues=result.issues,
+            suggestions=result.suggestions,
+        )
+
+    except Exception as e:
+        logger.error(f"分析标题失败: {e}")
+        return HeadlineAnalyzeResponse(
+            success=False,
+            attractiveness_score=70,
+            readability_score=70,
+            seo_score=70,
+            emotional_appeal="",
+            power_words=[],
+            issues=[],
+            suggestions=[],
+        )
+
+
+@router.post("/headline/optimize", response_model=HeadlineOptimizeResponse)
+async def optimize_headline(request: HeadlineOptimizeRequest):
+    """
+    优化标题
+
+    优化标题使其更具吸引力
+    """
+    try:
+        from backend.services.headline_analyzer import headline_analyzer_service
+
+        result = await headline_analyzer_service.optimize_headline(
+            request.headline, request.platform, request.target_score
+        )
+
+        return HeadlineOptimizeResponse(
+            success=True,
+            original_headline=result["original_headline"],
+            platform=result["platform"],
+            target_score=result["target_score"],
+            optimized_headlines=result["optimized_headlines"],
+        )
+
+    except Exception as e:
+        logger.error(f"优化标题失败: {e}")
+        return HeadlineOptimizeResponse(
+            success=False,
+            original_headline=request.headline,
+            platform=request.platform,
+            target_score=request.target_score,
+            optimized_headlines=[],
+        )
+
+
+@router.post("/headline/structure", response_model=HeadlineStructureResponse)
+async def analyze_headline_structure(request: HeadlineStructureRequest):
+    """
+    分析标题结构
+
+    分析标题的结构特征
+    """
+    try:
+        from backend.services.headline_analyzer import headline_analyzer_service
+
+        result = headline_analyzer_service.analyze_headline_structure(request.headline)
+
+        return HeadlineStructureResponse(
+            success=True,
+            headline=result["headline"],
+            length=result["length"],
+            has_number=result["has_number"],
+            has_question=result["has_question"],
+            has_emoji=result["has_emoji"],
+            has_colon=result["has_colon"],
+            has_parentheses=result["has_parentheses"],
+            numbers=result["numbers"],
+            structure_type=result["structure_type"],
+            is_optimal_length=result["is_optimal_length"],
+        )
+
+    except Exception as e:
+        logger.error(f"分析标题结构失败: {e}")
+        return HeadlineStructureResponse(
+            success=False,
+            headline=request.headline,
+            length=len(request.headline),
+            has_number=False,
+            has_question=False,
+            has_emoji=False,
+            has_colon=False,
+            has_parentheses=False,
+            numbers=[],
+            structure_type="unknown",
+            is_optimal_length=False,
+        )
