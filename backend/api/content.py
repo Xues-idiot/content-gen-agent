@@ -5003,3 +5003,152 @@ async def generate_content_briefing(request: ContentBriefingRequest):
             competitors_analysis="",
             call_to_action="",
         )
+
+
+# ==================== 评论生成接口 ====================
+
+class CommentGenerateRequest(BaseModel):
+    """评论生成请求"""
+    content: str = Field(default="", description="目标内容")
+    content_type: str = Field(default="post", description="内容类型: post/video/product/review")
+    platform: str = Field(default="xiaohongshu", description="目标平台")
+    num_comments: int = Field(default=5, ge=1, le=20, description="生成数量")
+    tone: str = Field(default="auto", description="语气: auto/friendly/professional/humorous/empathetic")
+
+
+class CommentOptionModel(BaseModel):
+    """评论选项模型"""
+    text: str
+    tone: str
+    engagement_score: int
+    emoji_used: bool
+
+
+class CommentGenerateResponse(BaseModel):
+    """评论生成响应"""
+    success: bool
+    comments: List[CommentOptionModel]
+    total: int
+
+
+class CommentReplyRequest(BaseModel):
+    """评论回复请求"""
+    original_comment: str = Field(..., description="原始评论")
+    platform: str = Field(default="xiaohongshu", description="平台")
+    tone: str = Field(default="friendly", description="语气")
+
+
+class CommentReplyResponse(BaseModel):
+    """评论回复响应"""
+    success: bool
+    reply: str
+
+
+class CommentStrategyResponse(BaseModel):
+    """评论策略响应"""
+    success: bool
+    platform: str
+    best_times: List[str]
+    response_rate: str
+    tips: List[str]
+    avoid: List[str]
+
+
+@router.post("/comments/generate", response_model=CommentGenerateResponse)
+async def generate_comments(request: CommentGenerateRequest):
+    """
+    生成评论选项
+
+    为帖子/视频/产品生成多条互动评论
+    """
+    try:
+        from backend.services.comment_generator import comment_generator_service
+
+        comments = await comment_generator_service.generate_comments(
+            content=request.content,
+            content_type=request.content_type,
+            platform=request.platform,
+            num_comments=request.num_comments,
+            tone=request.tone,
+        )
+
+        return CommentGenerateResponse(
+            success=True,
+            comments=[CommentOptionModel(
+                text=c.text,
+                tone=c.tone,
+                engagement_score=c.engagement_score,
+                emoji_used=c.emoji_used,
+            ) for c in comments],
+            total=len(comments),
+        )
+
+    except Exception as e:
+        logger.error(f"生成评论失败: {e}")
+        return CommentGenerateResponse(
+            success=False,
+            comments=[],
+            total=0,
+        )
+
+
+@router.post("/comments/reply", response_model=CommentReplyResponse)
+async def generate_comment_reply(request: CommentReplyRequest):
+    """
+    生成评论回复
+
+    为已有评论生成得体的回复
+    """
+    try:
+        from backend.services.comment_generator import comment_generator_service
+
+        reply = await comment_generator_service.generate_reply(
+            original_comment=request.original_comment,
+            platform=request.platform,
+            tone=request.tone,
+        )
+
+        return CommentReplyResponse(
+            success=True,
+            reply=reply,
+        )
+
+    except Exception as e:
+        logger.error(f"生成回复失败: {e}")
+        return CommentReplyResponse(
+            success=False,
+            reply="感谢回复！",
+        )
+
+
+@router.get("/comments/strategy/{platform}", response_model=CommentStrategyResponse)
+async def get_comment_strategy(platform: str):
+    """
+    获取评论策略
+
+    获取指定平台的评论最佳实践
+    """
+    try:
+        from backend.services.comment_generator import comment_generator_service
+
+        strategy = comment_generator_service.get_comment_strategy(platform)
+
+        return CommentStrategyResponse(
+            success=True,
+            platform=platform,
+            best_times=strategy.get("best_times", []),
+            response_rate=strategy.get("response_rate", "中"),
+            tips=strategy.get("tips", []),
+            avoid=strategy.get("avoid", []),
+        )
+
+    except Exception as e:
+        logger.error(f"获取评论策略失败: {e}")
+        return CommentStrategyResponse(
+            success=False,
+            platform=platform,
+            best_times=[],
+            response_rate="中",
+            tips=[],
+            avoid=[],
+        )
