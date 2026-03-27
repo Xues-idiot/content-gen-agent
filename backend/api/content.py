@@ -11719,3 +11719,2411 @@ async def generate_mindmap_content(request: MindmapContentRequest):
             branch_count=request.branch_count, mindmap_structure={}, key_concepts=[],
             relationships=[], visualization_tips=[], color_coding_suggestions=""
         )
+
+
+# Market Trend Report Generator Models
+class MarketTrendReportRequest(BaseModel):
+    """市场趋势报告请求"""
+    industry: str = Field(..., description="行业")
+    region: str = Field(default="全球", description="地区")
+    time_horizon: str = Field(default="2026", description="时间范围")
+
+
+class MarketTrendReportResponse(BaseModel):
+    """市场趋势报告响应"""
+    success: bool
+    industry: str
+    region: str
+    time_horizon: str
+    executive_summary: str
+    market_size: str
+    growth_rate: str
+    key_trends: List[str]
+    driving_factors: List[str]
+    challenges: List[str]
+    emerging_technologies: List[str]
+    consumer_behavior_changes: List[str]
+    competitive_landscape: str
+    investment_opportunities: List[str]
+    forecast: str
+    recommendations: List[str]
+
+
+@router.post("/report/market-trend", response_model=MarketTrendReportResponse)
+async def generate_market_trend_report(request: MarketTrendReportRequest):
+    """生成市场趋势报告"""
+    try:
+        from backend.services.market_trend_report_generator import market_trend_report_generator_service
+        result = await market_trend_report_generator_service.generate_market_trend_report(
+            request.industry, request.region, request.time_horizon
+        )
+        return MarketTrendReportResponse(
+            success=True,
+            industry=result["industry"],
+            region=result["region"],
+            time_horizon=result["time_horizon"],
+            executive_summary=result.get("executive_summary", ""),
+            market_size=result.get("market_size", ""),
+            growth_rate=result.get("growth_rate", ""),
+            key_trends=result.get("key_trends", []),
+            driving_factors=result.get("driving_factors", []),
+            challenges=result.get("challenges", []),
+            emerging_technologies=result.get("emerging_technologies", []),
+            consumer_behavior_changes=result.get("consumer_behavior_changes", []),
+            competitive_landscape=result.get("competitive_landscape", ""),
+            investment_opportunities=result.get("investment_opportunities", []),
+            forecast=result.get("forecast", ""),
+            recommendations=result.get("recommendations", []),
+        )
+    except Exception as e:
+        logger.error(f"生成市场趋势报告失败: {e}")
+        return MarketTrendReportResponse(
+            success=False, industry=request.industry, region=request.region,
+            time_horizon=request.time_horizon, executive_summary="", market_size="", growth_rate="",
+            key_trends=[], driving_factors=[], challenges=[], emerging_technologies=[],
+            consumer_behavior_changes=[], competitive_landscape="", investment_opportunities=[],
+            forecast="", recommendations=[]
+        )
+
+
+# Product Roadmap Generator Models
+class ProductRoadmapRequest(BaseModel):
+    """产品路线图请求"""
+    product_name: str = Field(..., description="产品名称")
+    planning_period: str = Field(default="12 months", description="规划周期")
+    num_versions: int = Field(default=4, description="版本数量")
+
+
+class ProductRoadmapResponse(BaseModel):
+    """产品路线图响应"""
+    success: bool
+    product_name: str
+    planning_period: str
+    num_versions: int
+    overview: str
+    versions: List[Dict[str, Any]]
+    technical_requirements: List[str]
+    resource_needs: str
+    risks_and_mitigations: List[str]
+    success_metrics: str
+
+
+@router.post("/product/roadmap", response_model=ProductRoadmapResponse)
+async def generate_product_roadmap(request: ProductRoadmapRequest):
+    """生成产品路线图"""
+    try:
+        from backend.services.product_roadmap_generator import product_roadmap_generator_service
+        result = await product_roadmap_generator_service.generate_product_roadmap(
+            request.product_name, request.planning_period, request.num_versions
+        )
+        return ProductRoadmapResponse(
+            success=True,
+            product_name=result["product_name"],
+            planning_period=result["planning_period"],
+            num_versions=result["num_versions"],
+            overview=result.get("overview", ""),
+            versions=result.get("versions", []),
+            technical_requirements=result.get("technical_requirements", []),
+            resource_needs=result.get("resource_needs", ""),
+            risks_and_mitigations=result.get("risks_and_mitigations", []),
+            success_metrics=result.get("success_metrics", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成产品路线图失败: {e}")
+        return ProductRoadmapResponse(
+            success=False, product_name=request.product_name, planning_period=request.planning_period,
+            num_versions=request.num_versions, overview="", versions=[], technical_requirements=[],
+            resource_needs="", risks_and_mitigations=[], success_metrics=""
+        )
+
+
+# UX Flow Generator Models
+class UXFlowRequest(BaseModel):
+    """用户体验流程请求"""
+    product_name: str = Field(..., description="产品名称")
+    flow_type: str = Field(default="onboarding", description="流程类型")
+    num_steps: int = Field(default=7, description="步骤数量")
+
+
+class UXFlowResponse(BaseModel):
+    """用户体验流程响应"""
+    success: bool
+    product_name: str
+    flow_type: str
+    num_steps: int
+    flow_title: str
+    overview: str
+    user_persona: str
+    steps: List[Dict[str, Any]]
+    key_metrics: List[str]
+    optimization_suggestions: List[str]
+    friction_points: List[str]
+
+
+@router.post("/ux/flow", response_model=UXFlowResponse)
+async def generate_ux_flow(request: UXFlowRequest):
+    """生成UX流程"""
+    try:
+        from backend.services.ux_flow_generator import ux_flow_generator_service
+        result = await ux_flow_generator_service.generate_ux_flow(
+            request.product_name, request.flow_type, request.num_steps
+        )
+        return UXFlowResponse(
+            success=True,
+            product_name=result["product_name"],
+            flow_type=result["flow_type"],
+            num_steps=result["num_steps"],
+            flow_title=result.get("flow_title", ""),
+            overview=result.get("overview", ""),
+            user_persona=result.get("user_persona", ""),
+            steps=result.get("steps", []),
+            key_metrics=result.get("key_metrics", []),
+            optimization_suggestions=result.get("optimization_suggestions", []),
+            friction_points=result.get("friction_points", []),
+        )
+    except Exception as e:
+        logger.error(f"生成UX流程失败: {e}")
+        return UXFlowResponse(
+            success=False, product_name=request.product_name, flow_type=request.flow_type,
+            num_steps=request.num_steps, flow_title="", overview="", user_persona="", steps=[],
+            key_metrics=[], optimization_suggestions=[], friction_points=[]
+        )
+
+
+# Campaign Analytics Generator Models
+class CampaignAnalyticsRequest(BaseModel):
+    """营销活动分析请求"""
+    campaign_name: str = Field(..., description="活动名称")
+    campaign_type: str = Field(default="social_media", description="活动类型")
+    duration_weeks: int = Field(default=4, description="持续周数")
+
+
+class CampaignAnalyticsResponse(BaseModel):
+    """营销活动分析响应"""
+    success: bool
+    campaign_name: str
+    campaign_type: str
+    duration_weeks: int
+    executive_summary: str
+    performance_metrics: Dict[str, Any]
+    audience_insights: List[str]
+    top_performing_content: List[str]
+    underperforming_content: List[str]
+    a_b_test_results: List[str]
+    channel_performance: List[str]
+    key_learnings: List[str]
+    optimization_recommendations: List[str]
+    next_campaign_suggestions: List[str]
+
+
+@router.post("/analytics/campaign", response_model=CampaignAnalyticsResponse)
+async def generate_campaign_analytics(request: CampaignAnalyticsRequest):
+    """生成营销活动分析"""
+    try:
+        from backend.services.campaign_analytics_generator import campaign_analytics_generator_service
+        result = await campaign_analytics_generator_service.generate_campaign_analytics(
+            request.campaign_name, request.campaign_type, request.duration_weeks
+        )
+        return CampaignAnalyticsResponse(
+            success=True,
+            campaign_name=result["campaign_name"],
+            campaign_type=result["campaign_type"],
+            duration_weeks=result["duration_weeks"],
+            executive_summary=result.get("executive_summary", ""),
+            performance_metrics=result.get("performance_metrics", {}),
+            audience_insights=result.get("audience_insights", []),
+            top_performing_content=result.get("top_performing_content", []),
+            underperforming_content=result.get("underperforming_content", []),
+            a_b_test_results=result.get("a_b_test_results", []),
+            channel_performance=result.get("channel_performance", []),
+            key_learnings=result.get("key_learnings", []),
+            optimization_recommendations=result.get("optimization_recommendations", []),
+            next_campaign_suggestions=result.get("next_campaign_suggestions", []),
+        )
+    except Exception as e:
+        logger.error(f"生成营销活动分析失败: {e}")
+        return CampaignAnalyticsResponse(
+            success=False, campaign_name=request.campaign_name, campaign_type=request.campaign_type,
+            duration_weeks=request.duration_weeks, executive_summary="", performance_metrics={},
+            audience_insights=[], top_performing_content=[], underperforming_content=[],
+            a_b_test_results=[], channel_performance=[], key_learnings=[], optimization_recommendations=[],
+            next_campaign_suggestions=[]
+        )
+
+
+# Customer Persona Generator Models
+class CustomerPersonaRequest(BaseModel):
+    """客户画像请求"""
+    persona_name: str = Field(..., description="画像名称")
+    demographic_info: str = Field(..., description="人口统计信息")
+    industry: str = Field(default="", description="行业")
+
+
+class CustomerPersonaResponse(BaseModel):
+    """客户画像响应"""
+    success: bool
+    persona_name: str
+    demographic_info: str
+    industry: str
+    avatar: str
+    background: str
+    goals: List[str]
+    pain_points: List[str]
+    motivations: List[str]
+    behaviors: List[str]
+    preferred_channels: List[str]
+    content_preferences: List[str]
+    buying_patterns: str
+    technology_usage: str
+    quotes: List[str]
+    success_metrics: str
+
+
+@router.post("/customer/persona", response_model=CustomerPersonaResponse)
+async def generate_customer_persona(request: CustomerPersonaRequest):
+    """生成客户画像"""
+    try:
+        from backend.services.customer_persona_generator import customer_persona_generator_service
+        result = await customer_persona_generator_service.generate_customer_persona(
+            request.persona_name, request.demographic_info, request.industry
+        )
+        return CustomerPersonaResponse(
+            success=True,
+            persona_name=result["persona_name"],
+            demographic_info=result["demographic_info"],
+            industry=result["industry"],
+            avatar=result.get("avatar", ""),
+            background=result.get("background", ""),
+            goals=result.get("goals", []),
+            pain_points=result.get("pain_points", []),
+            motivations=result.get("motivations", []),
+            behaviors=result.get("behaviors", []),
+            preferred_channels=result.get("preferred_channels", []),
+            content_preferences=result.get("content_preferences", []),
+            buying_patterns=result.get("buying_patterns", ""),
+            technology_usage=result.get("technology_usage", ""),
+            quotes=result.get("quotes", []),
+            success_metrics=result.get("success_metrics", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成客户画像失败: {e}")
+        return CustomerPersonaResponse(
+            success=False, persona_name=request.persona_name, demographic_info=request.demographic_info,
+            industry=request.industry, avatar="", background="", goals=[], pain_points=[],
+            motivations=[], behaviors=[], preferred_channels=[], content_preferences=[],
+            buying_patterns="", technology_usage="", quotes=[], success_metrics=""
+        )
+
+
+# Value Proposition Generator Models
+class ValuePropositionRequest(BaseModel):
+    """价值主张请求"""
+    product_name: str = Field(..., description="产品名称")
+    target_audience: str = Field(..., description="目标受众")
+    main_benefit: str = Field(..., description="主要利益")
+
+
+class ValuePropositionResponse(BaseModel):
+    """价值主张响应"""
+    success: bool
+    product_name: str
+    target_audience: str
+    main_benefit: str
+    headline: str
+    subheadline: str
+    value_statement: str
+    key_benefits: List[str]
+    differentiators: List[str]
+    proof_points: List[str]
+    emotional_benefits: List[str]
+    rational_benefits: List[str]
+    brand_promise: str
+    supporting_evidence: List[str]
+
+
+@router.post("/value/proposition", response_model=ValuePropositionResponse)
+async def generate_value_proposition(request: ValuePropositionRequest):
+    """生成价值主张"""
+    try:
+        from backend.services.value_proposition_generator import value_proposition_generator_service
+        result = await value_proposition_generator_service.generate_value_proposition(
+            request.product_name, request.target_audience, request.main_benefit
+        )
+        return ValuePropositionResponse(
+            success=True,
+            product_name=result["product_name"],
+            target_audience=result["target_audience"],
+            main_benefit=result["main_benefit"],
+            headline=result.get("headline", ""),
+            subheadline=result.get("subheadline", ""),
+            value_statement=result.get("value_statement", ""),
+            key_benefits=result.get("key_benefits", []),
+            differentiators=result.get("differentiators", []),
+            proof_points=result.get("proof_points", []),
+            emotional_benefits=result.get("emotional_benefits", []),
+            rational_benefits=result.get("rational_benefits", []),
+            brand_promise=result.get("brand_promise", ""),
+            supporting_evidence=result.get("supporting_evidence", []),
+        )
+    except Exception as e:
+        logger.error(f"生成价值主张失败: {e}")
+        return ValuePropositionResponse(
+            success=False, product_name=request.product_name, target_audience=request.target_audience,
+            main_benefit=request.main_benefit, headline="", subheadline="", value_statement="",
+            key_benefits=[], differentiators=[], proof_points=[], emotional_benefits=[], rational_benefits=[],
+            brand_promise="", supporting_evidence=[]
+        )
+
+
+# Brand Messaging Generator Models
+class BrandMessagingRequest(BaseModel):
+    """品牌话术请求"""
+    brand_name: str = Field(..., description="品牌名称")
+    industry: str = Field(..., description="行业")
+    communication_context: str = Field(default="general", description="沟通场景")
+
+
+class BrandMessagingResponse(BaseModel):
+    """品牌话术响应"""
+    success: bool
+    brand_name: str
+    industry: str
+    communication_context: str
+    tone_of_voice: str
+    messaging_framework: str
+    key_messages: List[str]
+    sample_copy: Dict[str, str]
+    do_and_donts: Dict[str, List[str]]
+    platform_specific_messaging: List[str]
+    industry_terms: List[str]
+    forbidden_words: List[str]
+
+
+@router.post("/brand/messaging", response_model=BrandMessagingResponse)
+async def generate_brand_messaging(request: BrandMessagingRequest):
+    """生成品牌话术"""
+    try:
+        from backend.services.brand_messaging_generator import brand_messaging_generator_service
+        result = await brand_messaging_generator_service.generate_brand_messaging(
+            request.brand_name, request.industry, request.communication_context
+        )
+        return BrandMessagingResponse(
+            success=True,
+            brand_name=result["brand_name"],
+            industry=result["industry"],
+            communication_context=result["communication_context"],
+            tone_of_voice=result.get("tone_of_voice", ""),
+            messaging_framework=result.get("messaging_framework", ""),
+            key_messages=result.get("key_messages", []),
+            sample_copy=result.get("sample_copy", {}),
+            do_and_donts=result.get("do_and_donts", {"do": [], "donts": []}),
+            platform_specific_messaging=result.get("platform_specific_messaging", []),
+            industry_terms=result.get("industry_terms", []),
+            forbidden_words=result.get("forbidden_words", []),
+        )
+    except Exception as e:
+        logger.error(f"生成品牌话术失败: {e}")
+        return BrandMessagingResponse(
+            success=False, brand_name=request.brand_name, industry=request.industry,
+            communication_context=request.communication_context, tone_of_voice="",
+            messaging_framework="", key_messages=[], sample_copy={}, do_and_donts={"do": [], "donts": []},
+            platform_specific_messaging=[], industry_terms=[], forbidden_words=[]
+        )
+
+
+# Go-To-Market Generator Models
+class GoToMarketRequest(BaseModel):
+    """市场推广计划请求"""
+    product_name: str = Field(..., description="产品名称")
+    launch_date: str = Field(..., description="发布日期")
+    target_market: str = Field(..., description="目标市场")
+
+
+class GoToMarketResponse(BaseModel):
+    """市场推广计划响应"""
+    success: bool
+    product_name: str
+    launch_date: str
+    target_market: str
+    executive_summary: str
+    market_analysis: str
+    target_customer: str
+    competitive_positioning: str
+    pricing_strategy: str
+    launch_phases: List[Dict[str, Any]]
+    marketing_channels: List[str]
+    promotional_tactics: List[str]
+    sales_enablement: str
+    budget_allocation: str
+    risk_assessment: str
+    success_metrics: str
+
+
+@router.post("/go-to-market", response_model=GoToMarketResponse)
+async def generate_go_to_market(request: GoToMarketRequest):
+    """生成市场推广计划"""
+    try:
+        from backend.services.go_to_market_generator import go_to_market_generator_service
+        result = await go_to_market_generator_service.generate_go_to_market(
+            request.product_name, request.launch_date, request.target_market
+        )
+        return GoToMarketResponse(
+            success=True,
+            product_name=result["product_name"],
+            launch_date=result["launch_date"],
+            target_market=result["target_market"],
+            executive_summary=result.get("executive_summary", ""),
+            market_analysis=result.get("market_analysis", ""),
+            target_customer=result.get("target_customer", ""),
+            competitive_positioning=result.get("competitive_positioning", ""),
+            pricing_strategy=result.get("pricing_strategy", ""),
+            launch_phases=result.get("launch_phases", []),
+            marketing_channels=result.get("marketing_channels", []),
+            promotional_tactics=result.get("promotional_tactics", []),
+            sales_enablement=result.get("sales_enablement", ""),
+            budget_allocation=result.get("budget_allocation", ""),
+            risk_assessment=result.get("risk_assessment", ""),
+            success_metrics=result.get("success_metrics", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成市场推广计划失败: {e}")
+        return GoToMarketResponse(
+            success=False, product_name=request.product_name, launch_date=request.launch_date,
+            target_market=request.target_market, executive_summary="", market_analysis="",
+            target_customer="", competitive_positioning="", pricing_strategy="", launch_phases=[],
+            marketing_channels=[], promotional_tactics=[], sales_enablement="", budget_allocation="",
+            risk_assessment="", success_metrics=""
+        )
+
+
+# Channel Strategy Generator Models
+class ChannelStrategyRequest(BaseModel):
+    """渠道策略请求"""
+    product_name: str = Field(..., description="产品名称")
+    industry: str = Field(..., description="行业")
+    num_channels: int = Field(default=5, description="渠道数量")
+
+
+class ChannelStrategyResponse(BaseModel):
+    """渠道策略响应"""
+    success: bool
+    product_name: str
+    industry: str
+    num_channels: int
+    overview: str
+    channel_analysis: List[Dict[str, Any]]
+    channel_mix_recommendation: str
+    budget_allocation: str
+    timeline: str
+    success_metrics: str
+    risks: List[str]
+    mitigation_strategies: List[str]
+
+
+@router.post("/strategy/channel", response_model=ChannelStrategyResponse)
+async def generate_channel_strategy(request: ChannelStrategyRequest):
+    """生成渠道策略"""
+    try:
+        from backend.services.channel_strategy_generator import channel_strategy_generator_service
+        result = await channel_strategy_generator_service.generate_channel_strategy(
+            request.product_name, request.industry, request.num_channels
+        )
+        return ChannelStrategyResponse(
+            success=True,
+            product_name=result["product_name"],
+            industry=result["industry"],
+            num_channels=result["num_channels"],
+            overview=result.get("overview", ""),
+            channel_analysis=result.get("channel_analysis", []),
+            channel_mix_recommendation=result.get("channel_mix_recommendation", ""),
+            budget_allocation=result.get("budget_allocation", ""),
+            timeline=result.get("timeline", ""),
+            success_metrics=result.get("success_metrics", ""),
+            risks=result.get("risks", []),
+            mitigation_strategies=result.get("mitigation_strategies", []),
+        )
+    except Exception as e:
+        logger.error(f"生成渠道策略失败: {e}")
+        return ChannelStrategyResponse(
+            success=False, product_name=request.product_name, industry=request.industry,
+            num_channels=request.num_channels, overview="", channel_analysis=[],
+            channel_mix_recommendation="", budget_allocation="", timeline="", success_metrics="",
+            risks=[], mitigation_strategies=[]
+        )
+
+
+# Pricing Strategy Generator Models
+class PricingStrategyRequest(BaseModel):
+    """定价策略请求"""
+    product_name: str = Field(..., description="产品名称")
+    product_category: str = Field(..., description="产品类别")
+    target_segment: str = Field(..., description="目标细分市场")
+
+
+class PricingStrategyResponse(BaseModel):
+    """定价策略响应"""
+    success: bool
+    product_name: str
+    product_category: str
+    target_segment: str
+    executive_summary: str
+    pricing_objectives: List[str]
+    pricing_model: str
+    price_tiers: List[Dict[str, Any]]
+    competitive_pricing_analysis: str
+    psychological_pricing: str
+    discount_strategy: str
+    promotional_pricing: str
+    revenue_projections: str
+    price_testing_plan: str
+    implementation_timeline: str
+
+
+@router.post("/strategy/pricing", response_model=PricingStrategyResponse)
+async def generate_pricing_strategy(request: PricingStrategyRequest):
+    """生成定价策略"""
+    try:
+        from backend.services.pricing_strategy_generator import pricing_strategy_generator_service
+        result = await pricing_strategy_generator_service.generate_pricing_strategy(
+            request.product_name, request.product_category, request.target_segment
+        )
+        return PricingStrategyResponse(
+            success=True,
+            product_name=result["product_name"],
+            product_category=result["product_category"],
+            target_segment=result["target_segment"],
+            executive_summary=result.get("executive_summary", ""),
+            pricing_objectives=result.get("pricing_objectives", []),
+            pricing_model=result.get("pricing_model", ""),
+            price_tiers=result.get("price_tiers", []),
+            competitive_pricing_analysis=result.get("competitive_pricing_analysis", ""),
+            psychological_pricing=result.get("psychological_pricing", ""),
+            discount_strategy=result.get("discount_strategy", ""),
+            promotional_pricing=result.get("promotional_pricing", ""),
+            revenue_projections=result.get("revenue_projections", ""),
+            price_testing_plan=result.get("price_testing_plan", ""),
+            implementation_timeline=result.get("implementation_timeline", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成定价策略失败: {e}")
+        return PricingStrategyResponse(
+            success=False, product_name=request.product_name, product_category=request.product_category,
+            target_segment=request.target_segment, executive_summary="", pricing_objectives=[],
+            pricing_model="", price_tiers=[], competitive_pricing_analysis="", psychological_pricing="",
+            discount_strategy="", promotional_pricing="", revenue_projections="", price_testing_plan="",
+            implementation_timeline=""
+        )
+
+
+# Product Launch Checklist Generator Models
+class ProductLaunchChecklistRequest(BaseModel):
+    """产品发布清单请求"""
+    product_name: str = Field(..., description="产品名称")
+    launch_date: str = Field(..., description="发布日期")
+    launch_type: str = Field(default="new product", description="发布类型")
+
+
+class ProductLaunchChecklistResponse(BaseModel):
+    """产品发布清单响应"""
+    success: bool
+    product_name: str
+    launch_date: str
+    launch_type: str
+    overview: str
+    pre_launch_checklist: List[Dict[str, Any]]
+    launch_day_checklist: List[str]
+    post_launch_checklist: List[str]
+    risk_items: List[str]
+    escalation_plan: str
+    success_criteria: str
+
+
+@router.post("/product/launch-checklist", response_model=ProductLaunchChecklistResponse)
+async def generate_launch_checklist(request: ProductLaunchChecklistRequest):
+    """生成产品发布清单"""
+    try:
+        from backend.services.product_launch_checklist_generator import product_launch_checklist_generator_service
+        result = await product_launch_checklist_generator_service.generate_launch_checklist(
+            request.product_name, request.launch_date, request.launch_type
+        )
+        return ProductLaunchChecklistResponse(
+            success=True,
+            product_name=result["product_name"],
+            launch_date=result["launch_date"],
+            launch_type=result["launch_type"],
+            overview=result.get("overview", ""),
+            pre_launch_checklist=result.get("pre_launch_checklist", []),
+            launch_day_checklist=result.get("launch_day_checklist", []),
+            post_launch_checklist=result.get("post_launch_checklist", []),
+            risk_items=result.get("risk_items", []),
+            escalation_plan=result.get("escalation_plan", ""),
+            success_criteria=result.get("success_criteria", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成产品发布清单失败: {e}")
+        return ProductLaunchChecklistResponse(
+            success=False, product_name=request.product_name, launch_date=request.launch_date,
+            launch_type=request.launch_type, overview="", pre_launch_checklist=[], launch_day_checklist=[],
+            post_launch_checklist=[], risk_items=[], escalation_plan="", success_criteria=""
+        )
+
+
+# Customer Journey Map Generator Models
+class CustomerJourneyMapRequest(BaseModel):
+    """客户旅程地图请求"""
+    product_name: str = Field(..., description="产品名称")
+    target_audience: str = Field(..., description="目标受众")
+    num_stages: int = Field(default=5, description="阶段数量")
+
+
+class CustomerJourneyMapResponse(BaseModel):
+    """客户旅程地图响应"""
+    success: bool
+    product_name: str
+    target_audience: str
+    num_stages: int
+    overview: str
+    persona: str
+    stages: List[Dict[str, Any]]
+    key_insights: List[str]
+    improvement_areas: List[str]
+    quick_wins: List[str]
+    strategic_initiatives: List[str]
+
+
+@router.post("/customer/journey-map", response_model=CustomerJourneyMapResponse)
+async def generate_journey_map(request: CustomerJourneyMapRequest):
+    """生成客户旅程地图"""
+    try:
+        from backend.services.customer_journey_map_generator import customer_journey_map_generator_service
+        result = await customer_journey_map_generator_service.generate_journey_map(
+            request.product_name, request.target_audience, request.num_stages
+        )
+        return CustomerJourneyMapResponse(
+            success=True,
+            product_name=result["product_name"],
+            target_audience=result["target_audience"],
+            num_stages=result["num_stages"],
+            overview=result.get("overview", ""),
+            persona=result.get("persona", ""),
+            stages=result.get("stages", []),
+            key_insights=result.get("key_insights", []),
+            improvement_areas=result.get("improvement_areas", []),
+            quick_wins=result.get("quick_wins", []),
+            strategic_initiatives=result.get("strategic_initiatives", []),
+        )
+    except Exception as e:
+        logger.error(f"生成客户旅程地图失败: {e}")
+        return CustomerJourneyMapResponse(
+            success=False, product_name=request.product_name, target_audience=request.target_audience,
+            num_stages=request.num_stages, overview="", persona="", stages=[], key_insights=[],
+            improvement_areas=[], quick_wins=[], strategic_initiatives=[]
+        )
+
+
+# Competitor Analysis Generator Models
+class CompetitorAnalysisRequest(BaseModel):
+    """竞争对手分析请求"""
+    your_product: str = Field(..., description="你的产品")
+    competitor_name: str = Field(..., description="竞争对手名称")
+    industry: str = Field(..., description="行业")
+
+
+class CompetitorAnalysisResponse(BaseModel):
+    """竞争对手分析响应"""
+    success: bool
+    your_product: str
+    competitor_name: str
+    industry: str
+    overview: str
+    competitor_profile: Dict[str, str]
+    product_comparison: List[Dict[str, Any]]
+    pricing_comparison: str
+    strengths: List[str]
+    weaknesses: List[str]
+    market_share: str
+    swot_analysis: Dict[str, List[str]]
+    competitive_advantages_to_emphasize: List[str]
+    potential_threats: List[str]
+    strategic_recommendations: List[str]
+
+
+@router.post("/analysis/competitor", response_model=CompetitorAnalysisResponse)
+async def generate_competitor_analysis(request: CompetitorAnalysisRequest):
+    """生成竞争对手分析"""
+    try:
+        from backend.services.competitor_analysis_generator import competitor_analysis_generator_service
+        result = await competitor_analysis_generator_service.generate_competitor_analysis(
+            request.your_product, request.competitor_name, request.industry
+        )
+        return CompetitorAnalysisResponse(
+            success=True,
+            your_product=result["your_product"],
+            competitor_name=result["competitor_name"],
+            industry=result["industry"],
+            overview=result.get("overview", ""),
+            competitor_profile=result.get("competitor_profile", {}),
+            product_comparison=result.get("product_comparison", []),
+            pricing_comparison=result.get("pricing_comparison", ""),
+            strengths=result.get("strengths", []),
+            weaknesses=result.get("weaknesses", []),
+            market_share=result.get("market_share", ""),
+            swot_analysis=result.get("swot_analysis", {}),
+            competitive_advantages_to_emphasize=result.get("competitive_advantages_to_emphasize", []),
+            potential_threats=result.get("potential_threats", []),
+            strategic_recommendations=result.get("strategic_recommendations", []),
+        )
+    except Exception as e:
+        logger.error(f"生成竞争对手分析失败: {e}")
+        return CompetitorAnalysisResponse(
+            success=False, your_product=request.your_product, competitor_name=request.competitor_name,
+            industry=request.industry, overview="", competitor_profile={}, product_comparison=[],
+            pricing_comparison="", strengths=[], weaknesses=[], market_share="", swot_analysis={},
+            competitive_advantages_to_emphasize=[], potential_threats=[], strategic_recommendations=[]
+        )
+
+
+# Feature Specification Generator Models
+class FeatureSpecRequest(BaseModel):
+    """功能规格说明书请求"""
+    feature_name: str = Field(..., description="功能名称")
+    product_name: str = Field(..., description="产品名称")
+    feature_type: str = Field(default="new feature", description="功能类型")
+
+
+class FeatureSpecResponse(BaseModel):
+    """功能规格说明书响应"""
+    success: bool
+    feature_name: str
+    product_name: str
+    feature_type: str
+    overview: str
+    user_story: str
+    functional_requirements: List[Dict[str, Any]]
+    non_functional_requirements: List[str]
+    user_interface: Dict[str, Any]
+    data_requirements: List[str]
+    technical_specifications: List[str]
+    dependencies: List[str]
+    constraints: List[str]
+    edge_cases: List[str]
+    error_handling: str
+    testing_requirements: List[str]
+    success_metrics: str
+
+
+@router.post("/feature/specification", response_model=FeatureSpecResponse)
+async def generate_feature_spec(request: FeatureSpecRequest):
+    """生成功能规格说明书"""
+    try:
+        from backend.services.feature_specification_generator import feature_specification_generator_service
+        result = await feature_specification_generator_service.generate_feature_spec(
+            request.feature_name, request.product_name, request.feature_type
+        )
+        return FeatureSpecResponse(
+            success=True,
+            feature_name=result["feature_name"],
+            product_name=result["product_name"],
+            feature_type=result["feature_type"],
+            overview=result.get("overview", ""),
+            user_story=result.get("user_story", ""),
+            functional_requirements=result.get("functional_requirements", []),
+            non_functional_requirements=result.get("non_functional_requirements", []),
+            user_interface=result.get("user_interface", {}),
+            data_requirements=result.get("data_requirements", []),
+            technical_specifications=result.get("technical_specifications", []),
+            dependencies=result.get("dependencies", []),
+            constraints=result.get("constraints", []),
+            edge_cases=result.get("edge_cases", []),
+            error_handling=result.get("error_handling", ""),
+            testing_requirements=result.get("testing_requirements", []),
+            success_metrics=result.get("success_metrics", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成功能规格说明书失败: {e}")
+        return FeatureSpecResponse(
+            success=False, feature_name=request.feature_name, product_name=request.product_name,
+            feature_type=request.feature_type, overview="", user_story="", functional_requirements=[],
+            non_functional_requirements=[], user_interface={}, data_requirements=[], technical_specifications=[],
+            dependencies=[], constraints=[], edge_cases=[], error_handling="", testing_requirements=[], success_metrics=""
+        )
+
+
+# API Specification Generator Models
+class APISpecRequest(BaseModel):
+    """API规格请求"""
+    api_name: str = Field(..., description="API名称")
+    api_version: str = Field(default="1.0", description="API版本")
+    num_endpoints: int = Field(default=5, description="端点数量")
+
+
+class APISpecResponse(BaseModel):
+    """API规格响应"""
+    success: bool
+    api_name: str
+    api_version: str
+    num_endpoints: int
+    base_url: str
+    overview: str
+    authentication: str
+    endpoints: List[Dict[str, Any]]
+    rate_limiting: str
+    pagination: str
+    webhooks: List[str]
+    sdks: List[str]
+    changelog: str
+
+
+@router.post("/api/specification", response_model=APISpecResponse)
+async def generate_api_spec(request: APISpecRequest):
+    """生成API规格"""
+    try:
+        from backend.services.api_specification_generator import api_specification_generator_service
+        result = await api_specification_generator_service.generate_api_spec(
+            request.api_name, request.api_version, request.num_endpoints
+        )
+        return APISpecResponse(
+            success=True,
+            api_name=result["api_name"],
+            api_version=result["api_version"],
+            num_endpoints=result["num_endpoints"],
+            base_url=result.get("base_url", ""),
+            overview=result.get("overview", ""),
+            authentication=result.get("authentication", ""),
+            endpoints=result.get("endpoints", []),
+            rate_limiting=result.get("rate_limiting", ""),
+            pagination=result.get("pagination", ""),
+            webhooks=result.get("webhooks", []),
+            sdks=result.get("sdks", []),
+            changelog=result.get("changelog", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成API规格失败: {e}")
+        return APISpecResponse(
+            success=False, api_name=request.api_name, api_version=request.api_version,
+            num_endpoints=request.num_endpoints, base_url="", overview="", authentication="",
+            endpoints=[], rate_limiting="", pagination="", webhooks=[], sdks=[], changelog=""
+        )
+
+
+# Data Dictionary Generator Models
+class DataDictionaryRequest(BaseModel):
+    """数据字典请求"""
+    database_name: str = Field(..., description="数据库名称")
+    num_tables: int = Field(default=5, description="表数量")
+
+
+class DataDictionaryResponse(BaseModel):
+    """数据字典响应"""
+    success: bool
+    database_name: str
+    num_tables: int
+    overview: str
+    tables: List[Dict[str, Any]]
+    relationships: List[str]
+    assumptions: List[str]
+    version: str
+
+
+@router.post("/data/dictionary", response_model=DataDictionaryResponse)
+async def generate_data_dictionary(request: DataDictionaryRequest):
+    """生成数据字典"""
+    try:
+        from backend.services.data_dictionary_generator import data_dictionary_generator_service
+        result = await data_dictionary_generator_service.generate_data_dictionary(
+            request.database_name, request.num_tables
+        )
+        return DataDictionaryResponse(
+            success=True,
+            database_name=result["database_name"],
+            num_tables=result["num_tables"],
+            overview=result.get("overview", ""),
+            tables=result.get("tables", []),
+            relationships=result.get("relationships", []),
+            assumptions=result.get("assumptions", []),
+            version=result.get("version", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成数据字典失败: {e}")
+        return DataDictionaryResponse(
+            success=False, database_name=request.database_name, num_tables=request.num_tables,
+            overview="", tables=[], relationships=[], assumptions=[], version=""
+        )
+
+
+# Architecture Document Generator Models
+class ArchitectureDocumentRequest(BaseModel):
+    """架构文档请求"""
+    system_name: str = Field(..., description="系统名称")
+    system_type: str = Field(default="web application", description="系统类型")
+    num_components: int = Field(default=6, description="组件数量")
+
+
+class ArchitectureDocumentResponse(BaseModel):
+    """架构文档响应"""
+    success: bool
+    system_name: str
+    system_type: str
+    num_components: int
+    overview: str
+    architecture_diagram_description: str
+    components: List[Dict[str, Any]]
+    data_flow: str
+    security_considerations: List[str]
+    scalability: str
+    monitoring_and_logging: str
+    disaster_recovery: str
+    deployment_architecture: str
+    technology_decisions: List[str]
+
+
+@router.post("/architecture/document", response_model=ArchitectureDocumentResponse)
+async def generate_architecture_document(request: ArchitectureDocumentRequest):
+    """生成架构文档"""
+    try:
+        from backend.services.architecture_document_generator import architecture_document_generator_service
+        result = await architecture_document_generator_service.generate_architecture_document(
+            request.system_name, request.system_type, request.num_components
+        )
+        return ArchitectureDocumentResponse(
+            success=True,
+            system_name=result["system_name"],
+            system_type=result["system_type"],
+            num_components=result["num_components"],
+            overview=result.get("overview", ""),
+            architecture_diagram_description=result.get("architecture_diagram_description", ""),
+            components=result.get("components", []),
+            data_flow=result.get("data_flow", ""),
+            security_considerations=result.get("security_considerations", []),
+            scalability=result.get("scalability", ""),
+            monitoring_and_logging=result.get("monitoring_and_logging", ""),
+            disaster_recovery=result.get("disaster_recovery", ""),
+            deployment_architecture=result.get("deployment_architecture", ""),
+            technology_decisions=result.get("technology_decisions", []),
+        )
+    except Exception as e:
+        logger.error(f"生成架构文档失败: {e}")
+        return ArchitectureDocumentResponse(
+            success=False, system_name=request.system_name, system_type=request.system_type,
+            num_components=request.num_components, overview="", architecture_diagram_description="",
+            components=[], data_flow="", security_considerations=[], scalability="",
+            monitoring_and_logging="", disaster_recovery="", deployment_architecture="", technology_decisions=[]
+        )
+
+
+# Incident Report Generator Models
+class IncidentReportRequest(BaseModel):
+    """事件报告请求"""
+    incident_title: str = Field(..., description="事件标题")
+    severity: str = Field(default="medium", description="严重程度")
+    system_name: str = Field(default="", description="系统名称")
+
+
+class IncidentReportResponse(BaseModel):
+    """事件报告响应"""
+    success: bool
+    incident_title: str
+    severity: str
+    system_name: str
+    incident_id: str
+    detected_time: str
+    resolved_time: str
+    duration: str
+    summary: str
+    impact: str
+    timeline: List[Dict[str, str]]
+    root_cause: str
+    contributing_factors: List[str]
+    resolution_steps: List[str]
+    lessons_learned: List[str]
+    preventive_measures: List[str]
+    action_items: List[Dict[str, str]]
+    resources_affected: List[str]
+    customer_impact: str
+
+
+@router.post("/incident/report", response_model=IncidentReportResponse)
+async def generate_incident_report(request: IncidentReportRequest):
+    """生成事件报告"""
+    try:
+        from backend.services.incident_report_generator import incident_report_generator_service
+        result = await incident_report_generator_service.generate_incident_report(
+            request.incident_title, request.severity, request.system_name
+        )
+        return IncidentReportResponse(
+            success=True,
+            incident_title=result["incident_title"],
+            severity=result["severity"],
+            system_name=result["system_name"],
+            incident_id=result.get("incident_id", ""),
+            detected_time=result.get("detected_time", ""),
+            resolved_time=result.get("resolved_time", ""),
+            duration=result.get("duration", ""),
+            summary=result.get("summary", ""),
+            impact=result.get("impact", ""),
+            timeline=result.get("timeline", []),
+            root_cause=result.get("root_cause", ""),
+            contributing_factors=result.get("contributing_factors", []),
+            resolution_steps=result.get("resolution_steps", []),
+            lessons_learned=result.get("lessons_learned", []),
+            preventive_measures=result.get("preventive_measures", []),
+            action_items=result.get("action_items", []),
+            resources_affected=result.get("resources_affected", []),
+            customer_impact=result.get("customer_impact", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成事件报告失败: {e}")
+        return IncidentReportResponse(
+            success=False, incident_title=request.incident_title, severity=request.severity,
+            system_name=request.system_name, incident_id="", detected_time="", resolved_time="",
+            duration="", summary="", impact="", timeline=[], root_cause="", contributing_factors=[],
+            resolution_steps=[], lessons_learned=[], preventive_measures=[], action_items=[],
+            resources_affected=[], customer_impact=""
+        )
+
+
+# Sprint Planning Generator Models
+class SprintPlanningRequest(BaseModel):
+    """冲刺计划请求"""
+    sprint_name: str = Field(..., description="冲刺名称")
+    sprint_number: int = Field(..., description="冲刺编号")
+    duration_weeks: int = Field(default=2, description="持续周数")
+    num_stories: int = Field(default=8, description="用户故事数量")
+
+
+class SprintPlanningResponse(BaseModel):
+    """冲刺计划响应"""
+    success: bool
+    sprint_name: str
+    sprint_number: int
+    duration_weeks: int
+    num_stories: int
+    sprint_goal: str
+    start_date: str
+    end_date: str
+    user_stories: List[Dict[str, Any]]
+    capacity_planning: Dict[str, Any]
+    risks: List[str]
+    dependencies: List[str]
+    retrospective_actions: List[str]
+    daily_standup_notes: str
+
+
+@router.post("/sprint/planning", response_model=SprintPlanningResponse)
+async def generate_sprint_planning(request: SprintPlanningRequest):
+    """生成冲刺计划"""
+    try:
+        from backend.services.sprint_planning_generator import sprint_planning_generator_service
+        result = await sprint_planning_generator_service.generate_sprint_planning(
+            request.sprint_name, request.sprint_number, request.duration_weeks, request.num_stories
+        )
+        return SprintPlanningResponse(
+            success=True,
+            sprint_name=result["sprint_name"],
+            sprint_number=result["sprint_number"],
+            duration_weeks=result["duration_weeks"],
+            num_stories=result["num_stories"],
+            sprint_goal=result.get("sprint_goal", ""),
+            start_date=result.get("start_date", ""),
+            end_date=result.get("end_date", ""),
+            user_stories=result.get("user_stories", []),
+            capacity_planning=result.get("capacity_planning", {}),
+            risks=result.get("risks", []),
+            dependencies=result.get("dependencies", []),
+            retrospective_actions=result.get("retrospective_actions", []),
+            daily_standup_notes=result.get("daily_standup_notes", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成冲刺计划失败: {e}")
+        return SprintPlanningResponse(
+            success=False, sprint_name=request.sprint_name, sprint_number=request.sprint_number,
+            duration_weeks=request.duration_weeks, num_stories=request.num_stories,
+            sprint_goal="", start_date="", end_date="", user_stories=[], capacity_planning={},
+            risks=[], dependencies=[], retrospective_actions=[], daily_standup_notes=""
+        )
+
+
+# Release Notes Generator Models
+class ReleaseNotesRequest(BaseModel):
+    """发布说明请求"""
+    product_name: str = Field(..., description="产品名称")
+    version: str = Field(..., description="版本号")
+    release_date: str = Field(..., description="发布日期")
+
+
+class ReleaseNotesResponse(BaseModel):
+    """发布说明响应"""
+    success: bool
+    product_name: str
+    version: str
+    release_date: str
+    release_type: str
+    overview: str
+    new_features: List[Dict[str, str]]
+    improvements: List[Dict[str, str]]
+    bug_fixes: List[str]
+    known_issues: List[str]
+    deprecations: List[str]
+    breaking_changes: List[str]
+    migration_guide: str
+    upgrade_notice: str
+    download_links: List[str]
+    support_information: str
+
+
+@router.post("/release/notes", response_model=ReleaseNotesResponse)
+async def generate_release_notes(request: ReleaseNotesRequest):
+    """生成发布说明"""
+    try:
+        from backend.services.release_notes_generator import release_notes_generator_service
+        result = await release_notes_generator_service.generate_release_notes(
+            request.product_name, request.version, request.release_date
+        )
+        return ReleaseNotesResponse(
+            success=True,
+            product_name=result["product_name"],
+            version=result["version"],
+            release_date=result["release_date"],
+            release_type=result.get("release_type", ""),
+            overview=result.get("overview", ""),
+            new_features=result.get("new_features", []),
+            improvements=result.get("improvements", []),
+            bug_fixes=result.get("bug_fixes", []),
+            known_issues=result.get("known_issues", []),
+            deprecations=result.get("deprecations", []),
+            breaking_changes=result.get("breaking_changes", []),
+            migration_guide=result.get("migration_guide", ""),
+            upgrade_notice=result.get("upgrade_notice", ""),
+            download_links=result.get("download_links", []),
+            support_information=result.get("support_information", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成发布说明失败: {e}")
+        return ReleaseNotesResponse(
+            success=False, product_name=request.product_name, version=request.version,
+            release_date=request.release_date, release_type="", overview="", new_features=[],
+            improvements=[], bug_fixes=[], known_issues=[], deprecations=[], breaking_changes=[],
+            migration_guide="", upgrade_notice="", download_links=[], support_information=""
+        )
+
+
+# Service Level Agreement Generator Models
+class SLARequest(BaseModel):
+    """服务水平协议请求"""
+    service_name: str = Field(..., description="服务名称")
+    service_type: str = Field(default="SaaS", description="服务类型")
+    tier: str = Field(default="standard", description="服务等级")
+
+
+class SLAResponse(BaseModel):
+    """服务水平协议响应"""
+    success: bool
+    service_name: str
+    service_type: str
+    tier: str
+    effective_date: str
+    overview: str
+    service_availability: Dict[str, str]
+    performance_metrics: List[Dict[str, str]]
+    response_times: Dict[str, str]
+    support_availability: str
+    maintenance_windows: str
+    incident_management: str
+    credits_and_refunds: str
+    limitations_and_exclusions: List[str]
+    reporting_and_monitoring: str
+    customer_responsibilities: str
+    term_and_termination: str
+
+
+@router.post("/sla/generate", response_model=SLAResponse)
+async def generate_sla(request: SLARequest):
+    """生成服务水平协议"""
+    try:
+        from backend.services.service_level_agreement_generator import service_level_agreement_generator_service
+        result = await service_level_agreement_generator_service.generate_sla(
+            request.service_name, request.service_type, request.tier
+        )
+        return SLAResponse(
+            success=True,
+            service_name=result["service_name"],
+            service_type=result["service_type"],
+            tier=result["tier"],
+            effective_date=result.get("effective_date", ""),
+            overview=result.get("overview", ""),
+            service_availability=result.get("service_availability", {}),
+            performance_metrics=result.get("performance_metrics", []),
+            response_times=result.get("response_times", {}),
+            support_availability=result.get("support_availability", ""),
+            maintenance_windows=result.get("maintenance_windows", ""),
+            incident_management=result.get("incident_management", ""),
+            credits_and_refunds=result.get("credits_and_refunds", ""),
+            limitations_and_exclusions=result.get("limitations_and_exclusions", []),
+            reporting_and_monitoring=result.get("reporting_and_monitoring", ""),
+            customer_responsibilities=result.get("customer_responsibilities", ""),
+            term_and_termination=result.get("term_and_termination", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成服务水平协议失败: {e}")
+        return SLAResponse(
+            success=False, service_name=request.service_name, service_type=request.service_type,
+            tier=request.tier, effective_date="", overview="", service_availability={},
+            performance_metrics=[], response_times={}, support_availability="", maintenance_windows="",
+            incident_management="", credits_and_refunds="", limitations_and_exclusions=[],
+            reporting_and_monitoring="", customer_responsibilities="", term_and_termination=""
+        )
+
+
+# Privacy Policy Generator Models
+class PrivacyPolicyRequest(BaseModel):
+    """隐私政策请求"""
+    company_name: str = Field(..., description="公司名称")
+    product_name: str = Field(..., description="产品名称")
+    jurisdiction: str = Field(default="中国", description="管辖区域")
+
+
+class PrivacyPolicyResponse(BaseModel):
+    """隐私政策响应"""
+    success: bool
+    company_name: str
+    product_name: str
+    jurisdiction: str
+    effective_date: str
+    last_updated: str
+    overview: str
+    information_collected: List[str]
+    how_information_is_used: List[str]
+    information_sharing: str
+    data_protection: str
+    cookies_and_tracking: str
+    user_rights: List[str]
+    data_retention: str
+    children_privacy: str
+    international_transfers: str
+    policy_changes: str
+    contact_information: str
+    consent_text: str
+
+
+@router.post("/policy/privacy", response_model=PrivacyPolicyResponse)
+async def generate_privacy_policy(request: PrivacyPolicyRequest):
+    """生成隐私政策"""
+    try:
+        from backend.services.privacy_policy_generator import privacy_policy_generator_service
+        result = await privacy_policy_generator_service.generate_privacy_policy(
+            request.company_name, request.product_name, request.jurisdiction
+        )
+        return PrivacyPolicyResponse(
+            success=True,
+            company_name=result["company_name"],
+            product_name=result["product_name"],
+            jurisdiction=result["jurisdiction"],
+            effective_date=result.get("effective_date", ""),
+            last_updated=result.get("last_updated", ""),
+            overview=result.get("overview", ""),
+            information_collected=result.get("information_collected", []),
+            how_information_is_used=result.get("how_information_is_used", []),
+            information_sharing=result.get("information_sharing", ""),
+            data_protection=result.get("data_protection", ""),
+            cookies_and_tracking=result.get("cookies_and_tracking", ""),
+            user_rights=result.get("user_rights", []),
+            data_retention=result.get("data_retention", ""),
+            children_privacy=result.get("children_privacy", ""),
+            international_transfers=result.get("international_transfers", ""),
+            policy_changes=result.get("policy_changes", ""),
+            contact_information=result.get("contact_information", ""),
+            consent_text=result.get("consent_text", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成隐私政策失败: {e}")
+        return PrivacyPolicyResponse(
+            success=False, company_name=request.company_name, product_name=request.product_name,
+            jurisdiction=request.jurisdiction, effective_date="", last_updated="", overview="",
+            information_collected=[], how_information_is_used=[], information_sharing="", data_protection="",
+            cookies_and_tracking="", user_rights=[], data_retention="", children_privacy="",
+            international_transfers="", policy_changes="", contact_information="", consent_text=""
+        )
+
+
+# Terms of Service Generator Models
+class TermsOfServiceRequest(BaseModel):
+    """服务条款请求"""
+    company_name: str = Field(..., description="公司名称")
+    product_name: str = Field(..., description="产品名称")
+    effective_date: str = Field(..., description="生效日期")
+
+
+class TermsOfServiceResponse(BaseModel):
+    """服务条款响应"""
+    success: bool
+    company_name: str
+    product_name: str
+    effective_date: str
+    overview: str
+    acceptance_of_terms: str
+    description_of_service: str
+    user_obligations: List[str]
+    account_terms: str
+    payment_terms: str
+    intellectual_property: str
+    user_content: str
+    prohibited_uses: List[str]
+    warranties_and_disclaimers: str
+    limitation_of_liability: str
+    indemnification: str
+    termination: str
+    governing_law: str
+    dispute_resolution: str
+    amendments: str
+    contact_information: str
+    entire_agreement: str
+
+
+@router.post("/terms/service", response_model=TermsOfServiceResponse)
+async def generate_terms_of_service(request: TermsOfServiceRequest):
+    """生成服务条款"""
+    try:
+        from backend.services.terms_of_service_generator import terms_of_service_generator_service
+        result = await terms_of_service_generator_service.generate_terms_of_service(
+            request.company_name, request.product_name, request.effective_date
+        )
+        return TermsOfServiceResponse(
+            success=True,
+            company_name=result["company_name"],
+            product_name=result["product_name"],
+            effective_date=result["effective_date"],
+            overview=result.get("overview", ""),
+            acceptance_of_terms=result.get("acceptance_of_terms", ""),
+            description_of_service=result.get("description_of_service", ""),
+            user_obligations=result.get("user_obligations", []),
+            account_terms=result.get("account_terms", ""),
+            payment_terms=result.get("payment_terms", ""),
+            intellectual_property=result.get("intellectual_property", ""),
+            user_content=result.get("user_content", ""),
+            prohibited_uses=result.get("prohibited_uses", []),
+            warranties_and_disclaimers=result.get("warranties_and_disclaimers", ""),
+            limitation_of_liability=result.get("limitation_of_liability", ""),
+            indemnification=result.get("indemnification", ""),
+            termination=result.get("termination", ""),
+            governing_law=result.get("governing_law", ""),
+            dispute_resolution=result.get("dispute_resolution", ""),
+            amendments=result.get("amendments", ""),
+            contact_information=result.get("contact_information", ""),
+            entire_agreement=result.get("entire_agreement", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成服务条款失败: {e}")
+        return TermsOfServiceResponse(
+            success=False, company_name=request.company_name, product_name=request.product_name,
+            effective_date=request.effective_date, overview="", acceptance_of_terms="",
+            description_of_service="", user_obligations=[], account_terms="", payment_terms="",
+            intellectual_property="", user_content="", prohibited_uses=[], warranties_and_disclaimers="",
+            limitation_of_liability="", indemnification="", termination="", governing_law="",
+            dispute_resolution="", amendments="", contact_information="", entire_agreement=""
+        )
+
+
+# Cookie Policy Generator Models
+class CookiePolicyRequest(BaseModel):
+    """Cookie政策请求"""
+    website_name: str = Field(..., description="网站名称")
+    company_name: str = Field(..., description="公司名称")
+
+
+class CookiePolicyResponse(BaseModel):
+    """Cookie政策响应"""
+    success: bool
+    website_name: str
+    company_name: str
+    effective_date: str
+    overview: str
+    what_are_cookies: str
+    how_we_use_cookies: List[str]
+    types_of_cookies: List[Dict[str, str]]
+    third_party_cookies: List[str]
+    cookie_purposes: List[str]
+    managing_cookies: str
+    browser_settings: str
+    impact_of_disabling: str
+    updates_to_policy: str
+    contact_information: str
+
+
+@router.post("/policy/cookie", response_model=CookiePolicyResponse)
+async def generate_cookie_policy(request: CookiePolicyRequest):
+    """生成Cookie政策"""
+    try:
+        from backend.services.cookie_policy_generator import cookie_policy_generator_service
+        result = await cookie_policy_generator_service.generate_cookie_policy(
+            request.website_name, request.company_name
+        )
+        return CookiePolicyResponse(
+            success=True,
+            website_name=result["website_name"],
+            company_name=result["company_name"],
+            effective_date=result.get("effective_date", ""),
+            overview=result.get("overview", ""),
+            what_are_cookies=result.get("what_are_cookies", ""),
+            how_we_use_cookies=result.get("how_we_use_cookies", []),
+            types_of_cookies=result.get("types_of_cookies", []),
+            third_party_cookies=result.get("third_party_cookies", []),
+            cookie_purposes=result.get("cookie_purposes", []),
+            managing_cookies=result.get("managing_cookies", ""),
+            browser_settings=result.get("browser_settings", ""),
+            impact_of_disabling=result.get("impact_of_disabling", ""),
+            updates_to_policy=result.get("updates_to_policy", ""),
+            contact_information=result.get("contact_information", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成Cookie政策失败: {e}")
+        return CookiePolicyResponse(
+            success=False, website_name=request.website_name, company_name=request.company_name,
+            effective_date="", overview="", what_are_cookies="", how_we_use_cookies=[],
+            types_of_cookies=[], third_party_cookies=[], cookie_purposes=[], managing_cookies="",
+            browser_settings="", impact_of_disabling="", updates_to_policy="", contact_information=""
+        )
+
+
+# Accessibility Statement Generator Models
+class AccessibilityStatementRequest(BaseModel):
+    """无障碍声明请求"""
+    website_name: str = Field(..., description="网站名称")
+    organization_name: str = Field(..., description="组织名称")
+    compliance_level: str = Field(default="WCAG 2.1 AA", description="合规级别")
+
+
+class AccessibilityStatementResponse(BaseModel):
+    """无障碍声明响应"""
+    success: bool
+    website_name: str
+    organization_name: str
+    compliance_level: str
+    effective_date: str
+    commitment_statement: str
+    accessibility_features: List[str]
+    accessibility_partial_conformance: List[str]
+    non_accessible_content: List[str]
+    assessment_approach: str
+    feedback_mechanism: str
+    contact_information: str
+    enforcement_procedure: str
+    technical_information: str
+    compatible_browsers: str
+    assistive_technologies: str
+    training_materials: str
+
+
+@router.post("/statement/accessibility", response_model=AccessibilityStatementResponse)
+async def generate_accessibility_statement(request: AccessibilityStatementRequest):
+    """生成无障碍声明"""
+    try:
+        from backend.services.accessibility_statement_generator import accessibility_statement_generator_service
+        result = await accessibility_statement_generator_service.generate_accessibility_statement(
+            request.website_name, request.organization_name, request.compliance_level
+        )
+        return AccessibilityStatementResponse(
+            success=True,
+            website_name=result["website_name"],
+            organization_name=result["organization_name"],
+            compliance_level=result["compliance_level"],
+            effective_date=result.get("effective_date", ""),
+            commitment_statement=result.get("commitment_statement", ""),
+            accessibility_features=result.get("accessibility_features", []),
+            accessibility_partial_conformance=result.get("accessibility_partial_conformance", []),
+            non_accessible_content=result.get("non_accessible_content", []),
+            assessment_approach=result.get("assessment_approach", ""),
+            feedback_mechanism=result.get("feedback_mechanism", ""),
+            contact_information=result.get("contact_information", ""),
+            enforcement_procedure=result.get("enforcement_procedure", ""),
+            technical_information=result.get("technical_information", ""),
+            compatible_browsers=result.get("compatible_browsers", ""),
+            assistive_technologies=result.get("assistive_technologies", ""),
+            training_materials=result.get("training_materials", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成无障碍声明失败: {e}")
+        return AccessibilityStatementResponse(
+            success=False, website_name=request.website_name, organization_name=request.organization_name,
+            compliance_level=request.compliance_level, effective_date="", commitment_statement="",
+            accessibility_features=[], accessibility_partial_conformance=[], non_accessible_content=[],
+            assessment_approach="", feedback_mechanism="", contact_information="", enforcement_procedure="",
+            technical_information="", compatible_browsers="", assistive_technologies="", training_materials=""
+        )
+
+
+# Disclaimer Generator Models
+class DisclaimerRequest(BaseModel):
+    """免责声明请求"""
+    content_type: str = Field(..., description="内容类型")
+    company_name: str = Field(..., description="公司名称")
+    product_name: str = Field(..., description="产品名称")
+
+
+class DisclaimerResponse(BaseModel):
+    """免责声明响应"""
+    success: bool
+    content_type: str
+    company_name: str
+    product_name: str
+    effective_date: str
+    general_disclaimer: str
+    accuracy_disclaimer: str
+    medical_disclaimer: str
+    financial_disclaimer: str
+    legal_disclaimer: str
+    professional_advice_disclaimer: str
+    third_party_links: str
+    user_responsibility: str
+    limitation_of_liability: str
+    indemnification: str
+    changes_to_disclaimer: str
+    contact_information: str
+
+
+@router.post("/disclaimer/generate", response_model=DisclaimerResponse)
+async def generate_disclaimer(request: DisclaimerRequest):
+    """生成免责声明"""
+    try:
+        from backend.services.disclaimer_generator import disclaimer_generator_service
+        result = await disclaimer_generator_service.generate_disclaimer(
+            request.content_type, request.company_name, request.product_name
+        )
+        return DisclaimerResponse(
+            success=True,
+            content_type=result["content_type"],
+            company_name=result["company_name"],
+            product_name=result["product_name"],
+            effective_date=result.get("effective_date", ""),
+            general_disclaimer=result.get("general_disclaimer", ""),
+            accuracy_disclaimer=result.get("accuracy_disclaimer", ""),
+            medical_disclaimer=result.get("medical_disclaimer", ""),
+            financial_disclaimer=result.get("financial_disclaimer", ""),
+            legal_disclaimer=result.get("legal_disclaimer", ""),
+            professional_advice_disclaimer=result.get("professional_advice_disclaimer", ""),
+            third_party_links=result.get("third_party_links", ""),
+            user_responsibility=result.get("user_responsibility", ""),
+            limitation_of_liability=result.get("limitation_of_liability", ""),
+            indemnification=result.get("indemnification", ""),
+            changes_to_disclaimer=result.get("changes_to_disclaimer", ""),
+            contact_information=result.get("contact_information", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成免责声明失败: {e}")
+        return DisclaimerResponse(
+            success=False, content_type=request.content_type, company_name=request.company_name,
+            product_name=request.product_name, effective_date="", general_disclaimer="",
+            accuracy_disclaimer="", medical_disclaimer="", financial_disclaimer="", legal_disclaimer="",
+            professional_advice_disclaimer="", third_party_links="", user_responsibility="",
+            limitation_of_liability="", indemnification="", changes_to_disclaimer="", contact_information=""
+        )
+
+
+# Human Resources Policy Generator Models
+class HRPolicyRequest(BaseModel):
+    """人力资源政策请求"""
+    company_name: str = Field(..., description="公司名称")
+    policy_type: str = Field(..., description="政策类型")
+    num_sections: int = Field(default=8, description="章节数量")
+
+
+class HRPolicyResponse(BaseModel):
+    """人力资源政策响应"""
+    success: bool
+    company_name: str
+    policy_type: str
+    num_sections: int
+    effective_date: str
+    purpose: str
+    scope: str
+    policy_statements: List[Dict[str, Any]]
+    procedures: List[str]
+    employee_responsibilities: List[str]
+    management_responsibilities: str
+    compliance_requirements: List[str]
+    violation_consequences: str
+    review_process: str
+    contact_information: str
+
+
+@router.post("/hr/policy", response_model=HRPolicyResponse)
+async def generate_hr_policy(request: HRPolicyRequest):
+    """生成人力资源政策"""
+    try:
+        from backend.services.human_resources_policy_generator import human_resources_policy_generator_service
+        result = await human_resources_policy_generator_service.generate_hr_policy(
+            request.company_name, request.policy_type, request.num_sections
+        )
+        return HRPolicyResponse(
+            success=True,
+            company_name=result["company_name"],
+            policy_type=result["policy_type"],
+            num_sections=result["num_sections"],
+            effective_date=result.get("effective_date", ""),
+            purpose=result.get("purpose", ""),
+            scope=result.get("scope", ""),
+            policy_statements=result.get("policy_statements", []),
+            procedures=result.get("procedures", []),
+            employee_responsibilities=result.get("employee_responsibilities", []),
+            management_responsibilities=result.get("management_responsibilities", ""),
+            compliance_requirements=result.get("compliance_requirements", []),
+            violation_consequences=result.get("violation_consequences", ""),
+            review_process=result.get("review_process", ""),
+            contact_information=result.get("contact_information", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成人力资源政策失败: {e}")
+        return HRPolicyResponse(
+            success=False, company_name=request.company_name, policy_type=request.policy_type,
+            num_sections=request.num_sections, effective_date="", purpose="", scope="",
+            policy_statements=[], procedures=[], employee_responsibilities=[], management_responsibilities="",
+            compliance_requirements=[], violation_consequences="", review_process="", contact_information=""
+        )
+
+
+# Onboarding Checklist Generator Models
+class OnboardingChecklistRequest(BaseModel):
+    """入职清单请求"""
+    job_title: str = Field(..., description="职位名称")
+    department: str = Field(..., description="部门")
+    employment_type: str = Field(default="full-time", description="雇佣类型")
+
+
+class OnboardingChecklistResponse(BaseModel):
+    """入职清单响应"""
+    success: bool
+    job_title: str
+    department: str
+    employment_type: str
+    overview: str
+    pre_day_one: List[Dict[str, str]]
+    day_one: List[str]
+    first_week: List[Dict[str, str]]
+    first_month: List[Dict[str, str]]
+    training_requirements: List[str]
+    required_documents: List[str]
+    equipment_and_access: List[str]
+    key_contacts: List[str]
+    team_introductions: List[str]
+    goals_for_first_30_days: List[str]
+    success_metrics: str
+
+
+@router.post("/onboarding/checklist", response_model=OnboardingChecklistResponse)
+async def generate_onboarding_checklist(request: OnboardingChecklistRequest):
+    """生成入职清单"""
+    try:
+        from backend.services.onboarding_checklist_generator import onboarding_checklist_generator_service
+        result = await onboarding_checklist_generator_service.generate_onboarding_checklist(
+            request.job_title, request.department, request.employment_type
+        )
+        return OnboardingChecklistResponse(
+            success=True,
+            job_title=result["job_title"],
+            department=result["department"],
+            employment_type=result["employment_type"],
+            overview=result.get("overview", ""),
+            pre_day_one=result.get("pre_day_one", []),
+            day_one=result.get("day_one", []),
+            first_week=result.get("first_week", []),
+            first_month=result.get("first_month", []),
+            training_requirements=result.get("training_requirements", []),
+            required_documents=result.get("required_documents", []),
+            equipment_and_access=result.get("equipment_and_access", []),
+            key_contacts=result.get("key_contacts", []),
+            team_introductions=result.get("team_introductions", []),
+            goals_for_first_30_days=result.get("goals_for_first_30_days", []),
+            success_metrics=result.get("success_metrics", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成入职清单失败: {e}")
+        return OnboardingChecklistResponse(
+            success=False, job_title=request.job_title, department=request.department,
+            employment_type=request.employment_type, overview="", pre_day_one=[], day_one=[],
+            first_week=[], first_month=[], training_requirements=[], required_documents=[],
+            equipment_and_access=[], key_contacts=[], team_introductions=[], goals_for_first_30_days=[],
+            success_metrics=""
+        )
+
+
+# Exit Interview Template Generator Models
+class ExitInterviewTemplateRequest(BaseModel):
+    """离职面谈模板请求"""
+    employee_name: str = Field(..., description="员工姓名")
+    department: str = Field(..., description="部门")
+    tenure: str = Field(..., description="任职时间")
+
+
+class ExitInterviewTemplateResponse(BaseModel):
+    """离职面谈模板响应"""
+    success: bool
+    employee_name: str
+    department: str
+    tenure: str
+    interview_date: str
+    interviewer: str
+    sections: List[Dict[str, Any]]
+    opening_questions: List[str]
+    reason_for_leaving_questions: List[str]
+    job_satisfaction_questions: List[str]
+    management_feedback_questions: List[str]
+    work_environment_questions: List[str]
+    compensation_benefits_questions: List[str]
+    career_development_questions: List[str]
+    training_questions: List[str]
+    recommendations_questions: List[str]
+    closing_questions: List[str]
+    confidentiality_statement: str
+    next_steps: str
+
+
+@router.post("/hr/exit-interview", response_model=ExitInterviewTemplateResponse)
+async def generate_exit_interview_template(request: ExitInterviewTemplateRequest):
+    """生成离职面谈模板"""
+    try:
+        from backend.services.exit_interview_template_generator import exit_interview_template_generator_service
+        result = await exit_interview_template_generator_service.generate_exit_interview_template(
+            request.employee_name, request.department, request.tenure
+        )
+        return ExitInterviewTemplateResponse(
+            success=True,
+            employee_name=result["employee_name"],
+            department=result["department"],
+            tenure=result["tenure"],
+            interview_date=result.get("interview_date", ""),
+            interviewer=result.get("interviewer", ""),
+            sections=result.get("sections", []),
+            opening_questions=result.get("opening_questions", []),
+            reason_for_leaving_questions=result.get("reason_for_leaving_questions", []),
+            job_satisfaction_questions=result.get("job_satisfaction_questions", []),
+            management_feedback_questions=result.get("management_feedback_questions", []),
+            work_environment_questions=result.get("work_environment_questions", []),
+            compensation_benefits_questions=result.get("compensation_benefits_questions", []),
+            career_development_questions=result.get("career_development_questions", []),
+            training_questions=result.get("training_questions", []),
+            recommendations_questions=result.get("recommendations_questions", []),
+            closing_questions=result.get("closing_questions", []),
+            confidentiality_statement=result.get("confidentiality_statement", ""),
+            next_steps=result.get("next_steps", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成离职面谈模板失败: {e}")
+        return ExitInterviewTemplateResponse(
+            success=False, employee_name=request.employee_name, department=request.department,
+            tenure=request.tenure, interview_date="", interviewer="", sections=[],
+            opening_questions=[], reason_for_leaving_questions=[], job_satisfaction_questions=[],
+            management_feedback_questions=[], work_environment_questions=[],
+            compensation_benefits_questions=[], career_development_questions=[], training_questions=[],
+            recommendations_questions=[], closing_questions=[], confidentiality_statement="", next_steps=""
+        )
+
+
+# Job Description Generator Models
+class JobDescriptionRequest(BaseModel):
+    """职位描述请求"""
+    job_title: str = Field(..., description="职位名称")
+    department: str = Field(..., description="部门")
+    location: str = Field(..., description="工作地点")
+    employment_type: str = Field(default="full-time", description="雇佣类型")
+
+
+class JobDescriptionResponse(BaseModel):
+    """职位描述响应"""
+    success: bool
+    job_title: str
+    department: str
+    location: str
+    employment_type: str
+    job_summary: str
+    about_company: str
+    key_responsibilities: List[str]
+    daily_activities: List[str]
+    qualifications: Dict[str, Any]
+    required_experience: List[str]
+    preferred_qualifications: List[str]
+    technical_requirements: List[str]
+    soft_skills: List[str]
+    language_requirements: List[str]
+    certifications: List[str]
+    compensation_benefits: List[str]
+    career_growth: str
+    work_environment: str
+    diversity_statement: str
+
+
+@router.post("/hr/job-description", response_model=JobDescriptionResponse)
+async def generate_job_description(request: JobDescriptionRequest):
+    """生成职位描述"""
+    try:
+        from backend.services.job_description_generator import job_description_generator_service
+        result = await job_description_generator_service.generate_job_description(
+            request.job_title, request.department, request.location, request.employment_type
+        )
+        return JobDescriptionResponse(
+            success=True,
+            job_title=result["job_title"],
+            department=result["department"],
+            location=result["location"],
+            employment_type=result["employment_type"],
+            job_summary=result.get("job_summary", ""),
+            about_company=result.get("about_company", ""),
+            key_responsibilities=result.get("key_responsibilities", []),
+            daily_activities=result.get("daily_activities", []),
+            qualifications=result.get("qualifications", {}),
+            required_experience=result.get("required_experience", []),
+            preferred_qualifications=result.get("preferred_qualifications", []),
+            technical_requirements=result.get("technical_requirements", []),
+            soft_skills=result.get("soft_skills", []),
+            language_requirements=result.get("language_requirements", []),
+            certifications=result.get("certifications", []),
+            compensation_benefits=result.get("compensation_benefits", []),
+            career_growth=result.get("career_growth", ""),
+            work_environment=result.get("work_environment", ""),
+            diversity_statement=result.get("diversity_statement", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成职位描述失败: {e}")
+        return JobDescriptionResponse(
+            success=False, job_title=request.job_title, department=request.department,
+            location=request.location, employment_type=request.employment_type, job_summary="",
+            about_company="", key_responsibilities=[], daily_activities=[], qualifications={},
+            required_experience=[], preferred_qualifications=[], technical_requirements=[], soft_skills=[],
+            language_requirements=[], certifications=[], compensation_benefits=[], career_growth="",
+            work_environment="", diversity_statement=""
+        )
+
+
+# Training Plan Generator Models
+class TrainingPlanRequest(BaseModel):
+    """培训计划请求"""
+    training_title: str = Field(..., description="培训标题")
+    target_audience: str = Field(..., description="目标受众")
+    duration_hours: int = Field(default=8, description="培训时长")
+    num_sessions: int = Field(default=4, description="场次数量")
+
+
+class TrainingPlanResponse(BaseModel):
+    """培训计划响应"""
+    success: bool
+    training_title: str
+    target_audience: str
+    duration_hours: int
+    num_sessions: int
+    overview: str
+    objectives: List[str]
+    prerequisites: List[str]
+    sessions: List[Dict[str, Any]]
+    methodology: str
+    assessment_methods: List[str]
+    resources_required: List[str]
+    post_training_support: str
+    evaluation_criteria: str
+    certification: str
+    follow_up_plan: str
+
+
+@router.post("/training/plan", response_model=TrainingPlanResponse)
+async def generate_training_plan(request: TrainingPlanRequest):
+    """生成培训计划"""
+    try:
+        from backend.services.training_plan_generator import training_plan_generator_service
+        result = await training_plan_generator_service.generate_training_plan(
+            request.training_title, request.target_audience, request.duration_hours, request.num_sessions
+        )
+        return TrainingPlanResponse(
+            success=True,
+            training_title=result["training_title"],
+            target_audience=result["target_audience"],
+            duration_hours=result["duration_hours"],
+            num_sessions=result["num_sessions"],
+            overview=result.get("overview", ""),
+            objectives=result.get("objectives", []),
+            prerequisites=result.get("prerequisites", []),
+            sessions=result.get("sessions", []),
+            methodology=result.get("methodology", ""),
+            assessment_methods=result.get("assessment_methods", []),
+            resources_required=result.get("resources_required", []),
+            post_training_support=result.get("post_training_support", ""),
+            evaluation_criteria=result.get("evaluation_criteria", ""),
+            certification=result.get("certification", ""),
+            follow_up_plan=result.get("follow_up_plan", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成培训计划失败: {e}")
+        return TrainingPlanResponse(
+            success=False, training_title=request.training_title, target_audience=request.target_audience,
+            duration_hours=request.duration_hours, num_sessions=request.num_sessions, overview="",
+            objectives=[], prerequisites=[], sessions=[], methodology="", assessment_methods=[],
+            resources_required=[], post_training_support="", evaluation_criteria="", certification="", follow_up_plan=""
+        )
+
+
+# Employee Handbook Generator Models
+class EmployeeHandbookRequest(BaseModel):
+    """员工手册请求"""
+    company_name: str = Field(..., description="公司名称")
+    industry: str = Field(..., description="行业")
+    num_chapters: int = Field(default=10, description="章节数量")
+
+
+class EmployeeHandbookResponse(BaseModel):
+    """员工手册响应"""
+    success: bool
+    company_name: str
+    industry: str
+    num_chapters: int
+    version: str
+    effective_date: str
+    introduction: str
+    about_company: str
+    chapters: List[Dict[str, Any]]
+    code_of_conduct: str
+    benefits_overview: str
+    leave_policies: str
+    performance_management: str
+    training_development: str
+    workplace_safety: str
+    it_security: str
+    emergency_procedures: str
+    contact_directory: str
+    acknowledgment_form: str
+
+
+@router.post("/hr/employee-handbook", response_model=EmployeeHandbookResponse)
+async def generate_employee_handbook(request: EmployeeHandbookRequest):
+    """生成员工手册"""
+    try:
+        from backend.services.employee_handbook_generator import employee_handbook_generator_service
+        result = await employee_handbook_generator_service.generate_employee_handbook(
+            request.company_name, request.industry, request.num_chapters
+        )
+        return EmployeeHandbookResponse(
+            success=True,
+            company_name=result["company_name"],
+            industry=result["industry"],
+            num_chapters=result["num_chapters"],
+            version=result.get("version", ""),
+            effective_date=result.get("effective_date", ""),
+            introduction=result.get("introduction", ""),
+            about_company=result.get("about_company", ""),
+            chapters=result.get("chapters", []),
+            code_of_conduct=result.get("code_of_conduct", ""),
+            benefits_overview=result.get("benefits_overview", ""),
+            leave_policies=result.get("leave_policies", ""),
+            performance_management=result.get("performance_management", ""),
+            training_development=result.get("training_development", ""),
+            workplace_safety=result.get("workplace_safety", ""),
+            it_security=result.get("it_security", ""),
+            emergency_procedures=result.get("emergency_procedures", ""),
+            contact_directory=result.get("contact_directory", ""),
+            acknowledgment_form=result.get("acknowledgment_form", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成员工手册失败: {e}")
+        return EmployeeHandbookResponse(
+            success=False, company_name=request.company_name, industry=request.industry,
+            num_chapters=request.num_chapters, version="", effective_date="", introduction="",
+            about_company="", chapters=[], code_of_conduct="", benefits_overview="", leave_policies="",
+            performance_management="", training_development="", workplace_safety="", it_security="",
+            emergency_procedures="", contact_directory="", acknowledgment_form=""
+        )
+
+
+# Corporate Video Script Generator Models
+class CorporateVideoScriptRequest(BaseModel):
+    """企业视频脚本请求"""
+    video_title: str = Field(..., description="视频标题")
+    video_type: str = Field(default="promotional", description="视频类型")
+    duration_minutes: int = Field(default=3, description="时长")
+
+
+class CorporateVideoScriptResponse(BaseModel):
+    """企业视频脚本响应"""
+    success: bool
+    video_title: str
+    video_type: str
+    duration_minutes: int
+    target_audience: str
+    key_message: str
+    script: List[Dict[str, Any]]
+    voiceover_script: str
+    music_and_sound_effects: str
+    on_screen_text: str
+    call_to_action: str
+    production_notes: str
+    technical_requirements: str
+
+
+@router.post("/video/corporate-script", response_model=CorporateVideoScriptResponse)
+async def generate_corporate_video_script(request: CorporateVideoScriptRequest):
+    """生成企业视频脚本"""
+    try:
+        from backend.services.corporate_video_script_generator import corporate_video_script_generator_service
+        result = await corporate_video_script_generator_service.generate_corporate_video_script(
+            request.video_title, request.video_type, request.duration_minutes
+        )
+        return CorporateVideoScriptResponse(
+            success=True,
+            video_title=result["video_title"],
+            video_type=result["video_type"],
+            duration_minutes=result["duration_minutes"],
+            target_audience=result.get("target_audience", ""),
+            key_message=result.get("key_message", ""),
+            script=result.get("script", []),
+            voiceover_script=result.get("voiceover_script", ""),
+            music_and_sound_effects=result.get("music_and_sound_effects", ""),
+            on_screen_text=result.get("on_screen_text", ""),
+            call_to_action=result.get("call_to_action", ""),
+            production_notes=result.get("production_notes", ""),
+            technical_requirements=result.get("technical_requirements", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成企业视频脚本失败: {e}")
+        return CorporateVideoScriptResponse(
+            success=False, video_title=request.video_title, video_type=request.video_type,
+            duration_minutes=request.duration_minutes, target_audience="", key_message="", script=[],
+            voiceover_script="", music_and_sound_effects="", on_screen_text="", call_to_action="",
+            production_notes="", technical_requirements=""
+        )
+
+
+# Social Media Policy Generator Models
+class SocialMediaPolicyRequest(BaseModel):
+    """社交媒体政策请求"""
+    company_name: str = Field(..., description="公司名称")
+    num_sections: int = Field(default=8, description="章节数量")
+
+
+class SocialMediaPolicyResponse(BaseModel):
+    """社交媒体政策响应"""
+    success: bool
+    company_name: str
+    num_sections: int
+    effective_date: str
+    purpose: str
+    scope: str
+    sections: List[Dict[str, Any]]
+    brand_voice_guidelines: str
+    content_guidelines: str
+    dos_and_donts: Dict[str, List[str]]
+    disclosure_requirements: str
+    confidentiality: str
+    legal_compliance: str
+    crisis_management: str
+    employee_guidelines: str
+    approval_process: str
+    monitoring: str
+    enforcement: str
+    training_requirements: str
+    contact_information: str
+
+
+@router.post("/policy/social-media", response_model=SocialMediaPolicyResponse)
+async def generate_social_media_policy(request: SocialMediaPolicyRequest):
+    """生成社交媒体政策"""
+    try:
+        from backend.services.social_media_policy_generator import social_media_policy_generator_service
+        result = await social_media_policy_generator_service.generate_social_media_policy(
+            request.company_name, request.num_sections
+        )
+        return SocialMediaPolicyResponse(
+            success=True,
+            company_name=result["company_name"],
+            num_sections=result["num_sections"],
+            effective_date=result.get("effective_date", ""),
+            purpose=result.get("purpose", ""),
+            scope=result.get("scope", ""),
+            sections=result.get("sections", []),
+            brand_voice_guidelines=result.get("brand_voice_guidelines", ""),
+            content_guidelines=result.get("content_guidelines", ""),
+            dos_and_donts=result.get("dos_and_donts", {"do": [], "dont": []}),
+            disclosure_requirements=result.get("disclosure_requirements", ""),
+            confidentiality=result.get("confidentiality", ""),
+            legal_compliance=result.get("legal_compliance", ""),
+            crisis_management=result.get("crisis_management", ""),
+            employee_guidelines=result.get("employee_guidelines", ""),
+            approval_process=result.get("approval_process", ""),
+            monitoring=result.get("monitoring", ""),
+            enforcement=result.get("enforcement", ""),
+            training_requirements=result.get("training_requirements", ""),
+            contact_information=result.get("contact_information", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成社交媒体政策失败: {e}")
+        return SocialMediaPolicyResponse(
+            success=False, company_name=request.company_name, num_sections=request.num_sections,
+            effective_date="", purpose="", scope="", sections=[], brand_voice_guidelines="",
+            content_guidelines="", dos_and_donts={"do": [], "dont": []}, disclosure_requirements="",
+            confidentiality="", legal_compliance="", crisis_management="", employee_guidelines="",
+            approval_process="", monitoring="", enforcement="", training_requirements="", contact_information=""
+        )
+
+
+# Corporate Communications Template Generator Models
+class CorporateCommsTemplateRequest(BaseModel):
+    """企业通讯模板请求"""
+    comms_type: str = Field(..., description="通讯类型")
+    company_name: str = Field(..., description="公司名称")
+    urgency: str = Field(default="normal", description="紧急程度")
+
+
+class CorporateCommsTemplateResponse(BaseModel):
+    """企业通讯模板响应"""
+    success: bool
+    comms_type: str
+    company_name: str
+    urgency: str
+    template_structure: str
+    subject_line: str
+    header: str
+    body_sections: List[Dict[str, str]]
+    call_to_action: str
+    signature_block: str
+    attachments: List[str]
+    distribution_list: str
+    timing_recommendations: str
+    tone_guidance: str
+    branding_guidelines: str
+    legal_disclaimer: str
+
+
+@router.post("/comms/corporate-template", response_model=CorporateCommsTemplateResponse)
+async def generate_corporate_comms_template(request: CorporateCommsTemplateRequest):
+    """生成企业通讯模板"""
+    try:
+        from backend.services.corporate_comms_template_generator import corporate_comms_template_generator_service
+        result = await corporate_comms_template_generator_service.generate_corporate_comms_template(
+            request.comms_type, request.company_name, request.urgency
+        )
+        return CorporateCommsTemplateResponse(
+            success=True,
+            comms_type=result["comms_type"],
+            company_name=result["company_name"],
+            urgency=result["urgency"],
+            template_structure=result.get("template_structure", ""),
+            subject_line=result.get("subject_line", ""),
+            header=result.get("header", ""),
+            body_sections=result.get("body_sections", []),
+            call_to_action=result.get("call_to_action", ""),
+            signature_block=result.get("signature_block", ""),
+            attachments=result.get("attachments", []),
+            distribution_list=result.get("distribution_list", ""),
+            timing_recommendations=result.get("timing_recommendations", ""),
+            tone_guidance=result.get("tone_guidance", ""),
+            branding_guidelines=result.get("branding_guidelines", ""),
+            legal_disclaimer=result.get("legal_disclaimer", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成企业通讯模板失败: {e}")
+        return CorporateCommsTemplateResponse(
+            success=False, comms_type=request.comms_type, company_name=request.company_name,
+            urgency=request.urgency, template_structure="", subject_line="", header="",
+            body_sections=[], call_to_action="", signature_block="", attachments=[],
+            distribution_list="", timing_recommendations="", tone_guidance="", branding_guidelines="",
+            legal_disclaimer=""
+        )
+
+
+# Meeting Minutes Template Generator Models
+class MeetingMinutesTemplateRequest(BaseModel):
+    """会议纪要模板请求"""
+    meeting_type: str = Field(..., description="会议类型")
+    num_agenda_items: int = Field(default=6, description="议程项数量")
+
+
+class MeetingMinutesTemplateResponse(BaseModel):
+    """会议纪要模板响应"""
+    success: bool
+    meeting_type: str
+    num_agenda_items: int
+    document_header: str
+    meeting_information: Dict[str, Any]
+    agenda_items: List[Dict[str, Any]]
+    action_items_summary: List[Dict[str, str]]
+    decisions_log: List[str]
+    next_meeting: str
+    attachments: List[str]
+    distribution: str
+
+
+@router.post("/meeting/minutes-template", response_model=MeetingMinutesTemplateResponse)
+async def generate_meeting_minutes_template(request: MeetingMinutesTemplateRequest):
+    """生成会议纪要模板"""
+    try:
+        from backend.services.meeting_minutes_template_generator import meeting_minutes_template_generator_service
+        result = await meeting_minutes_template_generator_service.generate_meeting_minutes_template(
+            request.meeting_type, request.num_agenda_items
+        )
+        return MeetingMinutesTemplateResponse(
+            success=True,
+            meeting_type=result["meeting_type"],
+            num_agenda_items=result["num_agenda_items"],
+            document_header=result.get("document_header", ""),
+            meeting_information=result.get("meeting_information", {}),
+            agenda_items=result.get("agenda_items", []),
+            action_items_summary=result.get("action_items_summary", []),
+            decisions_log=result.get("decisions_log", []),
+            next_meeting=result.get("next_meeting", ""),
+            attachments=result.get("attachments", []),
+            distribution=result.get("distribution", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成会议纪要模板失败: {e}")
+        return MeetingMinutesTemplateResponse(
+            success=False, meeting_type=request.meeting_type, num_agenda_items=request.num_agenda_items,
+            document_header="", meeting_information={}, agenda_items=[], action_items_summary=[],
+            decisions_log=[], next_meeting="", attachments=[], distribution=""
+        )
+
+
+# Project Charter Generator Models
+class ProjectCharterRequest(BaseModel):
+    """项目章程请求"""
+    project_name: str = Field(..., description="项目名称")
+    project_sponsor: str = Field(..., description="项目发起人")
+    project_manager: str = Field(..., description="项目经理")
+
+
+class ProjectCharterResponse(BaseModel):
+    """项目章程响应"""
+    success: bool
+    project_name: str
+    project_sponsor: str
+    project_manager: str
+    document_version: str
+    date: str
+    executive_summary: str
+    project_background: str
+    project_objectives: List[str]
+    scope: Dict[str, List[str]]
+    deliverables: List[str]
+    milestones: List[Dict[str, Any]]
+    budget: str
+    resources: str
+    stakeholders: List[Dict[str, str]]
+    constraints: List[str]
+    assumptions: List[str]
+    risks: List[str]
+    governance_structure: str
+    communication_plan: str
+    approval_requirements: str
+    signed_by: List[str]
+
+
+@router.post("/project/charter", response_model=ProjectCharterResponse)
+async def generate_project_charter(request: ProjectCharterRequest):
+    """生成项目章程"""
+    try:
+        from backend.services.project_charter_generator import project_charter_generator_service
+        result = await project_charter_generator_service.generate_project_charter(
+            request.project_name, request.project_sponsor, request.project_manager
+        )
+        return ProjectCharterResponse(
+            success=True,
+            project_name=result["project_name"],
+            project_sponsor=result["project_sponsor"],
+            project_manager=result["project_manager"],
+            document_version=result.get("document_version", ""),
+            date=result.get("date", ""),
+            executive_summary=result.get("executive_summary", ""),
+            project_background=result.get("project_background", ""),
+            project_objectives=result.get("project_objectives", []),
+            scope=result.get("scope", {"in_scope": [], "out_of_scope": []}),
+            deliverables=result.get("deliverables", []),
+            milestones=result.get("milestones", []),
+            budget=result.get("budget", ""),
+            resources=result.get("resources", ""),
+            stakeholders=result.get("stakeholders", []),
+            constraints=result.get("constraints", []),
+            assumptions=result.get("assumptions", []),
+            risks=result.get("risks", []),
+            governance_structure=result.get("governance_structure", ""),
+            communication_plan=result.get("communication_plan", ""),
+            approval_requirements=result.get("approval_requirements", ""),
+            signed_by=result.get("signed_by", []),
+        )
+    except Exception as e:
+        logger.error(f"生成项目章程失败: {e}")
+        return ProjectCharterResponse(
+            success=False, project_name=request.project_name, project_sponsor=request.project_sponsor,
+            project_manager=request.project_manager, document_version="", date="", executive_summary="",
+            project_background="", project_objectives=[], scope={"in_scope": [], "out_of_scope": []},
+            deliverables=[], milestones=[], budget="", resources="", stakeholders=[], constraints=[],
+            assumptions=[], risks=[], governance_structure="", communication_plan="", approval_requirements="", signed_by=[]
+        )
+
+
+# Status Report Template Generator Models
+class StatusReportTemplateRequest(BaseModel):
+    """状态报告模板请求"""
+    project_name: str = Field(..., description="项目名称")
+    report_type: str = Field(default="project status", description="报告类型")
+    reporting_period: str = Field(default="weekly", description="报告周期")
+
+
+class StatusReportTemplateResponse(BaseModel):
+    """状态报告模板响应"""
+    success: bool
+    project_name: str
+    report_type: str
+    reporting_period: str
+    report_date: str
+    prepared_by: str
+    executive_summary: str
+    overall_status: str
+    progress_summary: str
+    accomplishments_this_period: List[str]
+    planned_for_next_period: List[str]
+    metrics: List[Dict[str, str]]
+    budget_status: str
+    timeline_status: str
+    resource_status: str
+    issues_and_blockers: List[str]
+    risks: List[Dict[str, str]]
+    changes: List[str]
+    stakeholder_engagement: str
+    quality_metrics: str
+    next_steps: str
+    attachments: List[str]
+
+
+@router.post("/report/status-template", response_model=StatusReportTemplateResponse)
+async def generate_status_report_template(request: StatusReportTemplateRequest):
+    """生成状态报告模板"""
+    try:
+        from backend.services.status_report_template_generator import status_report_template_generator_service
+        result = await status_report_template_generator_service.generate_status_report_template(
+            request.project_name, request.report_type, request.reporting_period
+        )
+        return StatusReportTemplateResponse(
+            success=True,
+            project_name=result["project_name"],
+            report_type=result["report_type"],
+            reporting_period=result["reporting_period"],
+            report_date=result.get("report_date", ""),
+            prepared_by=result.get("prepared_by", ""),
+            executive_summary=result.get("executive_summary", ""),
+            overall_status=result.get("overall_status", ""),
+            progress_summary=result.get("progress_summary", ""),
+            accomplishments_this_period=result.get("accomplishments_this_period", []),
+            planned_for_next_period=result.get("planned_for_next_period", []),
+            metrics=result.get("metrics", []),
+            budget_status=result.get("budget_status", ""),
+            timeline_status=result.get("timeline_status", ""),
+            resource_status=result.get("resource_status", ""),
+            issues_and_blockers=result.get("issues_and_blockers", []),
+            risks=result.get("risks", []),
+            changes=result.get("changes", []),
+            stakeholder_engagement=result.get("stakeholder_engagement", ""),
+            quality_metrics=result.get("quality_metrics", ""),
+            next_steps=result.get("next_steps", ""),
+            attachments=result.get("attachments", []),
+        )
+    except Exception as e:
+        logger.error(f"生成状态报告模板失败: {e}")
+        return StatusReportTemplateResponse(
+            success=False, project_name=request.project_name, report_type=request.report_type,
+            reporting_period=request.reporting_period, report_date="", prepared_by="", executive_summary="",
+            overall_status="", progress_summary="", accomplishments_this_period=[], planned_for_next_period=[],
+            metrics=[], budget_status="", timeline_status="", resource_status="", issues_and_blockers=[],
+            risks=[], changes=[], stakeholder_engagement="", quality_metrics="", next_steps="", attachments=[]
+        )
