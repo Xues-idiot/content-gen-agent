@@ -7432,3 +7432,185 @@ async def customize_template(request: TemplateCustomizeRequest):
             customized_structure="",
             writing_points=[],
         )
+
+
+# Social Proof Generator Models
+class TestimonialRequest(BaseModel):
+    """用户评价请求"""
+    product_info: Dict[str, Any] = Field(..., description="产品信息")
+    num: int = Field(default=5, ge=1, le=10, description="生成数量")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class TestimonialResponse(BaseModel):
+    """用户评价响应"""
+    success: bool
+    testimonials: List[Dict[str, Any]]
+
+
+class StatsRequest(BaseModel):
+    """数据统计请求"""
+    product_info: Dict[str, Any] = Field(..., description="产品信息")
+    num: int = Field(default=5, ge=1, le=10, description="生成数量")
+
+
+class StatsResponse(BaseModel):
+    """数据统计响应"""
+    success: bool
+    stats: List[Dict[str, Any]]
+
+
+class EndorsementRequest(BaseModel):
+    """权威背书请求"""
+    product_info: Dict[str, Any] = Field(..., description="产品信息")
+    num: int = Field(default=3, ge=1, le=5, description="生成数量")
+
+
+class EndorsementResponse(BaseModel):
+    """权威背书响应"""
+    success: bool
+    endorsements: List[Dict[str, Any]]
+
+
+class SocialMentionRequest(BaseModel):
+    """社交提及请求"""
+    product_info: Dict[str, Any] = Field(..., description="产品信息")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class SocialMentionResponse(BaseModel):
+    """社交提及响应"""
+    success: bool
+    proof_type: str
+    content: str
+    source: str
+    credibility: str
+
+
+@router.post("/social-proof/testimonials", response_model=TestimonialResponse)
+async def generate_testimonials(request: TestimonialRequest):
+    """
+    生成用户评价
+
+    生成多条用户评价增强可信度
+    """
+    try:
+        from backend.services.social_proof_generator import social_proof_generator_service
+
+        testimonials = await social_proof_generator_service.generate_testimonials(
+            request.product_info, request.num, request.platform
+        )
+
+        return TestimonialResponse(
+            success=True,
+            testimonials=[
+                {
+                    "proof_type": t.proof_type,
+                    "content": t.content,
+                    "source": t.source,
+                    "credibility": t.credibility,
+                }
+                for t in testimonials
+            ],
+        )
+
+    except Exception as e:
+        logger.error(f"生成用户评价失败: {e}")
+        return TestimonialResponse(success=False, testimonials=[])
+
+
+@router.post("/social-proof/stats", response_model=StatsResponse)
+async def generate_stats(request: StatsRequest):
+    """
+    生成数据统计
+
+    生成有说服力的数据统计
+    """
+    try:
+        from backend.services.social_proof_generator import social_proof_generator_service
+
+        stats = await social_proof_generator_service.generate_stats(
+            request.product_info, request.num
+        )
+
+        return StatsResponse(
+            success=True,
+            stats=[
+                {
+                    "proof_type": s.proof_type,
+                    "content": s.content,
+                    "source": s.source,
+                    "credibility": s.credibility,
+                }
+                for s in stats
+            ],
+        )
+
+    except Exception as e:
+        logger.error(f"生成数据统计失败: {e}")
+        return StatsResponse(success=False, stats=[])
+
+
+@router.post("/social-proof/endorsements", response_model=EndorsementResponse)
+async def generate_endorsements(request: EndorsementRequest):
+    """
+    生成权威背书
+
+    生成权威机构或专家背书
+    """
+    try:
+        from backend.services.social_proof_generator import social_proof_generator_service
+
+        endorsements = await social_proof_generator_service.generate_endorsements(
+            request.product_info, request.num
+        )
+
+        return EndorsementResponse(
+            success=True,
+            endorsements=[
+                {
+                    "proof_type": e.proof_type,
+                    "content": e.content,
+                    "source": e.source,
+                    "credibility": e.credibility,
+                }
+                for e in endorsements
+            ],
+        )
+
+    except Exception as e:
+        logger.error(f"生成权威背书失败: {e}")
+        return EndorsementResponse(success=False, endorsements=[])
+
+
+@router.post("/social-proof/mentions", response_model=SocialMentionResponse)
+async def generate_social_mentions(request: SocialMentionRequest):
+    """
+    生成社交提及
+
+    生成平台社交热度描述
+    """
+    try:
+        from backend.services.social_proof_generator import social_proof_generator_service
+
+        mention = await social_proof_generator_service.generate_social_mentions(
+            request.product_info, request.platform
+        )
+
+        return SocialMentionResponse(
+            success=True,
+            proof_type=mention.proof_type,
+            content=mention.content,
+            source=mention.source,
+            credibility=mention.credibility,
+        )
+
+    except Exception as e:
+        logger.error(f"生成社交提及失败: {e}")
+        return SocialMentionResponse(
+            success=False,
+            proof_type="social_mention",
+            content="",
+            source=request.platform,
+            credibility="低",
+        )
