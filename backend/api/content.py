@@ -5848,3 +5848,242 @@ async def suggest_keyword_combinations(request: KeywordCombinationsRequest):
             success=False,
             combinations=[],
         )
+
+
+# ==================== 竞品追踪接口 ====================
+
+class CompetitorTrackRequest(BaseModel):
+    """竞品追踪请求"""
+    competitor_name: str = Field(..., description="竞品名称/账号")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class CompetitorInfoModel(BaseModel):
+    """竞品信息模型"""
+    name: str
+    platform: str
+    followers: int
+    avg_views: int
+    avg_engagement: float
+    content_frequency: str
+    top_content_types: List[str]
+    strengths: List[str]
+
+
+class CompetitorTrackResponse(BaseModel):
+    """竞品追踪响应"""
+    success: bool
+    competitor: CompetitorInfoModel
+
+
+class CompetitorAnalysisRequest(BaseModel):
+    """竞品内容分析请求"""
+    competitor_name: str = Field(..., description="竞品名称")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class CompetitorAnalysisResponse(BaseModel):
+    """竞品内容分析响应"""
+    success: bool
+    competitor: str
+    platform: str
+    topic_tendencies: List[str]
+    title_styles: List[str]
+    posting_schedule: str
+    hashtag_strategy: str
+    engagement_strategy: str
+    takeaways: List[str]
+
+
+class CompetitorCompareRequest(BaseModel):
+    """竞品对比请求"""
+    my_content: str = Field(..., description="自己的内容")
+    competitor_name: str = Field(..., description="竞品名称")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class CompetitorCompareResponse(BaseModel):
+    """竞品对比响应"""
+    success: bool
+    competitor: str
+    platform: str
+    main_gaps: List[str]
+    advantages: List[str]
+    disadvantages: List[str]
+    improvement_suggestions: List[str]
+
+
+class BenchmarkMetricsResponse(BaseModel):
+    """基准指标响应"""
+    success: bool
+    platform: str
+    avg_like_rate: float
+    avg_comment_rate: float
+    avg_share_rate: float
+    avg_save_rate: float
+    good_engagement_rate: float
+    excellent_engagement_rate: float
+
+
+@router.post("/competitor/track", response_model=CompetitorTrackResponse)
+async def track_competitor(request: CompetitorTrackRequest):
+    """
+    追踪竞品
+
+    获取竞品的基本信息
+    """
+    try:
+        from backend.services.competitor_tracker import competitor_tracker_service
+
+        competitor = await competitor_tracker_service.track_competitor(
+            competitor_name=request.competitor_name,
+            platform=request.platform,
+        )
+
+        return CompetitorTrackResponse(
+            success=True,
+            competitor=CompetitorInfoModel(
+                name=competitor.name,
+                platform=competitor.platform,
+                followers=competitor.followers,
+                avg_views=competitor.avg_views,
+                avg_engagement=competitor.avg_engagement,
+                content_frequency=competitor.content_frequency,
+                top_content_types=competitor.top_content_types,
+                strengths=competitor.strengths,
+            ),
+        )
+
+    except Exception as e:
+        logger.error(f"追踪竞品失败: {e}")
+        return CompetitorTrackResponse(
+            success=False,
+            competitor=CompetitorInfoModel(
+                name=request.competitor_name,
+                platform=request.platform,
+                followers=0,
+                avg_views=0,
+                avg_engagement=0.0,
+                content_frequency="",
+                top_content_types=[],
+                strengths=[],
+            ),
+        )
+
+
+@router.post("/competitor/analyze", response_model=CompetitorAnalysisResponse)
+async def analyze_competitor_content(request: CompetitorAnalysisRequest):
+    """
+    分析竞品内容策略
+
+    分析竞品的内容策略
+    """
+    try:
+        from backend.services.competitor_tracker import competitor_tracker_service
+
+        result = await competitor_tracker_service.analyze_competitor_content(
+            competitor_name=request.competitor_name,
+            platform=request.platform,
+        )
+
+        return CompetitorAnalysisResponse(
+            success=True,
+            competitor=result["competitor"],
+            platform=result["platform"],
+            topic_tendencies=result.get("topic_tendencies", []),
+            title_styles=result.get("title_styles", []),
+            posting_schedule=result.get("posting_schedule", ""),
+            hashtag_strategy=result.get("hashtag_strategy", ""),
+            engagement_strategy=result.get("engagement_strategy", ""),
+            takeaways=result.get("takeaways", []),
+        )
+
+    except Exception as e:
+        logger.error(f"分析竞品内容失败: {e}")
+        return CompetitorAnalysisResponse(
+            success=False,
+            competitor=request.competitor_name,
+            platform=request.platform,
+            topic_tendencies=[],
+            title_styles=[],
+            posting_schedule="",
+            hashtag_strategy="",
+            engagement_strategy="",
+            takeaways=[],
+        )
+
+
+@router.post("/competitor/compare", response_model=CompetitorCompareResponse)
+async def compare_with_competitor(request: CompetitorCompareRequest):
+    """
+    与竞品对比
+
+    对比自己内容与竞品的差异
+    """
+    try:
+        from backend.services.competitor_tracker import competitor_tracker_service
+
+        result = await competitor_tracker_service.compare_with_competitor(
+            my_content=request.my_content,
+            competitor_name=request.competitor_name,
+            platform=request.platform,
+        )
+
+        return CompetitorCompareResponse(
+            success=True,
+            competitor=result["competitor"],
+            platform=result["platform"],
+            main_gaps=result.get("main_gaps", []),
+            advantages=result.get("advantages", []),
+            disadvantages=result.get("disadvantages", []),
+            improvement_suggestions=result.get("improvement_suggestions", []),
+        )
+
+    except Exception as e:
+        logger.error(f"竞品对比失败: {e}")
+        return CompetitorCompareResponse(
+            success=False,
+            competitor=request.competitor_name,
+            platform=request.platform,
+            main_gaps=[],
+            advantages=[],
+            disadvantages=[],
+            improvement_suggestions=[],
+        )
+
+
+@router.get("/competitor/benchmarks/{platform}", response_model=BenchmarkMetricsResponse)
+async def get_benchmark_metrics(platform: str):
+    """
+    获取平台基准指标
+
+    获取各平台的基准互动指标
+    """
+    try:
+        from backend.services.competitor_tracker import competitor_tracker_service
+
+        benchmarks = competitor_tracker_service.get_benchmark_metrics(platform)
+
+        return BenchmarkMetricsResponse(
+            success=True,
+            platform=platform,
+            avg_like_rate=benchmarks["avg_like_rate"],
+            avg_comment_rate=benchmarks["avg_comment_rate"],
+            avg_share_rate=benchmarks["avg_share_rate"],
+            avg_save_rate=benchmarks["avg_save_rate"],
+            good_engagement_rate=benchmarks["good_engagement_rate"],
+            excellent_engagement_rate=benchmarks["excellent_engagement_rate"],
+        )
+
+    except Exception as e:
+        logger.error(f"获取基准指标失败: {e}")
+        return BenchmarkMetricsResponse(
+            success=False,
+            platform=platform,
+            avg_like_rate=0.0,
+            avg_comment_rate=0.0,
+            avg_share_rate=0.0,
+            avg_save_rate=0.0,
+            good_engagement_rate=0.0,
+            excellent_engagement_rate=0.0,
+        )
