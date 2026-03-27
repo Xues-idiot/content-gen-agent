@@ -8738,3 +8738,436 @@ async def adapt_caption(request: CaptionAdaptRequest):
             changes=[],
             tips=[],
         )
+
+
+# Video Hook Generator Models
+class VideoHookRequest(BaseModel):
+    """视频钩子请求"""
+    topic: str = Field(..., description="主题")
+    duration: int = Field(default=60, ge=5, le=300, description="时长(秒)")
+    platform: str = Field(default="tiktok", description="平台")
+
+
+class VideoHookResponse(BaseModel):
+    """视频钩子响应"""
+    success: bool
+    topic: str
+    duration: int
+    platform: str
+    hook_text: str
+    visual_suggestion: str
+    audio_suggestion: str
+
+
+@router.post("/video/hook", response_model=VideoHookResponse)
+async def generate_video_hook(request: VideoHookRequest):
+    """生成视频开头钩子"""
+    try:
+        from backend.services.video_hook_generator import video_hook_generator_service
+        result = await video_hook_generator_service.generate_hook(
+            request.topic, request.duration, request.platform
+        )
+        return VideoHookResponse(
+            success=True,
+            topic=result["topic"],
+            duration=result["duration"],
+            platform=result["platform"],
+            hook_text=result.get("hook_text", ""),
+            visual_suggestion=result.get("visual_suggestion", ""),
+            audio_suggestion=result.get("audio_suggestion", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成视频钩子失败: {e}")
+        return VideoHookResponse(
+            success=False, topic=request.topic, duration=request.duration,
+            platform=request.platform, hook_text="", visual_suggestion="", audio_suggestion=""
+        )
+
+
+# Thread Generator Models
+class ThreadGenerateRequest(BaseModel):
+    """推文串请求"""
+    topic: str = Field(..., description="主题")
+    num_tweets: int = Field(default=5, ge=2, le=20, description="推文数量")
+    platform: str = Field(default="twitter", description="平台")
+
+
+class ThreadGenerateResponse(BaseModel):
+    """推文串响应"""
+    success: bool
+    thread: List[Dict[str, Any]]
+
+
+@router.post("/thread/generate", response_model=ThreadGenerateResponse)
+async def generate_thread(request: ThreadGenerateRequest):
+    """生成推文串"""
+    try:
+        from backend.services.thread_generator import thread_generator_service
+        thread = await thread_generator_service.generate_thread(
+            request.topic, request.num_tweets, request.platform
+        )
+        return ThreadGenerateResponse(success=True, thread=thread)
+    except Exception as e:
+        logger.error(f"生成推文串失败: {e}")
+        return ThreadGenerateResponse(success=False, thread=[])
+
+
+# FAQ Generator Models
+class FAQGenerateRequest(BaseModel):
+    """FAQ请求"""
+    topic: str = Field(..., description="主题")
+    num: int = Field(default=5, ge=1, le=20, description="数量")
+
+
+class FAQGenerateResponse(BaseModel):
+    """FAQ响应"""
+    success: bool
+    faqs: List[Dict[str, Any]]
+
+
+@router.post("/faq/generate", response_model=FAQGenerateResponse)
+async def generate_faq(request: FAQGenerateRequest):
+    """生成FAQ"""
+    try:
+        from backend.services.faq_generator import faq_generator_service
+        faqs = await faq_generator_service.generate_faq(request.topic, request.num)
+        return FAQGenerateResponse(success=True, faqs=faqs)
+    except Exception as e:
+        logger.error(f"生成FAQ失败: {e}")
+        return FAQGenerateResponse(success=False, faqs=[])
+
+
+# HowTo Generator Models
+class HowToGenerateRequest(BaseModel):
+    """教程请求"""
+    topic: str = Field(..., description="主题")
+    difficulty: str = Field(default="medium", description="难度")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class HowToGenerateResponse(BaseModel):
+    """教程响应"""
+    success: bool
+    topic: str
+    difficulty: str
+    platform: str
+    title: str
+    steps: List[Dict[str, Any]]
+    common_mistakes: List[str]
+    pro_tips: List[str]
+
+
+@router.post("/howto/generate", response_model=HowToGenerateResponse)
+async def generate_howto(request: HowToGenerateRequest):
+    """生成教程"""
+    try:
+        from backend.services.howto_generator import howto_generator_service
+        result = await howto_generator_service.generate_howto(
+            request.topic, request.difficulty, request.platform
+        )
+        return HowToGenerateResponse(
+            success=True,
+            topic=result["topic"],
+            difficulty=result["difficulty"],
+            platform=result["platform"],
+            title=result.get("title", ""),
+            steps=result.get("steps", []),
+            common_mistakes=result.get("common_mistakes", []),
+            pro_tips=result.get("pro_tips", []),
+        )
+    except Exception as e:
+        logger.error(f"生成教程失败: {e}")
+        return HowToGenerateResponse(
+            success=False, topic=request.topic, difficulty=request.difficulty,
+            platform=request.platform, title="", steps=[], common_mistakes=[], pro_tips=[]
+        )
+
+
+# Listicle Generator Models
+class ListicleGenerateRequest(BaseModel):
+    """清单请求"""
+    topic: str = Field(..., description="主题")
+    num_items: int = Field(default=5, ge=3, le=20, description="条目数量")
+    list_type: str = Field(default="ranking", description="清单类型")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class ListicleGenerateResponse(BaseModel):
+    """清单响应"""
+    success: bool
+    topic: str
+    num_items: int
+    list_type: str
+    platform: str
+    title: str
+    intro: str
+    items: List[Dict[str, Any]]
+    conclusion: str
+
+
+@router.post("/listicle/generate", response_model=ListicleGenerateResponse)
+async def generate_listicle(request: ListicleGenerateRequest):
+    """生成清单"""
+    try:
+        from backend.services.listicle_generator import listicle_generator_service
+        result = await listicle_generator_service.generate_listicle(
+            request.topic, request.num_items, request.list_type, request.platform
+        )
+        return ListicleGenerateResponse(
+            success=True,
+            topic=result["topic"],
+            num_items=result["num_items"],
+            list_type=result["list_type"],
+            platform=result["platform"],
+            title=result.get("title", ""),
+            intro=result.get("intro", ""),
+            items=result.get("items", []),
+            conclusion=result.get("conclusion", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成清单失败: {e}")
+        return ListicleGenerateResponse(
+            success=False, topic=request.topic, num_items=request.num_items,
+            list_type=request.list_type, platform=request.platform,
+            title="", intro="", items=[], conclusion=""
+        )
+
+
+# Comparison Generator Models
+class ComparisonGenerateRequest(BaseModel):
+    """对比请求"""
+    item_a: str = Field(..., description="对比项A")
+    item_b: str = Field(..., description="对比项B")
+    comparison_dimensions: List[str] = Field(..., description="对比维度")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class ComparisonGenerateResponse(BaseModel):
+    """对比响应"""
+    success: bool
+    item_a: str
+    item_b: str
+    platform: str
+    comparison_table: List[Dict[str, Any]]
+    summary: str
+    recommendation: str
+
+
+@router.post("/comparison/generate", response_model=ComparisonGenerateResponse)
+async def generate_comparison(request: ComparisonGenerateRequest):
+    """生成对比"""
+    try:
+        from backend.services.comparison_generator import comparison_generator_service
+        result = await comparison_generator_service.generate_comparison(
+            request.item_a, request.item_b, request.comparison_dimensions, request.platform
+        )
+        return ComparisonGenerateResponse(
+            success=True,
+            item_a=result["item_a"],
+            item_b=result["item_b"],
+            platform=result["platform"],
+            comparison_table=result.get("comparison_table", []),
+            summary=result.get("summary", ""),
+            recommendation=result.get("recommendation", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成对比失败: {e}")
+        return ComparisonGenerateResponse(
+            success=False, item_a=request.item_a, item_b=request.item_b,
+            platform=request.platform, comparison_table=[], summary="", recommendation=""
+        )
+
+
+# Testimonial Generator Models
+class TestimonialGenerateRequest(BaseModel):
+    """用户评价请求"""
+    product_name: str = Field(..., description="产品名称")
+    num: int = Field(default=5, ge=1, le=20, description="数量")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class TestimonialGenerateResponse(BaseModel):
+    """用户评价响应"""
+    success: bool
+    testimonials: List[Dict[str, Any]]
+
+
+@router.post("/testimonial/generate", response_model=TestimonialGenerateResponse)
+async def generate_testimonials(request: TestimonialGenerateRequest):
+    """生成用户评价"""
+    try:
+        from backend.services.testimonial_generator import testimonial_generator_service
+        testimonials = await testimonial_generator_service.generate_testimonials(
+            request.product_name, request.num, request.platform
+        )
+        return TestimonialGenerateResponse(success=True, testimonials=testimonials)
+    except Exception as e:
+        logger.error(f"生成用户评价失败: {e}")
+        return TestimonialGenerateResponse(success=False, testimonials=[])
+
+
+# Story Generator Models
+class StoryGenerateRequest(BaseModel):
+    """故事请求"""
+    topic: str = Field(..., description="主题")
+    story_type: str = Field(default="personal", description="故事类型")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class StoryGenerateResponse(BaseModel):
+    """故事响应"""
+    success: bool
+    topic: str
+    story_type: str
+    platform: str
+    title: str
+    setting: str
+    characters: List[str]
+    plot_points: List[str]
+    emotional_takeaway: str
+
+
+@router.post("/story/generate", response_model=StoryGenerateResponse)
+async def generate_story(request: StoryGenerateRequest):
+    """生成故事"""
+    try:
+        from backend.services.story_generator import story_generator_service
+        result = await story_generator_service.generate_story(
+            request.topic, request.story_type, request.platform
+        )
+        return StoryGenerateResponse(
+            success=True,
+            topic=result["topic"],
+            story_type=result["story_type"],
+            platform=result["platform"],
+            title=result.get("title", ""),
+            setting=result.get("setting", ""),
+            characters=result.get("characters", []),
+            plot_points=result.get("plot_points", []),
+            emotional_takeaway=result.get("emotional_takeaway", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成故事失败: {e}")
+        return StoryGenerateResponse(
+            success=False, topic=request.topic, story_type=request.story_type,
+            platform=request.platform, title="", setting="", characters=[],
+            plot_points=[], emotional_takeaway=""
+        )
+
+
+# Poll Generator Models
+class PollGenerateRequest(BaseModel):
+    """投票请求"""
+    topic: str = Field(..., description="主题")
+    num_options: int = Field(default=4, ge=2, le=10, description="选项数量")
+    platform: str = Field(default="weibo", description="平台")
+
+
+class PollGenerateResponse(BaseModel):
+    """投票响应"""
+    success: bool
+    topic: str
+    platform: str
+    question: str
+    options: List[str]
+    duration_days: int
+    add_poll_note: str
+
+
+@router.post("/poll/generate", response_model=PollGenerateResponse)
+async def generate_poll(request: PollGenerateRequest):
+    """生成投票"""
+    try:
+        from backend.services.poll_generator import poll_generator_service
+        result = await poll_generator_service.generate_poll(
+            request.topic, request.num_options, request.platform
+        )
+        return PollGenerateResponse(
+            success=True,
+            topic=result["topic"],
+            platform=result["platform"],
+            question=result.get("question", ""),
+            options=result.get("options", []),
+            duration_days=result.get("duration_days", 7),
+            add_poll_note=result.get("add_poll_note", ""),
+        )
+    except Exception as e:
+        logger.error(f"生成投票失败: {e}")
+        return PollGenerateResponse(
+            success=False, topic=request.topic, platform=request.platform,
+            question="", options=[], duration_days=7, add_poll_note=""
+        )
+
+
+# Quote Card Generator Models
+class QuoteGenerateRequest(BaseModel):
+    """金句请求"""
+    topic: str = Field(..., description="主题")
+    num: int = Field(default=3, ge=1, le=10, description="数量")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class QuoteGenerateResponse(BaseModel):
+    """金句响应"""
+    success: bool
+    quotes: List[Dict[str, Any]]
+
+
+@router.post("/quote/generate", response_model=QuoteGenerateResponse)
+async def generate_quote(request: QuoteGenerateRequest):
+    """生成金句"""
+    try:
+        from backend.services.quote_card_generator import quote_card_generator_service
+        quotes = await quote_card_generator_service.generate_quote(
+            request.topic, request.num, request.platform
+        )
+        return QuoteGenerateResponse(success=True, quotes=quotes)
+    except Exception as e:
+        logger.error(f"生成金句失败: {e}")
+        return QuoteGenerateResponse(success=False, quotes=[])
+
+
+# Seasonal Content Generator Models
+class FestivalContentRequest(BaseModel):
+    """节日内容请求"""
+    festival: str = Field(..., description="节日")
+    product_info: Dict[str, Any] = Field(..., description="产品信息")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class FestivalContentResponse(BaseModel):
+    """节日内容响应"""
+    success: bool
+    festival: str
+    product_name: str
+    platform: str
+    content_idea: str
+    title: str
+    key_points: List[str]
+    hashtag_suggestions: List[str]
+
+
+@router.post("/seasonal/festival", response_model=FestivalContentResponse)
+async def generate_festival_content(request: FestivalContentRequest):
+    """生成节日内容"""
+    try:
+        from backend.services.seasonal_content_generator import seasonal_content_generator_service
+        result = await seasonal_content_generator_service.generate_festival_content(
+            request.festival, request.product_info, request.platform
+        )
+        return FestivalContentResponse(
+            success=True,
+            festival=result["festival"],
+            product_name=result["product_name"],
+            platform=result["platform"],
+            content_idea=result.get("content_idea", ""),
+            title=result.get("title", ""),
+            key_points=result.get("key_points", []),
+            hashtag_suggestions=result.get("hashtag_suggestions", []),
+        )
+    except Exception as e:
+        logger.error(f"生成节日内容失败: {e}")
+        return FestivalContentResponse(
+            success=False, festival=request.festival, product_name="",
+            platform=request.platform, content_idea="", title="", key_points=[], hashtag_suggestions=[]
+        )
