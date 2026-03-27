@@ -7257,3 +7257,178 @@ async def calculate_audience_match(request: AudienceMatchRequest):
             unmatched_tags=request.content_tags,
             recommendation="计算失败",
         )
+
+
+# Content Template Generator Models
+class TemplateGenerateRequest(BaseModel):
+    """模板生成请求"""
+    template_type: str = Field(..., description="模板类型")
+    product_info: Dict[str, Any] = Field(..., description="产品信息")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class TemplateGenerateResponse(BaseModel):
+    """模板生成响应"""
+    success: bool
+    template_type: str
+    title_template: str
+    content_structure: str
+    required_elements: List[str]
+    optional_elements: List[str]
+    example: str
+
+
+class TemplateSuggestRequest(BaseModel):
+    """模板推荐请求"""
+    product_info: Dict[str, Any] = Field(..., description="产品信息")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class TemplateSuggestResponse(BaseModel):
+    """模板推荐响应"""
+    success: bool
+    product_name: str
+    platform: str
+    recommended_types: List[str]
+    reasons: List[str]
+    title_suggestions: List[str]
+
+
+class TemplateCustomizeRequest(BaseModel):
+    """模板定制请求"""
+    base_template: str = Field(..., description="基础模板")
+    customization: Dict[str, Any] = Field(..., description="定制需求")
+
+
+class TemplateCustomizeResponse(BaseModel):
+    """模板定制响应"""
+    success: bool
+    original_template: str
+    customization: Dict[str, Any]
+    customized_title: str
+    customized_structure: str
+    writing_points: List[str]
+
+
+@router.get("/templates/types", response_model=List[str])
+async def get_template_types():
+    """
+    获取所有模板类型
+
+    获取可用的内容模板类型列表
+    """
+    try:
+        from backend.services.content_template_generator import content_template_generator_service
+
+        return content_template_generator_service.get_template_types()
+
+    except Exception as e:
+        logger.error(f"获取模板类型失败: {e}")
+        return []
+
+
+@router.post("/templates/generate", response_model=TemplateGenerateResponse)
+async def generate_template(request: TemplateGenerateRequest):
+    """
+    生成内容模板
+
+    根据模板类型和产品信息生成内容模板
+    """
+    try:
+        from backend.services.content_template_generator import content_template_generator_service
+
+        result = await content_template_generator_service.generate_template(
+            request.template_type, request.product_info, request.platform
+        )
+
+        return TemplateGenerateResponse(
+            success=True,
+            template_type=result.template_type,
+            title_template=result.title_template,
+            content_structure=result.content_structure,
+            required_elements=result.required_elements,
+            optional_elements=result.optional_elements,
+            example=result.example,
+        )
+
+    except Exception as e:
+        logger.error(f"生成模板失败: {e}")
+        return TemplateGenerateResponse(
+            success=False,
+            template_type=request.template_type,
+            title_template="",
+            content_structure="",
+            required_elements=[],
+            optional_elements=[],
+            example="",
+        )
+
+
+@router.post("/templates/suggest", response_model=TemplateSuggestResponse)
+async def suggest_template(request: TemplateSuggestRequest):
+    """
+    推荐模板类型
+
+    为产品推荐最合适的内容模板类型
+    """
+    try:
+        from backend.services.content_template_generator import content_template_generator_service
+
+        result = await content_template_generator_service.suggest_template_for_product(
+            request.product_info, request.platform
+        )
+
+        return TemplateSuggestResponse(
+            success=True,
+            product_name=result["product_name"],
+            platform=result["platform"],
+            recommended_types=result["recommended_types"],
+            reasons=result["reasons"],
+            title_suggestions=result["title_suggestions"],
+        )
+
+    except Exception as e:
+        logger.error(f"推荐模板失败: {e}")
+        return TemplateSuggestResponse(
+            success=False,
+            product_name=request.product_info.get("name", ""),
+            platform=request.platform,
+            recommended_types=[],
+            reasons=[],
+            title_suggestions=[],
+        )
+
+
+@router.post("/templates/customize", response_model=TemplateCustomizeResponse)
+async def customize_template(request: TemplateCustomizeRequest):
+    """
+    定制模板
+
+    根据需求定制内容模板
+    """
+    try:
+        from backend.services.content_template_generator import content_template_generator_service
+
+        result = await content_template_generator_service.customize_template(
+            request.base_template, request.customization
+        )
+
+        return TemplateCustomizeResponse(
+            success=True,
+            original_template=result["original_template"],
+            customization=result["customization"],
+            customized_title=result["customized_title"],
+            customized_structure=result["customized_structure"],
+            writing_points=result["writing_points"],
+        )
+
+    except Exception as e:
+        logger.error(f"定制模板失败: {e}")
+        return TemplateCustomizeResponse(
+            success=False,
+            original_template=request.base_template,
+            customization=request.customization,
+            customized_title=request.base_template,
+            customized_structure="",
+            writing_points=[],
+        )
