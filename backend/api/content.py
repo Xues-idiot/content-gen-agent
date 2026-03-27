@@ -5152,3 +5152,169 @@ async def get_comment_strategy(platform: str):
             tips=[],
             avoid=[],
         )
+
+
+# ==================== 热门话题分析接口 ====================
+
+class TrendingTopicsRequest(BaseModel):
+    """热门话题分析请求"""
+    platform: str = Field(default="xiaohongshu", description="目标平台")
+    category: str = Field(default="", description="话题分类")
+    num_topics: int = Field(default=10, ge=1, le=30, description="返回数量")
+
+
+class TrendingTopicModel(BaseModel):
+    """热门话题模型"""
+    topic: str
+    platform: str
+    heat_score: int
+    category: str
+    description: str
+    related_hashtags: List[str]
+    best_posting_time: str
+    growth_trend: str
+
+
+class TrendingTopicsResponse(BaseModel):
+    """热门话题分析响应"""
+    success: bool
+    topics: List[TrendingTopicModel]
+    total: int
+
+
+class TopicTrendRequest(BaseModel):
+    """话题趋势预测请求"""
+    topic: str = Field(..., description="话题名称")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class TopicTrendResponse(BaseModel):
+    """话题趋势预测响应"""
+    success: bool
+    topic: str
+    trend_prediction: str
+    peak_time: str
+    best_timing: str
+    risk_notes: str
+    confidence: int
+
+
+class TopicCompareRequest(BaseModel):
+    """话题对比请求"""
+    topics: List[str] = Field(..., description="话题列表")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class TopicCompareResponse(BaseModel):
+    """话题对比响应"""
+    success: bool
+    comparison: List[Dict[str, Any]]
+    recommendation: str
+
+
+@router.post("/trending/analyze", response_model=TrendingTopicsResponse)
+async def analyze_trending_topics(request: TrendingTopicsRequest):
+    """
+    分析热门话题
+
+    分析当前平台上的热门话题趋势
+    """
+    try:
+        from backend.services.trending_analyzer import trending_analyzer_service
+
+        topics = await trending_analyzer_service.analyze_trending_topics(
+            platform=request.platform,
+            category=request.category,
+            num_topics=request.num_topics,
+        )
+
+        return TrendingTopicsResponse(
+            success=True,
+            topics=[TrendingTopicModel(
+                topic=t.topic,
+                platform=t.platform,
+                heat_score=t.heat_score,
+                category=t.category,
+                description=t.description,
+                related_hashtags=t.related_hashtags,
+                best_posting_time=t.best_posting_time,
+                growth_trend=t.growth_trend,
+            ) for t in topics],
+            total=len(topics),
+        )
+
+    except Exception as e:
+        logger.error(f"分析热门话题失败: {e}")
+        return TrendingTopicsResponse(
+            success=False,
+            topics=[],
+            total=0,
+        )
+
+
+@router.post("/trending/predict", response_model=TopicTrendResponse)
+async def predict_topic_trend(request: TopicTrendRequest):
+    """
+    预测话题趋势
+
+    预测话题的未来热度趋势
+    """
+    try:
+        from backend.services.trending_analyzer import trending_analyzer_service
+
+        result = await trending_analyzer_service.predict_topic_trend(
+            topic=request.topic,
+            platform=request.platform,
+        )
+
+        return TopicTrendResponse(
+            success=True,
+            topic=result["topic"],
+            trend_prediction=result["trend_prediction"],
+            peak_time=result["peak_time"],
+            best_timing=result["best_timing"],
+            risk_notes=result.get("risk_notes", ""),
+            confidence=result.get("confidence", 70),
+        )
+
+    except Exception as e:
+        logger.error(f"预测话题趋势失败: {e}")
+        return TopicTrendResponse(
+            success=False,
+            topic=request.topic,
+            trend_prediction="平稳",
+            peak_time="未知",
+            best_timing="尽快行动",
+            risk_notes="",
+            confidence=50,
+        )
+
+
+@router.post("/trending/compare", response_model=TopicCompareResponse)
+async def compare_topics(request: TopicCompareRequest):
+    """
+    对比话题热度
+
+    对比多个话题的热度和竞争程度
+    """
+    try:
+        from backend.services.trending_analyzer import trending_analyzer_service
+
+        result = trending_analyzer_service.compare_topics(
+            topics=request.topics,
+            platform=request.platform,
+        )
+
+        return TopicCompareResponse(
+            success=True,
+            comparison=result.get("comparison", []),
+            recommendation=result.get("recommendation", ""),
+        )
+
+    except Exception as e:
+        logger.error(f"对比话题失败: {e}")
+        return TopicCompareResponse(
+            success=False,
+            comparison=[],
+            recommendation="",
+        )
