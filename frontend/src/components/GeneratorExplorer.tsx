@@ -22,6 +22,7 @@ export default function GeneratorExplorer({ onGenerate }: GeneratorExplorerProps
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const isMountedRef = React.useRef(true);
 
   // 常用服务分类
   const categories = {
@@ -33,20 +34,28 @@ export default function GeneratorExplorer({ onGenerate }: GeneratorExplorerProps
   };
 
   useEffect(() => {
+    isMountedRef.current = true;
     fetchServices();
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   const fetchServices = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/generators/`);
-      if (response.ok) {
+      if (response.ok && isMountedRef.current) {
         const data = await response.json();
         setServices(data.services);
       }
     } catch (err) {
-      setError("Failed to fetch services");
+      if (isMountedRef.current) {
+        setError("Failed to fetch services");
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -88,16 +97,22 @@ export default function GeneratorExplorer({ onGenerate }: GeneratorExplorerProps
       });
 
       const data = await response.json();
-      if (data.success) {
-        setResult(data.result);
-        onGenerate?.(serviceName, data.result);
-      } else {
-        setError(data.error || "Generation failed");
+      if (isMountedRef.current) {
+        if (data.success) {
+          setResult(data.result);
+          onGenerate?.(serviceName, data.result);
+        } else {
+          setError(data.error || "Generation failed");
+        }
       }
     } catch (err) {
-      setError("Network error");
+      if (isMountedRef.current) {
+        setError("Network error");
+      }
     } finally {
-      setIsGenerating(false);
+      if (isMountedRef.current) {
+        setIsGenerating(false);
+      }
     }
   };
 
@@ -117,7 +132,10 @@ export default function GeneratorExplorer({ onGenerate }: GeneratorExplorerProps
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">内容生成器</h2>
-        <p className="text-gray-600">浏览并使用 300+ 内容生成服务</p>
+        <p className="text-gray-600">
+          浏览并使用 {services.length > 0 ? services.length : "300+"} 个内容生成服务
+          {services.length > 0 && searchQuery && ` (筛选结果)`}
+        </p>
       </div>
 
       {/* 搜索框 */}
