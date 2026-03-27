@@ -8112,3 +8112,312 @@ async def analyze_headline_structure(request: HeadlineStructureRequest):
             structure_type="unknown",
             is_optimal_length=False,
         )
+
+
+# Content Idea Generator Models
+class IdeaGenerateRequest(BaseModel):
+    """内容创意生成请求"""
+    topic: str = Field(..., description="主题")
+    platform: str = Field(default="xiaohongshu", description="平台")
+    num: int = Field(default=5, ge=1, le=20, description="数量")
+
+
+class IdeaGenerateResponse(BaseModel):
+    """内容创意生成响应"""
+    success: bool
+    ideas: List[Dict[str, Any]]
+
+
+class IdeaTrendRequest(BaseModel):
+    """趋势结合创意请求"""
+    trend_topic: str = Field(..., description="趋势话题")
+    product_info: Dict[str, Any] = Field(..., description="产品信息")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class IdeaTrendResponse(BaseModel):
+    """趋势结合创意响应"""
+    success: bool
+    trend_topic: str
+    product_name: str
+    title: str
+    framework: str
+    connection_points: List[str]
+    posting_time: str
+
+
+@router.post("/ideas/generate", response_model=IdeaGenerateResponse)
+async def generate_content_ideas(request: IdeaGenerateRequest):
+    """
+    生成内容创意
+
+    根据主题生成多个内容创意
+    """
+    try:
+        from backend.services.content_idea_generator import content_idea_generator_service
+
+        ideas = await content_idea_generator_service.generate_ideas(
+            request.topic, request.platform, request.num
+        )
+
+        return IdeaGenerateResponse(success=True, ideas=ideas)
+
+    except Exception as e:
+        logger.error(f"生成内容创意失败: {e}")
+        return IdeaGenerateResponse(success=False, ideas=[])
+
+
+@router.post("/ideas/from-trend", response_model=IdeaTrendResponse)
+async def generate_idea_from_trend(request: IdeaTrendRequest):
+    """
+    结合趋势生成创意
+
+    将趋势话题与产品结合生成内容创意
+    """
+    try:
+        from backend.services.content_idea_generator import content_idea_generator_service
+
+        result = await content_idea_generator_service.generate_from_trend(
+            request.trend_topic, request.product_info, request.platform
+        )
+
+        return IdeaTrendResponse(
+            success=True,
+            trend_topic=result["trend_topic"],
+            product_name=result["product_name"],
+            title=result.get("title", ""),
+            framework=result.get("framework", ""),
+            connection_points=result.get("connection_points", []),
+            posting_time=result.get("posting_time", ""),
+        )
+
+    except Exception as e:
+        logger.error(f"结合趋势生成创意失败: {e}")
+        return IdeaTrendResponse(
+            success=False,
+            trend_topic=request.trend_topic,
+            product_name=request.product_info.get("name", ""),
+            title="",
+            framework="",
+            connection_points=[],
+            posting_time="",
+        )
+
+
+# Engagement Predictor Models
+class EngagementPredictRequest(BaseModel):
+    """互动预测请求"""
+    content: str = Field(..., description="内容")
+    title: str = Field(default="", description="标题")
+    platform: str = Field(default="xiaohongshu", description="平台")
+    follower_count: int = Field(default=10000, ge=0, description="粉丝数")
+
+
+class EngagementPredictResponse(BaseModel):
+    """互动预测响应"""
+    success: bool
+    predicted_likes: int
+    predicted_comments: int
+    predicted_shares: int
+    engagement_rate: float
+    confidence: str
+    factors: List[str]
+
+
+class EngagementOptimizeRequest(BaseModel):
+    """互动优化请求"""
+    content: str = Field(..., description="内容")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class EngagementOptimizeResponse(BaseModel):
+    """互动优化响应"""
+    success: bool
+    current_potential: str
+    barriers: List[str]
+    suggestions: List[str]
+
+
+@router.post("/engagement/predict", response_model=EngagementPredictResponse)
+async def predict_engagement(request: EngagementPredictRequest):
+    """
+    预测互动
+
+    预测内容的互动表现
+    """
+    try:
+        from backend.services.engagement_predictor import engagement_predictor_service
+
+        result = await engagement_predictor_service.predict_engagement(
+            request.content, request.title, request.platform, request.follower_count
+        )
+
+        return EngagementPredictResponse(
+            success=True,
+            predicted_likes=result.predicted_likes,
+            predicted_comments=result.predicted_comments,
+            predicted_shares=result.predicted_shares,
+            engagement_rate=result.engagement_rate,
+            confidence=result.confidence,
+            factors=result.factors,
+        )
+
+    except Exception as e:
+        logger.error(f"预测互动失败: {e}")
+        return EngagementPredictResponse(
+            success=False,
+            predicted_likes=0,
+            predicted_comments=0,
+            predicted_shares=0,
+            engagement_rate=0.0,
+            confidence="低",
+            factors=[],
+        )
+
+
+@router.post("/engagement/optimize", response_model=EngagementOptimizeResponse)
+async def get_engagement_optimization(request: EngagementOptimizeRequest):
+    """
+    获取互动优化建议
+
+    获取提高内容互动的建议
+    """
+    try:
+        from backend.services.engagement_predictor import engagement_predictor_service
+
+        result = await engagement_predictor_service.get_optimization_suggestions(
+            request.content, request.platform
+        )
+
+        return EngagementOptimizeResponse(
+            success=True,
+            current_potential=result.get("current_potential", ""),
+            barriers=result.get("barriers", []),
+            suggestions=result.get("suggestions", []),
+        )
+
+    except Exception as e:
+        logger.error(f"获取优化建议失败: {e}")
+        return EngagementOptimizeResponse(
+            success=False,
+            current_potential="",
+            barriers=[],
+            suggestions=[],
+        )
+
+
+# Content ROI Calculator Models
+class ROICalculateRequest(BaseModel):
+    """ROI计算请求"""
+    content_metrics: Dict[str, Any] = Field(..., description="内容指标")
+    cost_breakdown: Dict[str, float] = Field(..., description="成本明细")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class ROICalculateResponse(BaseModel):
+    """ROI计算响应"""
+    success: bool
+    total_cost: float
+    estimated_reach: int
+    estimated_conversions: int
+    estimated_revenue: float
+    roi_percentage: float
+    cost_per_reach: float
+    cost_per_conversion: float
+
+
+class ROIPotentialRequest(BaseModel):
+    """ROI潜力估算请求"""
+    content_type: str = Field(..., description="内容类型")
+    platform: str = Field(default="xiaohongshu", description="平台")
+    budget: float = Field(default=1000, ge=0, description="预算")
+
+
+class ROIPotentialResponse(BaseModel):
+    """ROI潜力估算响应"""
+    success: bool
+    content_type: str
+    platform: str
+    budget: float
+    reach_range: Dict[str, int]
+    engagement_estimate: Dict[str, int]
+    conversion_estimate: int
+    budget_allocation: Dict[str, float]
+
+
+@router.post("/roi/calculate", response_model=ROICalculateResponse)
+async def calculate_content_roi(request: ROICalculateRequest):
+    """
+    计算内容ROI
+
+    计算内容的投资回报率
+    """
+    try:
+        from backend.services.content_roi_calculator import content_roi_calculator_service
+
+        result = await content_roi_calculator_service.calculate_roi(
+            request.content_metrics, request.cost_breakdown, request.platform
+        )
+
+        return ROICalculateResponse(
+            success=True,
+            total_cost=result.total_cost,
+            estimated_reach=result.estimated_reach,
+            estimated_conversions=result.estimated_conversions,
+            estimated_revenue=result.estimated_revenue,
+            roi_percentage=result.roi_percentage,
+            cost_per_reach=result.cost_per_reach,
+            cost_per_conversion=result.cost_per_conversion,
+        )
+
+    except Exception as e:
+        logger.error(f"计算ROI失败: {e}")
+        return ROICalculateResponse(
+            success=False,
+            total_cost=0,
+            estimated_reach=0,
+            estimated_conversions=0,
+            estimated_revenue=0,
+            roi_percentage=0,
+            cost_per_reach=0,
+            cost_per_conversion=0,
+        )
+
+
+@router.post("/roi/estimate", response_model=ROIPotentialResponse)
+async def estimate_potential(request: ROIPotentialRequest):
+    """
+    估算潜力
+
+    估算内容类型的潜力
+    """
+    try:
+        from backend.services.content_roi_calculator import content_roi_calculator_service
+
+        result = await content_roi_calculator_service.estimate_potential(
+            request.content_type, request.platform, request.budget
+        )
+
+        return ROIPotentialResponse(
+            success=True,
+            content_type=result["content_type"],
+            platform=result["platform"],
+            budget=result["budget"],
+            reach_range=result.get("reach_range", {"min": 0, "max": 0}),
+            engagement_estimate=result.get("engagement_estimate", {"likes": 0, "comments": 0}),
+            conversion_estimate=result.get("conversion_estimate", 0),
+            budget_allocation=result.get("budget_allocation", {}),
+        )
+
+    except Exception as e:
+        logger.error(f"估算潜力失败: {e}")
+        return ROIPotentialResponse(
+            success=False,
+            content_type=request.content_type,
+            platform=request.platform,
+            budget=request.budget,
+            reach_range={"min": 0, "max": 0},
+            engagement_estimate={"likes": 0, "comments": 0},
+            conversion_estimate=0,
+            budget_allocation={},
+        )
