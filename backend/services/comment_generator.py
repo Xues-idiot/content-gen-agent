@@ -9,6 +9,7 @@ Vox Comment Generator Service 模块
 
 import json
 import random
+import re
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 
