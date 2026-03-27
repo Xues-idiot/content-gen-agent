@@ -7614,3 +7614,169 @@ async def generate_social_mentions(request: SocialMentionRequest):
             source=request.platform,
             credibility="低",
         )
+
+
+# CTA Generator Models
+class CTAGenerateRequest(BaseModel):
+    """CTA生成请求"""
+    content_type: str = Field(..., description="内容类型")
+    platform: str = Field(default="xiaohongshu", description="平台")
+    num: int = Field(default=3, ge=1, le=10, description="生成数量")
+
+
+class CTAGenerateResponse(BaseModel):
+    """CTA生成响应"""
+    success: bool
+    ctas: List[Dict[str, Any]]
+
+
+class CTAOptimizeRequest(BaseModel):
+    """CTA优化请求"""
+    original_cta: str = Field(..., description="原始CTA")
+    platform: str = Field(default="xiaohongshu", description="平台")
+    target_type: str = Field(default="immediate", description="目标类型")
+
+
+class CTAOptimizeResponse(BaseModel):
+    """CTA优化响应"""
+    success: bool
+    original_cta: str
+    platform: str
+    target_type: str
+    optimized_cta: str
+    reason: str
+    alternatives: List[str]
+
+
+class CTAGuideRequest(BaseModel):
+    """CTA指南请求"""
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class CTAGuideResponse(BaseModel):
+    """CTA指南响应"""
+    success: bool
+    platform: str
+    preferred_types: List[str]
+    style: str
+    avoid: str
+    examples: List[str]
+
+
+@router.post("/cta/generate", response_model=CTAGenerateResponse)
+async def generate_cta(request: CTAGenerateRequest):
+    """
+    生成CTA
+
+    生成行动号召文案
+    """
+    try:
+        from backend.services.cta_generator import cta_generator_service
+
+        ctas = await cta_generator_service.generate_cta(
+            request.content_type, request.platform, request.num
+        )
+
+        return CTAGenerateResponse(
+            success=True,
+            ctas=[
+                {
+                    "cta_text": c.cta_text,
+                    "cta_type": c.cta_type,
+                    "placement": c.placement,
+                    "style": c.style,
+                }
+                for c in ctas
+            ],
+        )
+
+    except Exception as e:
+        logger.error(f"生成CTA失败: {e}")
+        return CTAGenerateResponse(success=False, ctas=[])
+
+
+@router.post("/cta/optimize", response_model=CTAOptimizeResponse)
+async def optimize_cta(request: CTAOptimizeRequest):
+    """
+    优化CTA
+
+    优化现有CTA使其更有效
+    """
+    try:
+        from backend.services.cta_generator import cta_generator_service
+
+        result = await cta_generator_service.optimize_cta(
+            request.original_cta, request.platform, request.target_type
+        )
+
+        return CTAOptimizeResponse(
+            success=True,
+            original_cta=result["original_cta"],
+            platform=result["platform"],
+            target_type=result["target_type"],
+            optimized_cta=result["optimized_cta"],
+            reason=result["reason"],
+            alternatives=result["alternatives"],
+        )
+
+    except Exception as e:
+        logger.error(f"优化CTA失败: {e}")
+        return CTAOptimizeResponse(
+            success=False,
+            original_cta=request.original_cta,
+            platform=request.platform,
+            target_type=request.target_type,
+            optimized_cta=request.original_cta,
+            reason="优化失败",
+            alternatives=[],
+        )
+
+
+@router.post("/cta/guide", response_model=CTAGuideResponse)
+async def get_cta_guide(request: CTAGuideRequest):
+    """
+    获取平台CTA指南
+
+    获取平台的CTA撰写指南
+    """
+    try:
+        from backend.services.cta_generator import cta_generator_service
+
+        guide = await cta_generator_service.get_platform_cta_guide(request.platform)
+
+        return CTAGuideResponse(
+            success=True,
+            platform=guide["platform"],
+            preferred_types=guide["preferred_types"],
+            style=guide["style"],
+            avoid=guide["avoid"],
+            examples=guide["examples"],
+        )
+
+    except Exception as e:
+        logger.error(f"获取CTA指南失败: {e}")
+        return CTAGuideResponse(
+            success=False,
+            platform=request.platform,
+            preferred_types=[],
+            style="",
+            avoid="",
+            examples=[],
+        )
+
+
+@router.get("/cta/types", response_model=List[str])
+async def get_cta_types():
+    """
+    获取所有CTA类型
+
+    获取可用的CTA类型列表
+    """
+    try:
+        from backend.services.cta_generator import cta_generator_service
+
+        return cta_generator_service.get_cta_types()
+
+    except Exception as e:
+        logger.error(f"获取CTA类型失败: {e}")
+        return []
