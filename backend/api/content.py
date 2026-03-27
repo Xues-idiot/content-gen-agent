@@ -6087,3 +6087,214 @@ async def get_benchmark_metrics(platform: str):
             good_engagement_rate=0.0,
             excellent_engagement_rate=0.0,
         )
+
+
+# ==================== 智能发布调度接口 ====================
+
+class OptimalTimesRequest(BaseModel):
+    """最优时间请求"""
+    platform: str = Field(default="xiaohongshu", description="平台")
+    industry: str = Field(default="", description="行业")
+    num_slots: int = Field(default=5, ge=1, le=20, description="返回数量")
+
+
+class TimeSlotModel(BaseModel):
+    """时间槽模型"""
+    datetime: str
+    date: str
+    time: str
+    day_of_week: str
+    is_weekend: bool
+    score: int
+    exposure_level: str
+
+
+class OptimalTimesResponse(BaseModel):
+    """最优时间响应"""
+    success: bool
+    platform: str
+    slots: List[TimeSlotModel]
+
+
+class ScheduleContentRequest(BaseModel):
+    """排程内容请求"""
+    posts: List[Dict[str, Any]] = Field(..., description="帖子列表")
+
+
+class ScheduledPostModel(BaseModel):
+    """计划帖子模型"""
+    id: str
+    platform: str
+    title: str
+    scheduled_time: str
+    status: str
+    optimal_score: int
+
+
+class ScheduleContentResponse(BaseModel):
+    """排程内容响应"""
+    success: bool
+    scheduled_posts: List[ScheduledPostModel]
+
+
+class PostingReminderRequest(BaseModel):
+    """发布提醒请求"""
+    platform: str = Field(default="xiaohongshu", description="平台")
+    scheduled_time: str = Field(..., description="计划时间 ISO格式")
+    content_title: str = Field(..., description="内容标题")
+
+
+class PostingReminderResponse(BaseModel):
+    """发布提醒响应"""
+    success: bool
+    reminder: str
+
+
+class ScheduleSummaryRequest(BaseModel):
+    """排程摘要请求"""
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class ScheduleSummaryResponse(BaseModel):
+    """排程摘要响应"""
+    success: bool
+    platform: str
+    recommended_slots: List[TimeSlotModel]
+    best_day: str
+    best_time: str
+    weekly_distribution: Dict[str, int]
+
+
+@router.post("/scheduler/optimal-times", response_model=OptimalTimesResponse)
+async def get_optimal_posting_times(request: OptimalTimesRequest):
+    """
+    获取最优发布时间
+
+    获取平台的最佳发布时间推荐
+    """
+    try:
+        from backend.services.posting_scheduler import posting_scheduler_service
+
+        slots = posting_scheduler_service.get_optimal_times(
+            platform=request.platform,
+            industry=request.industry,
+            num_slots=request.num_slots,
+        )
+
+        return OptimalTimesResponse(
+            success=True,
+            platform=request.platform,
+            slots=[TimeSlotModel(**s) for s in slots],
+        )
+
+    except Exception as e:
+        logger.error(f"获取最优时间失败: {e}")
+        return OptimalTimesResponse(
+            success=False,
+            platform=request.platform,
+            slots=[],
+        )
+
+
+@router.post("/scheduler/schedule", response_model=ScheduleContentResponse)
+async def schedule_content(request: ScheduleContentRequest):
+    """
+    排程内容
+
+    为多个内容安排最优发布时间
+    """
+    try:
+        from backend.services.posting_scheduler import posting_scheduler_service
+
+        scheduled = posting_scheduler_service.schedule_content(
+            posts=request.posts,
+        )
+
+        return ScheduleContentResponse(
+            success=True,
+            scheduled_posts=[
+                ScheduledPostModel(
+                    id=p.id,
+                    platform=p.platform,
+                    title=p.title,
+                    scheduled_time=p.scheduled_time.isoformat(),
+                    status=p.status,
+                    optimal_score=p.optimal_score,
+                )
+                for p in scheduled
+            ],
+        )
+
+    except Exception as e:
+        logger.error(f"排程内容失败: {e}")
+        return ScheduleContentResponse(
+            success=False,
+            scheduled_posts=[],
+        )
+
+
+@router.post("/scheduler/reminder", response_model=PostingReminderResponse)
+async def generate_posting_reminder(request: PostingReminderRequest):
+    """
+    生成发布提醒
+
+    生成内容发布提醒文本
+    """
+    try:
+        from backend.services.posting_scheduler import posting_scheduler_service
+        from datetime import datetime
+
+        scheduled_time = datetime.fromisoformat(request.scheduled_time)
+
+        reminder = posting_scheduler_service.generate_posting_reminder(
+            platform=request.platform,
+            scheduled_time=scheduled_time,
+            content_title=request.content_title,
+        )
+
+        return PostingReminderResponse(
+            success=True,
+            reminder=reminder,
+        )
+
+    except Exception as e:
+        logger.error(f"生成发布提醒失败: {e}")
+        return PostingReminderResponse(
+            success=False,
+            reminder="生成提醒失败",
+        )
+
+
+@router.post("/scheduler/summary", response_model=ScheduleSummaryResponse)
+async def get_schedule_summary(request: ScheduleSummaryRequest):
+    """
+    获取排程摘要
+
+    获取平台的发布计划摘要
+    """
+    try:
+        from backend.services.posting_scheduler import posting_scheduler_service
+
+        summary = posting_scheduler_service.get_platform_schedule_summary(
+            platform=request.platform,
+        )
+
+        return ScheduleSummaryResponse(
+            success=True,
+            platform=summary["platform"],
+            recommended_slots=[TimeSlotModel(**s) for s in summary.get("recommended_slots", [])],
+            best_day=summary.get("best_day", ""),
+            best_time=summary.get("best_time", ""),
+            weekly_distribution=summary.get("weekly_distribution", {}),
+        )
+
+    except Exception as e:
+        logger.error(f"获取排程摘要失败: {e}")
+        return ScheduleSummaryResponse(
+            success=False,
+            platform=request.platform,
+            recommended_slots=[],
+            best_day="",
+            best_time="",
+            weekly_distribution={},
+        )
