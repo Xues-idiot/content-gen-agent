@@ -1912,3 +1912,30 @@ content-gen-agent/
 
 ### 结论
 - 继续下一轮
+
+---
+
+## CRIS 循环 #401-408 (2026-03-28)
+
+### 完成
+- Rounds 301-400: 创建100个生成服务
+- 统一生成器API: backend/api/generators.py
+  - 自动扫描341个服务
+  - 动态服务调用
+- GeneratorExplorer前端: frontend/src/components/GeneratorExplorer.tsx
+- 生成器页面: frontend/src/app/generators/page.tsx
+- 侧边栏导航更新
+
+### Bug修复
+- 修复4个文件名含中文字符/空格问题
+
+### 提交
+- fix: 修复文件名中的中文字符和空格问题 (8419638)
+- feat: 添加统一生成器API (Generators API) (df573fd)
+- feat: 自动扫描所有341个生成服务 (d8061cb)
+- feat: 添加生成器浏览器UI (e346327)
+- docs: 更新WORKFLOW.md项目进展 (439e609)
+- fix: 添加生成器页面到导航菜单 (775523a)
+
+### 结论
+- 继续下一轮
