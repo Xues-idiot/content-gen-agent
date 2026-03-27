@@ -6298,3 +6298,226 @@ async def get_schedule_summary(request: ScheduleSummaryRequest):
             best_time="",
             weekly_distribution={},
         )
+
+
+# ==================== 趋势预测接口 ====================
+
+class TopicTrendRequest(BaseModel):
+    """话题趋势请求"""
+    topic: str = Field(..., description="话题")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class TopicTrendResponse(BaseModel):
+    """话题趋势响应"""
+    success: bool
+    topic: str
+    trend_direction: str
+    peak_time: str
+    duration_days: int
+    confidence: int
+    viral_potential: str
+
+
+class ViralPotentialRequest(BaseModel):
+    """病毒潜力请求"""
+    content: str = Field(..., description="内容")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class ViralPotentialResponse(BaseModel):
+    """病毒潜力响应"""
+    success: bool
+    content_preview: str
+    platform: str
+    viral_potential: str
+    reasons: List[str]
+    risks: List[str]
+    improvement_suggestions: List[str]
+
+
+class TrendWindowRequest(BaseModel):
+    """趋势窗口请求"""
+    topic: str = Field(..., description="话题")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class TrendWindowResponse(BaseModel):
+    """趋势窗口响应"""
+    success: bool
+    topic: str
+    platform: str
+    is_optimal_now: bool
+    best_window_start: str
+    best_window_end: str
+    window_duration_hours: int
+    urgency: str
+    missed_impact: str
+
+
+class SeasonalTrendRequest(BaseModel):
+    """季节性趋势请求"""
+    topic: str = Field(..., description="话题")
+
+
+class SeasonalTrendResponse(BaseModel):
+    """季节性趋势响应"""
+    success: bool
+    topic: str
+    current_season: str
+    is_seasonal: bool
+    seasonal_keywords: List[str]
+    recommendation: str
+
+
+@router.post("/trends/topic-predict", response_model=TopicTrendResponse)
+async def predict_topic_trend(request: TopicTrendRequest):
+    """
+    预测话题趋势
+
+    预测话题的未来趋势
+    """
+    try:
+        from backend.services.trend_predictor import trend_predictor_service
+
+        pred = await trend_predictor_service.predict_topic_trend(
+            topic=request.topic,
+            platform=request.platform,
+        )
+
+        return TopicTrendResponse(
+            success=True,
+            topic=pred.topic,
+            trend_direction=pred.trend_direction,
+            peak_time=pred.peak_time,
+            duration_days=pred.duration_days,
+            confidence=pred.confidence,
+            viral_potential=pred.viral_potential,
+        )
+
+    except Exception as e:
+        logger.error(f"预测话题趋势失败: {e}")
+        return TopicTrendResponse(
+            success=False,
+            topic=request.topic,
+            trend_direction="平稳",
+            peak_time="",
+            duration_days=7,
+            confidence=50,
+            viral_potential="中",
+        )
+
+
+@router.post("/trends/viral-potential", response_model=ViralPotentialResponse)
+async def predict_viral_potential(request: ViralPotentialRequest):
+    """
+    预测病毒潜力
+
+    分析内容的病毒式传播潜力
+    """
+    try:
+        from backend.services.trend_predictor import trend_predictor_service
+
+        result = await trend_predictor_service.predict_viral_potential(
+            content=request.content,
+            platform=request.platform,
+        )
+
+        return ViralPotentialResponse(
+            success=True,
+            content_preview=result["content_preview"],
+            platform=result["platform"],
+            viral_potential=result["viral_potential"],
+            reasons=result["reasons"],
+            risks=result["risks"],
+            improvement_suggestions=result["improvement_suggestions"],
+        )
+
+    except Exception as e:
+        logger.error(f"预测病毒潜力失败: {e}")
+        return ViralPotentialResponse(
+            success=False,
+            content_preview=request.content[:100],
+            platform=request.platform,
+            viral_potential="中",
+            reasons=[],
+            risks=[],
+            improvement_suggestions=[],
+        )
+
+
+@router.post("/trends/window", response_model=TrendWindowResponse)
+async def get_trending_window(request: TrendWindowRequest):
+    """
+    获取趋势发布窗口
+
+    确定最佳发布时间窗口
+    """
+    try:
+        from backend.services.trend_predictor import trend_predictor_service
+
+        result = await trend_predictor_service.get_trending_window(
+            topic=request.topic,
+            platform=request.platform,
+        )
+
+        return TrendWindowResponse(
+            success=True,
+            topic=result["topic"],
+            platform=result["platform"],
+            is_optimal_now=result["is_optimal_now"],
+            best_window_start=result["best_window_start"],
+            best_window_end=result["best_window_end"],
+            window_duration_hours=result["window_duration_hours"],
+            urgency=result["urgency"],
+            missed_impact=result["missed_impact"],
+        )
+
+    except Exception as e:
+        logger.error(f"获取趋势窗口失败: {e}")
+        return TrendWindowResponse(
+            success=False,
+            topic=request.topic,
+            platform=request.platform,
+            is_optimal_now=False,
+            best_window_start="",
+            best_window_end="",
+            window_duration_hours=24,
+            urgency="中",
+            missed_impact="",
+        )
+
+
+@router.post("/trends/seasonal", response_model=SeasonalTrendResponse)
+async def analyze_seasonal_trends(request: SeasonalTrendRequest):
+    """
+    分析季节性趋势
+
+    分析话题的季节性特征
+    """
+    try:
+        from backend.services.trend_predictor import trend_predictor_service
+
+        result = trend_predictor_service.analyze_seasonal_trends(
+            topic=request.topic,
+        )
+
+        return SeasonalTrendResponse(
+            success=True,
+            topic=result["topic"],
+            current_season=result["current_season"],
+            is_seasonal=result["is_seasonal"],
+            seasonal_keywords=result["seasonal_keywords"],
+            recommendation=result["recommendation"],
+        )
+
+    except Exception as e:
+        logger.error(f"分析季节性趋势失败: {e}")
+        return SeasonalTrendResponse(
+            success=False,
+            topic=request.topic,
+            current_season="",
+            is_seasonal=False,
+            seasonal_keywords=[],
+            recommendation="",
+        )
