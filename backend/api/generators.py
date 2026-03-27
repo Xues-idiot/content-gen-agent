@@ -56,12 +56,17 @@ def generate_service_registry() -> Dict[str, str]:
         # 从文件路径提取服务名称
         filename = os.path.basename(filepath)
         # filename 格式: xxx_generator.py
-        # service_name 格式: xxx (下划线分隔)
+        # base_name 格式: xxx_generator
         base_name = filename.replace("_generator.py", "")
-        # 转换为下划线命名
-        service_name = base_name.replace("_", "_")
-        # 模块路径
-        module_path = f"backend.services.{base_name}_generator"
+        # service_name 格式: xxx (去掉 _generator 后缀)
+        # 文件名可能是 xxx_generator.py 或 xxx_yyy_generator.py
+        # 需要去掉最后的 _generator 得到服务名
+        if base_name.endswith("_generator"):
+            service_name = base_name[:-10]  # 去掉 "_generator" (9个字符)
+        else:
+            service_name = base_name
+        # 模块路径应该是 backend.services.xxx_generator
+        module_path = f"backend.services.{base_name}"
         registry[service_name] = module_path
     return registry
 
