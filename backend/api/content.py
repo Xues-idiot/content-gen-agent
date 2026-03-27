@@ -5507,3 +5507,150 @@ async def generate_performance_dashboard(request: PerformanceDashboardRequest):
             worst_content={},
             performance_distribution={},
         )
+
+
+# ==================== 内容互动增强接口 ====================
+
+class EngagementBoostRequest(BaseModel):
+    """互动增强请求"""
+    content: str = Field(..., description="内容文本")
+    current_metrics: Dict[str, int] = Field(default_factory=dict, description="当前指标")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class EngagementSuggestionModel(BaseModel):
+    """互动建议模型"""
+    action: str
+    description: str
+    expected_impact: str
+    difficulty: str
+    priority: int
+
+
+class EngagementBoostResponse(BaseModel):
+    """互动增强响应"""
+    success: bool
+    problem_analysis: str
+    suggestions: List[EngagementSuggestionModel]
+
+
+class InteractionCTARequest(BaseModel):
+    """互动引导文案请求"""
+    content: str = Field(..., description="内容文本")
+    cta_type: str = Field(default="comment", description="引导类型: comment/share/like/save")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class InteractionCTAResponse(BaseModel):
+    """互动引导文案响应"""
+    success: bool
+    cta: str
+
+
+class EngagementTipsResponse(BaseModel):
+    """互动技巧响应"""
+    success: bool
+    platform: str
+    like_rate_avg: str
+    comment_rate_avg: str
+    best_practices: List[str]
+    common_mistakes: List[str]
+    engagement_boosters: List[str]
+
+
+@router.post("/engagement/analyze", response_model=EngagementBoostResponse)
+async def analyze_and_boost_engagement(request: EngagementBoostRequest):
+    """
+    分析并增强内容互动
+
+    分析内容互动问题并提供增强建议
+    """
+    try:
+        from backend.services.engagement_booster import engagement_booster_service
+
+        result = await engagement_booster_service.analyze_and_suggest(
+            content=request.content,
+            current_metrics=request.current_metrics,
+            platform=request.platform,
+        )
+
+        return EngagementBoostResponse(
+            success=True,
+            problem_analysis=result.get("problem_analysis", ""),
+            suggestions=[
+                EngagementSuggestionModel(**s)
+                for s in result.get("suggestions", [])
+            ],
+        )
+
+    except Exception as e:
+        logger.error(f"分析互动增强失败: {e}")
+        return EngagementBoostResponse(
+            success=False,
+            problem_analysis="服务异常",
+            suggestions=[],
+        )
+
+
+@router.post("/engagement/cta", response_model=InteractionCTAResponse)
+async def generate_interaction_cta(request: InteractionCTARequest):
+    """
+    生成互动引导文案
+
+    为内容生成点赞/评论/分享/收藏引导文案
+    """
+    try:
+        from backend.services.engagement_booster import engagement_booster_service
+
+        cta = await engagement_booster_service.generate_interaction_cta(
+            content=request.content,
+            cta_type=request.cta_type,
+            platform=request.platform,
+        )
+
+        return InteractionCTAResponse(
+            success=True,
+            cta=cta,
+        )
+
+    except Exception as e:
+        logger.error(f"生成互动引导失败: {e}")
+        return InteractionCTAResponse(
+            success=False,
+            cta="欢迎留言讨论！",
+        )
+
+
+@router.get("/engagement/tips/{platform}", response_model=EngagementTipsResponse)
+async def get_engagement_tips(platform: str):
+    """
+    获取互动提升技巧
+
+    获取指定平台的互动提升最佳实践
+    """
+    try:
+        from backend.services.engagement_booster import engagement_booster_service
+
+        tips = engagement_booster_service.get_engagement_tips(platform)
+
+        return EngagementTipsResponse(
+            success=True,
+            platform=platform,
+            like_rate_avg=tips.get("like_rate_avg", ""),
+            comment_rate_avg=tips.get("comment_rate_avg", ""),
+            best_practices=tips.get("best_practices", []),
+            common_mistakes=tips.get("common_mistakes", []),
+            engagement_boosters=tips.get("engagement_boosters", []),
+        )
+
+    except Exception as e:
+        logger.error(f"获取互动技巧失败: {e}")
+        return EngagementTipsResponse(
+            success=False,
+            platform=platform,
+            like_rate_avg="",
+            comment_rate_avg="",
+            best_practices=[],
+            common_mistakes=[],
+            engagement_boosters=[],
+        )
