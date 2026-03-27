@@ -6655,3 +6655,213 @@ async def analyze_emoji_usage(request: EmojiAnalyzeRequest):
             usage_level="未知",
             suggestions=[],
         )
+
+
+# Hashtag Intelligence Models
+class HashtagAnalyzeRequest(BaseModel):
+    """Hashtag分析请求"""
+    hashtag: str = Field(..., description="Hashtag")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class HashtagAnalyzeResponse(BaseModel):
+    """Hashtag分析响应"""
+    success: bool
+    hashtag: str
+    popularity: str
+    competition: str
+    relevance_score: int
+    best_posting_time: str
+
+
+class HashtagOptimizeRequest(BaseModel):
+    """Hashtag优化请求"""
+    hashtags: List[str] = Field(..., description="原始hashtag列表")
+    platform: str = Field(default="xiaohongshu", description="平台")
+    target_count: int = Field(default=10, ge=1, le=30, description="目标数量")
+
+
+class HashtagOptimizeResponse(BaseModel):
+    """Hashtag优化响应"""
+    success: bool
+    original_count: int
+    target_count: int
+    current_issues: List[str]
+    recommended: List[str]
+    removed: List[str]
+    strategy: str
+
+
+class HashtagGenerateMixRequest(BaseModel):
+    """Hashtag组合生成请求"""
+    content_topic: str = Field(..., description="内容主题")
+    platform: str = Field(default="xiaohongshu", description="平台")
+    num: int = Field(default=10, ge=1, le=30, description="数量")
+
+
+class HashtagGenerateMixResponse(BaseModel):
+    """Hashtag组合生成响应"""
+    success: bool
+    topic: str
+    platform: str
+    total_count: int
+    core: List[str]
+    targeted: List[str]
+    long_tail: List[str]
+    trending: List[str]
+    mix_recommendation: str
+
+
+class HashtagScoreRequest(BaseModel):
+    """Hashtag分数计算请求"""
+    hashtag: str = Field(..., description="Hashtag")
+    post_time: str = Field(default="evening", description="发布时间")
+
+
+class HashtagScoreResponse(BaseModel):
+    """Hashtag分数响应"""
+    success: bool
+    hashtag: str
+    score: int
+
+
+@router.post("/hashtags/intelligence/analyze", response_model=HashtagAnalyzeResponse)
+async def analyze_hashtag(request: HashtagAnalyzeRequest):
+    """
+    分析Hashtag
+
+    分析单个hashtag的热度、竞争度、相关性等
+    """
+    try:
+        from backend.services.hashtag_intelligence import hashtag_intelligence_service
+
+        result = await hashtag_intelligence_service.analyze_hashtag(
+            request.hashtag, request.platform
+        )
+
+        return HashtagAnalyzeResponse(
+            success=True,
+            hashtag=result.hashtag,
+            popularity=result.popularity,
+            competition=result.competition,
+            relevance_score=result.relevance_score,
+            best_posting_time=result.best_posting_time,
+        )
+
+    except Exception as e:
+        logger.error(f"分析hashtag失败: {e}")
+        return HashtagAnalyzeResponse(
+            success=False,
+            hashtag=request.hashtag,
+            popularity="温",
+            competition="中",
+            relevance_score=60,
+            best_posting_time="",
+        )
+
+
+@router.post("/hashtags/intelligence/optimize", response_model=HashtagOptimizeResponse)
+async def optimize_hashtag_set(request: HashtagOptimizeRequest):
+    """
+    优化Hashtag组合
+
+    优化hashtag组合以达到最佳效果
+    """
+    try:
+        from backend.services.hashtag_intelligence import hashtag_intelligence_service
+
+        result = await hashtag_intelligence_service.optimize_hashtag_set(
+            request.hashtags, request.platform, request.target_count
+        )
+
+        return HashtagOptimizeResponse(
+            success=True,
+            original_count=result["original_count"],
+            target_count=result["target_count"],
+            current_issues=result["current_issues"],
+            recommended=result["recommended"],
+            removed=result["removed"],
+            strategy=result["strategy"],
+        )
+
+    except Exception as e:
+        logger.error(f"优化hashtag组合失败: {e}")
+        return HashtagOptimizeResponse(
+            success=False,
+            original_count=len(request.hashtags),
+            target_count=request.target_count,
+            current_issues=[],
+            recommended=[f"#{h}" for h in request.hashtags[:request.target_count]],
+            removed=[],
+            strategy="优化失败",
+        )
+
+
+@router.post("/hashtags/intelligence/generate-mix", response_model=HashtagGenerateMixResponse)
+async def generate_hashtag_mix(request: HashtagGenerateMixRequest):
+    """
+    生成Hashtag组合
+
+    根据内容主题生成最佳hashtag组合
+    """
+    try:
+        from backend.services.hashtag_intelligence import hashtag_intelligence_service
+
+        result = await hashtag_intelligence_service.generate_hashtag_mix(
+            request.content_topic, request.platform, request.num
+        )
+
+        return HashtagGenerateMixResponse(
+            success=True,
+            topic=result["topic"],
+            platform=result["platform"],
+            total_count=result["total_count"],
+            core=result["core"],
+            targeted=result["targeted"],
+            long_tail=result["long_tail"],
+            trending=result["trending"],
+            mix_recommendation=result["mix_recommendation"],
+        )
+
+    except Exception as e:
+        logger.error(f"生成hashtag组合失败: {e}")
+        return HashtagGenerateMixResponse(
+            success=False,
+            topic=request.content_topic,
+            platform=request.platform,
+            total_count=0,
+            core=[],
+            targeted=[],
+            long_tail=[],
+            trending=[],
+            mix_recommendation="",
+        )
+
+
+@router.post("/hashtags/intelligence/score", response_model=HashtagScoreResponse)
+async def calculate_hashtag_score(request: HashtagScoreRequest):
+    """
+    计算Hashtag分数
+
+    计算hashtag的推荐分数
+    """
+    try:
+        from backend.services.hashtag_intelligence import hashtag_intelligence_service
+
+        score = hashtag_intelligence_service.calculate_hashtag_score(
+            request.hashtag, request.post_time
+        )
+
+        return HashtagScoreResponse(
+            success=True,
+            hashtag=request.hashtag,
+            score=score,
+        )
+
+    except Exception as e:
+        logger.error(f"计算hashtag分数失败: {e}")
+        return HashtagScoreResponse(
+            success=False,
+            hashtag=request.hashtag,
+            score=60,
+        )
