@@ -7068,3 +7068,192 @@ async def analyze_emotion_distribution(request: EmotionDistributionRequest):
             dominant_emotion="未知",
             recommendations=[],
         )
+
+
+# Audience Analyzer Models
+class AudienceAnalyzeRequest(BaseModel):
+    """受众分析请求"""
+    content_topic: str = Field(..., description="内容主题")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class AudienceAnalyzeResponse(BaseModel):
+    """受众分析响应"""
+    success: bool
+    age_range: str
+    gender: str
+    interests: List[str]
+    pain_points: List[str]
+    motivations: List[str]
+    preferred_content_style: str
+
+
+class AudienceStrategyRequest(BaseModel):
+    """受众内容策略请求"""
+    audience_profile: Dict[str, Any] = Field(..., description="受众画像")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class AudienceStrategyResponse(BaseModel):
+    """受众内容策略响应"""
+    success: bool
+    audience: Dict[str, Any]
+    platform: str
+    recommended_content_types: List[str]
+    title_style: str
+    content_structure: str
+    engagement_strategy: str
+    best_posting_time: str
+
+
+class AudienceMatchRequest(BaseModel):
+    """受众匹配度请求"""
+    content_tags: List[str] = Field(..., description="内容标签")
+    audience_interests: List[str] = Field(..., description="受众兴趣")
+
+
+class AudienceMatchResponse(BaseModel):
+    """受众匹配度响应"""
+    success: bool
+    match_score: int
+    matched_interests: List[str]
+    unmatched_tags: List[str]
+    recommendation: str
+
+
+@router.post("/audience/analyze", response_model=AudienceAnalyzeResponse)
+async def analyze_audience(request: AudienceAnalyzeRequest):
+    """
+    分析受众画像
+
+    分析内容主题的目标受众画像
+    """
+    try:
+        from backend.services.audience_analyzer import audience_analyzer_service
+
+        result = await audience_analyzer_service.analyze_audience(
+            request.content_topic, request.platform
+        )
+
+        return AudienceAnalyzeResponse(
+            success=True,
+            age_range=result.age_range,
+            gender=result.gender,
+            interests=result.interests,
+            pain_points=result.pain_points,
+            motivations=result.motivations,
+            preferred_content_style=result.preferred_content_style,
+        )
+
+    except Exception as e:
+        logger.error(f"分析受众失败: {e}")
+        return AudienceAnalyzeResponse(
+            success=False,
+            age_range="未知",
+            gender="未知",
+            interests=[],
+            pain_points=[],
+            motivations=[],
+            preferred_content_style="",
+        )
+
+
+@router.get("/audience/platform/{platform}", response_model=Dict[str, Any])
+async def get_platform_audience(platform: str):
+    """
+    获取平台受众特征
+
+    获取指定平台的标准受众特征
+    """
+    try:
+        from backend.services.audience_analyzer import audience_analyzer_service
+
+        result = audience_analyzer_service.get_platform_audience(platform)
+
+        return {
+            "success": True,
+            **result,
+        }
+
+    except Exception as e:
+        logger.error(f"获取平台受众失败: {e}")
+        return {
+            "success": False,
+            "platform": platform,
+            "primary_age": "",
+            "gender": "",
+            "interests": [],
+            "content_style": "",
+        }
+
+
+@router.post("/audience/strategy", response_model=AudienceStrategyResponse)
+async def suggest_audience_strategy(request: AudienceStrategyRequest):
+    """
+    推荐受众内容策略
+
+    根据受众画像推荐内容策略
+    """
+    try:
+        from backend.services.audience_analyzer import audience_analyzer_service
+
+        result = await audience_analyzer_service.suggest_content_for_audience(
+            request.audience_profile, request.platform
+        )
+
+        return AudienceStrategyResponse(
+            success=True,
+            audience=result["audience"],
+            platform=result["platform"],
+            recommended_content_types=result["recommended_content_types"],
+            title_style=result["title_style"],
+            content_structure=result["content_structure"],
+            engagement_strategy=result["engagement_strategy"],
+            best_posting_time=result["best_posting_time"],
+        )
+
+    except Exception as e:
+        logger.error(f"推荐内容策略失败: {e}")
+        return AudienceStrategyResponse(
+            success=False,
+            audience=request.audience_profile,
+            platform=request.platform,
+            recommended_content_types=[],
+            title_style="",
+            content_structure="",
+            engagement_strategy="",
+            best_posting_time="",
+        )
+
+
+@router.post("/audience/match", response_model=AudienceMatchResponse)
+async def calculate_audience_match(request: AudienceMatchRequest):
+    """
+    计算内容与受众匹配度
+
+    计算内容标签与受众兴趣的匹配度
+    """
+    try:
+        from backend.services.audience_analyzer import audience_analyzer_service
+
+        result = audience_analyzer_service.calculate_audience_match(
+            request.content_tags, request.audience_interests
+        )
+
+        return AudienceMatchResponse(
+            success=True,
+            match_score=result["match_score"],
+            matched_interests=result["matched_interests"],
+            unmatched_tags=result["unmatched_tags"],
+            recommendation=result["recommendation"],
+        )
+
+    except Exception as e:
+        logger.error(f"计算匹配度失败: {e}")
+        return AudienceMatchResponse(
+            success=False,
+            match_score=0,
+            matched_interests=[],
+            unmatched_tags=request.content_tags,
+            recommendation="计算失败",
+        )
