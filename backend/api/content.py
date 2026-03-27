@@ -6865,3 +6865,206 @@ async def calculate_hashtag_score(request: HashtagScoreRequest):
             hashtag=request.hashtag,
             score=60,
         )
+
+
+# Sentiment Analyzer Models
+class SentimentAnalyzeRequest(BaseModel):
+    """情感分析请求"""
+    content: str = Field(..., description="内容")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class SentimentAnalyzeResponse(BaseModel):
+    """情感分析响应"""
+    success: bool
+    sentiment: str
+    confidence: int
+    emotions: List[str]
+    intensity: str
+    suggestions: List[str]
+
+
+class SentimentAdjustRequest(BaseModel):
+    """情感调整请求"""
+    content: str = Field(..., description="原始内容")
+    target_sentiment: str = Field(default="positive", description="目标情感")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class SentimentAdjustResponse(BaseModel):
+    """情感调整响应"""
+    success: bool
+    original_content: str
+    target_sentiment: str
+    adjusted_content: str
+    change_explanation: str
+    preserved_core: List[str]
+    adjustment_suggestions: List[str]
+
+
+class SentimentTipsRequest(BaseModel):
+    """情感建议请求"""
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class SentimentTipsResponse(BaseModel):
+    """情感建议响应"""
+    success: bool
+    platform: str
+    preferred_sentiment: str
+    tone: str
+    avoid: str
+    recommended_emojis: List[str]
+
+
+class EmotionDistributionRequest(BaseModel):
+    """情绪分布请求"""
+    contents: List[str] = Field(..., description="内容列表")
+
+
+class EmotionDistributionResponse(BaseModel):
+    """情绪分布响应"""
+    success: bool
+    total_contents: int
+    emotion_distribution: Dict[str, int]
+    emotion_percentages: Dict[str, float]
+    dominant_emotion: str
+    recommendations: List[str]
+
+
+@router.post("/sentiment/analyze", response_model=SentimentAnalyzeResponse)
+async def analyze_sentiment(request: SentimentAnalyzeRequest):
+    """
+    分析情感
+
+    分析内容的情感倾向和情绪
+    """
+    try:
+        from backend.services.sentiment_analyzer import sentiment_analyzer_service
+
+        result = await sentiment_analyzer_service.analyze_sentiment(
+            request.content, request.platform
+        )
+
+        return SentimentAnalyzeResponse(
+            success=True,
+            sentiment=result.sentiment,
+            confidence=result.confidence,
+            emotions=result.emotions,
+            intensity=result.intensity,
+            suggestions=result.suggestions,
+        )
+
+    except Exception as e:
+        logger.error(f"分析情感失败: {e}")
+        return SentimentAnalyzeResponse(
+            success=False,
+            sentiment="neutral",
+            confidence=50,
+            emotions=[],
+            intensity="中",
+            suggestions=[],
+        )
+
+
+@router.post("/sentiment/adjust", response_model=SentimentAdjustResponse)
+async def adjust_sentiment(request: SentimentAdjustRequest):
+    """
+    调整情感
+
+    将内容调整为指定情感倾向
+    """
+    try:
+        from backend.services.sentiment_analyzer import sentiment_analyzer_service
+
+        result = await sentiment_analyzer_service.adjust_sentiment(
+            request.content, request.target_sentiment, request.platform
+        )
+
+        return SentimentAdjustResponse(
+            success=True,
+            original_content=result["original_content"],
+            target_sentiment=result["target_sentiment"],
+            adjusted_content=result["adjusted_content"],
+            change_explanation=result["change_explanation"],
+            preserved_core=result["preserved_core"],
+            adjustment_suggestions=result["adjustment_suggestions"],
+        )
+
+    except Exception as e:
+        logger.error(f"调整情感失败: {e}")
+        return SentimentAdjustResponse(
+            success=False,
+            original_content=request.content,
+            target_sentiment=request.target_sentiment,
+            adjusted_content=request.content,
+            change_explanation="调整失败",
+            preserved_core=[],
+            adjustment_suggestions=[],
+        )
+
+
+@router.post("/sentiment/tips", response_model=SentimentTipsResponse)
+async def get_sentiment_tips(request: SentimentTipsRequest):
+    """
+    获取平台情感建议
+
+    获取指定平台的情感偏好和建议
+    """
+    try:
+        from backend.services.sentiment_analyzer import sentiment_analyzer_service
+
+        tips = await sentiment_analyzer_service.get_platform_sentiment_tips(request.platform)
+
+        return SentimentTipsResponse(
+            success=True,
+            platform=tips["platform"],
+            preferred_sentiment=tips["preferred_sentiment"],
+            tone=tips["tone"],
+            avoid=tips["avoid"],
+            recommended_emojis=tips["recommended_emojis"],
+        )
+
+    except Exception as e:
+        logger.error(f"获取情感建议失败: {e}")
+        return SentimentTipsResponse(
+            success=False,
+            platform=request.platform,
+            preferred_sentiment="",
+            tone="",
+            avoid="",
+            recommended_emojis=[],
+        )
+
+
+@router.post("/sentiment/emotion-distribution", response_model=EmotionDistributionResponse)
+async def analyze_emotion_distribution(request: EmotionDistributionRequest):
+    """
+    分析情绪分布
+
+    分析多内容的情绪分布
+    """
+    try:
+        from backend.services.sentiment_analyzer import sentiment_analyzer_service
+
+        result = sentiment_analyzer_service.analyze_emotion_distribution(request.contents)
+
+        return EmotionDistributionResponse(
+            success=True,
+            total_contents=result["total_contents"],
+            emotion_distribution=result["emotion_distribution"],
+            emotion_percentages=result["emotion_percentages"],
+            dominant_emotion=result["dominant_emotion"],
+            recommendations=result["recommendations"],
+        )
+
+    except Exception as e:
+        logger.error(f"分析情绪分布失败: {e}")
+        return EmotionDistributionResponse(
+            success=False,
+            total_contents=len(request.contents),
+            emotion_distribution={},
+            emotion_percentages={},
+            dominant_emotion="未知",
+            recommendations=[],
+        )
