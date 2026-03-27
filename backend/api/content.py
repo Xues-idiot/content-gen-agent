@@ -5654,3 +5654,197 @@ async def get_engagement_tips(platform: str):
             common_mistakes=[],
             engagement_boosters=[],
         )
+
+
+# ==================== 关键词研究接口 ====================
+
+class KeywordResearchRequest(BaseModel):
+    """关键词研究请求"""
+    seed_keyword: str = Field(..., description="种子关键词")
+    platform: str = Field(default="xiaohongshu", description="平台")
+    num_results: int = Field(default=10, ge=1, le=30, description="返回数量")
+
+
+class KeywordInfoModel(BaseModel):
+    """关键词信息模型"""
+    keyword: str
+    search_volume: int
+    competition: str
+    difficulty: int
+    related_keywords: List[str]
+    suggestions: List[str]
+
+
+class KeywordResearchResponse(BaseModel):
+    """关键词研究响应"""
+    success: bool
+    keywords: List[KeywordInfoModel]
+    total: int
+
+
+class KeywordDifficultyRequest(BaseModel):
+    """关键词难度分析请求"""
+    keyword: str = Field(..., description="关键词")
+    platform: str = Field(default="xiaohongshu", description="平台")
+
+
+class KeywordDifficultyResponse(BaseModel):
+    """关键词难度分析响应"""
+    success: bool
+    keyword: str
+    difficulty_score: int
+    competition_analysis: str
+    breakthrough_methods: List[str]
+    content_strategy: str
+
+
+class KeywordClustersRequest(BaseModel):
+    """关键词簇请求"""
+    keywords: List[str] = Field(..., description="关键词列表")
+
+
+class KeywordClustersResponse(BaseModel):
+    """关键词簇响应"""
+    success: bool
+    clusters: Dict[str, List[str]]
+
+
+class KeywordCombinationsRequest(BaseModel):
+    """关键词组合请求"""
+    primary_keyword: str = Field(..., description="主要关键词")
+    secondary_keywords: List[str] = Field(..., description="次要关键词列表")
+
+
+class KeywordCombinationsResponse(BaseModel):
+    """关键词组合响应"""
+    success: bool
+    combinations: List[str]
+
+
+@router.post("/keywords/research", response_model=KeywordResearchResponse)
+async def research_keywords(request: KeywordResearchRequest):
+    """
+    研究关键词
+
+    基于种子关键词研究相关关键词
+    """
+    try:
+        from backend.services.keyword_research import keyword_research_service
+
+        keywords = await keyword_research_service.research_keywords(
+            seed_keyword=request.seed_keyword,
+            platform=request.platform,
+            num_results=request.num_results,
+        )
+
+        return KeywordResearchResponse(
+            success=True,
+            keywords=[KeywordInfoModel(
+                keyword=k.keyword,
+                search_volume=k.search_volume,
+                competition=k.competition,
+                difficulty=k.difficulty,
+                related_keywords=k.related_keywords,
+                suggestions=k.suggestions,
+            ) for k in keywords],
+            total=len(keywords),
+        )
+
+    except Exception as e:
+        logger.error(f"关键词研究失败: {e}")
+        return KeywordResearchResponse(
+            success=False,
+            keywords=[],
+            total=0,
+        )
+
+
+@router.post("/keywords/difficulty", response_model=KeywordDifficultyResponse)
+async def analyze_keyword_difficulty(request: KeywordDifficultyRequest):
+    """
+    分析关键词难度
+
+    分析关键词的SEO难度
+    """
+    try:
+        from backend.services.keyword_research import keyword_research_service
+
+        result = await keyword_research_service.analyze_keyword_difficulty(
+            keyword=request.keyword,
+            platform=request.platform,
+        )
+
+        return KeywordDifficultyResponse(
+            success=True,
+            keyword=result["keyword"],
+            difficulty_score=result.get("difficulty_score", 50),
+            competition_analysis=result.get("competition_analysis", ""),
+            breakthrough_methods=result.get("breakthrough_methods", []),
+            content_strategy=result.get("content_strategy", ""),
+        )
+
+    except Exception as e:
+        logger.error(f"分析关键词难度失败: {e}")
+        return KeywordDifficultyResponse(
+            success=False,
+            keyword=request.keyword,
+            difficulty_score=50,
+            competition_analysis="分析失败",
+            breakthrough_methods=[],
+            content_strategy="",
+        )
+
+
+@router.post("/keywords/clusters", response_model=KeywordClustersResponse)
+async def generate_keyword_clusters(request: KeywordClustersRequest):
+    """
+    生成关键词簇
+
+    将关键词分组到主题簇
+    """
+    try:
+        from backend.services.keyword_research import keyword_research_service
+
+        clusters = keyword_research_service.generate_keyword_clusters(
+            keywords=request.keywords,
+        )
+
+        return KeywordClustersResponse(
+            success=True,
+            clusters=clusters,
+        )
+
+    except Exception as e:
+        logger.error(f"生成关键词簇失败: {e}")
+        return KeywordClustersResponse(
+            success=False,
+            clusters={},
+        )
+
+
+@router.post("/keywords/combinations", response_model=KeywordCombinationsResponse)
+async def suggest_keyword_combinations(request: KeywordCombinationsRequest):
+    """
+    建议关键词组合
+
+    生成关键词组合建议
+    """
+    try:
+        from backend.services.keyword_research import keyword_research_service
+
+        combinations = keyword_research_service.suggest_keyword_combinations(
+            primary_keyword=request.primary_keyword,
+            secondary_keywords=request.secondary_keywords,
+        )
+
+        return KeywordCombinationsResponse(
+            success=True,
+            combinations=combinations,
+        )
+
+    except Exception as e:
+        logger.error(f"建议关键词组合失败: {e}")
+        return KeywordCombinationsResponse(
+            success=False,
+            combinations=[],
+        )
