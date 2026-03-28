@@ -2,14 +2,26 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { copyToClipboard } from "@/lib/utils";
+import {
+  Copy,
+  Check,
+  Eye,
+  EyeOff,
+  ThumbsUp,
+  ThumbsDown,
+  AlertTriangle,
+  Lightbulb,
+  Image,
+  MessageSquare,
+  Sparkles,
+} from "lucide-react";
 
 interface CopyResult {
   platform: string;
   title: string;
   content: string;
   script?: string;
-  cta?: string;  // Call-to-Action 行动号召
+  cta?: string;
   tags: string[];
   imageSuggestions: string[];
   review?: {
@@ -26,110 +38,63 @@ interface CopyOutputProps {
   results: CopyResult[];
 }
 
-const PLATFORM_INFO: Record<string, { name: string; icon: string; color: string; bgColor: string }> = {
-  xiaohongshu: { name: "小红书", icon: "📕", color: "#EF4444", bgColor: "bg-red-50" },
-  tiktok: { name: "抖音", icon: "📺", color: "#EC4899", bgColor: "bg-pink-50" },
-  official: { name: "公众号", icon: "📰", color: "#3B82F6", bgColor: "bg-blue-50" },
-  friend_circle: { name: "朋友圈", icon: "👥", color: "#10B981", bgColor: "bg-green-50" },
+const PLATFORM_INFO: Record<string, {
+  name: string;
+  icon: string;
+  color: string;
+  gradient: string;
+  bgLight: string;
+  tagBg: string;
+  tagText: string;
+  checkBg: string;
+}> = {
+  xiaohongshu: {
+    name: "小红书",
+    icon: "📕",
+    color: "#EF4444",
+    gradient: "from-red-500 to-rose-600",
+    bgLight: "bg-red-50",
+    tagBg: "bg-red-100",
+    tagText: "text-red-700",
+    checkBg: "bg-red-500",
+  },
+  tiktok: {
+    name: "抖音",
+    icon: "📺",
+    color: "#EC4899",
+    gradient: "from-pink-500 to-fuchsia-600",
+    bgLight: "bg-pink-50",
+    tagBg: "bg-pink-100",
+    tagText: "text-pink-700",
+    checkBg: "bg-pink-500",
+  },
+  official: {
+    name: "公众号",
+    icon: "📰",
+    color: "#3B82F6",
+    gradient: "from-blue-500 to-indigo-600",
+    bgLight: "bg-blue-50",
+    tagBg: "bg-blue-100",
+    tagText: "text-blue-700",
+    checkBg: "bg-blue-500",
+  },
+  friend_circle: {
+    name: "朋友圈",
+    icon: "👥",
+    color: "#10B981",
+    gradient: "from-emerald-500 to-teal-600",
+    bgLight: "bg-emerald-50",
+    tagBg: "bg-emerald-100",
+    tagText: "text-emerald-700",
+    checkBg: "bg-emerald-500",
+  },
 };
-
-// Platform-specific preview components
-function XiaohongshuPreview({ result }: { result: CopyResult }) {
-  return (
-    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 max-w-sm">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-          <span>📕</span>
-        </div>
-        <div>
-          <p className="text-sm font-medium text-gray-900">用户名</p>
-          <p className="text-xs text-gray-500">小红书号</p>
-        </div>
-      </div>
-      {result.title && <h3 className="font-bold text-gray-900 mb-2">{result.title}</h3>}
-      <div className="text-sm text-gray-700 whitespace-pre-wrap mb-3">
-        {result.content ? result.content.slice(0, 200) : ""}{result.content && result.content.length > 200 && "..."}
-      </div>
-      {result.tags && result.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3">
-          {result.tags.slice(0, 5).map((tag, idx) => (
-            <span key={idx} className="text-xs text-red-500">#{tag.replace("#", "")}</span>
-          ))}
-        </div>
-      )}
-      {result.cta && <div className="bg-red-50 rounded-lg p-3 text-sm text-red-600">{result.cta}</div>}
-    </div>
-  );
-}
-
-function TikTokPreview({ result }: { result: CopyResult }) {
-  return (
-    <div className="bg-black rounded-lg p-4 shadow-lg max-w-sm">
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-full bg-pink-900 flex items-center justify-center">
-          <span>📺</span>
-        </div>
-        <div className="text-white">
-          <p className="font-medium">@用户名</p>
-          <p className="text-xs text-gray-400">抖音号</p>
-        </div>
-      </div>
-      {result.script && (
-        <div className="text-white text-sm mb-3 font-mono whitespace-pre-wrap">
-          {result.script.slice(0, 150)}{result.script.length > 150 && "..."}
-        </div>
-      )}
-      {result.cta && <div className="bg-pink-600 text-white rounded-lg p-3 text-sm">{result.cta}</div>}
-    </div>
-  );
-}
-
-function OfficialPreview({ result }: { result: CopyResult }) {
-  return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200 max-w-md overflow-hidden">
-      <div className="p-4">
-        {result.title && <h2 className="text-xl font-bold text-gray-900 mb-2">{result.title}</h2>}
-        <div className="text-sm text-gray-500 mb-3">公众号名称 · 日期</div>
-        <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
-          {result.content ? result.content.slice(0, 300) : ""}{result.content && result.content.length > 300 && "..."}
-        </div>
-      </div>
-      <div className="border-t border-gray-200 p-3 bg-gray-50">
-        <span className="text-xs text-gray-500">阅读全文</span>
-      </div>
-    </div>
-  );
-}
-
-function FriendCirclePreview({ result }: { result: CopyResult }) {
-  return (
-    <div className="bg-white rounded-lg shadow-md p-4 max-w-sm">
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-          <span>👤</span>
-        </div>
-        <div>
-          <p className="font-medium text-gray-900">微信用户</p>
-          <p className="text-xs text-gray-500">刚刚</p>
-        </div>
-      </div>
-      <div className="text-gray-800 text-sm whitespace-pre-wrap mb-3">{result.content || ""}</div>
-      {result.cta && <div className="bg-green-50 rounded-lg p-3 text-sm text-green-700 mb-3">{result.cta}</div>}
-      <div className="border-t border-gray-200 pt-2">
-        <div className="text-xs text-gray-400 flex gap-4">
-          <span>评论</span><span>赞</span><span>收藏</span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function CopyOutput({ results }: CopyOutputProps) {
   const [copiedPlatform, setCopiedPlatform] = useState<string | null>(null);
   const [previewPlatform, setPreviewPlatform] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -139,30 +104,22 @@ export default function CopyOutput({ results }: CopyOutputProps) {
   }, []);
 
   const handleCopy = async (platform: string, text: string) => {
-    const success = await copyToClipboard(text);
-    if (success) {
+    try {
+      await navigator.clipboard.writeText(text);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
       setCopiedPlatform(platform);
       timeoutRef.current = setTimeout(() => setCopiedPlatform(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
     }
   };
 
   const getScoreColor = (score: number): string => {
-    if (score >= 8) return "#10B981";
-    if (score >= 6) return "#F59E0B";
-    return "#EF4444";
-  };
-
-  const renderPreview = (result: CopyResult) => {
-    switch (result.platform) {
-      case "xiaohongshu": return <XiaohongshuPreview result={result} />;
-      case "tiktok": return <TikTokPreview result={result} />;
-      case "official": return <OfficialPreview result={result} />;
-      case "friend_circle": return <FriendCirclePreview result={result} />;
-      default: return null;
-    }
+    if (score >= 8) return "#059669";
+    if (score >= 6) return "#D97706";
+    return "#DC2626";
   };
 
   if (results.length === 0) {
@@ -170,30 +127,52 @@ export default function CopyOutput({ results }: CopyOutputProps) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl shadow-md p-8 text-center"
+        className="card card-bordered p-12 text-center"
       >
         <motion.div
-          animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.5, 1, 0.5],
+          }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="text-4xl mb-4"
+          className="w-20 h-20 rounded-2xl bg-gradient-to-br from-neutral-100 to-neutral-200 flex items-center justify-center mx-auto mb-6"
         >
-          📝
+          <MessageSquare className="w-10 h-10 text-neutral-400" />
         </motion.div>
-        <p className="text-gray-500">填写产品信息并选择平台后，点击"生成内容"按钮</p>
-        <p className="text-gray-400 text-sm mt-2">生成的文案将显示在这里</p>
+        <h3 className="font-display text-lg font-bold text-neutral-900 mb-2">
+          等待生成内容
+        </h3>
+        <p className="text-neutral-500 text-sm max-w-sm mx-auto">
+          填写产品信息并选择平台后，点击"开始生成内容"按钮
+        </p>
+        <div className="mt-6 flex items-center justify-center gap-2">
+          <div className="px-3 py-1.5 rounded-full bg-violet-50 text-violet-600 text-xs font-medium">
+            智能文案
+          </div>
+          <div className="px-3 py-1.5 rounded-full bg-orange-50 text-orange-600 text-xs font-medium">
+            违规检测
+          </div>
+          <div className="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-xs font-medium">
+            质量评分
+          </div>
+        </div>
       </motion.div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <AnimatePresence>
         {results.map((result, index) => {
           const info = PLATFORM_INFO[result.platform] || {
             name: result.platform,
             icon: "📄",
-            color: "#6B7280",
-            bgColor: "bg-gray-50",
+            color: "#78716C",
+            gradient: "from-stone-500 to-neutral-600",
+            bgLight: "bg-stone-50",
+            tagBg: "bg-stone-100",
+            tagText: "text-stone-700",
+            checkBg: "bg-stone-500",
           };
 
           return (
@@ -202,95 +181,141 @@ export default function CopyOutput({ results }: CopyOutputProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
-              className="bg-white rounded-xl shadow-md overflow-hidden"
+              className="card card-elevated overflow-hidden"
             >
               {/* Header */}
               <div
-                className="px-6 py-3 border-b border-gray-200 flex justify-between items-center"
-                style={{ backgroundColor: `${info.color}10` }}
+                className={`px-6 py-4 border-b border-neutral-200/50 ${
+                  info.bgLight
+                }`}
               >
-                <div className="flex items-center gap-3">
-                  <motion.span
-                    whileHover={{ scale: 1.2, rotate: 5 }}
-                    className="text-2xl"
-                  >
-                    {info.icon}
-                  </motion.span>
-                  <h3 className="font-bold text-lg" style={{ color: info.color }}>
-                    {info.name}
-                  </h3>
-                  {result.success && result.review && (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", delay: 0.2 }}
-                      className="text-xs px-2 py-1 rounded-full font-medium"
-                      style={{
-                        backgroundColor: result.review?.passed ? "#DCFCE7" : "#FEE2E2",
-                        color: result.review?.passed ? "#166534" : "#DC2626",
-                      }}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {/* Platform Icon */}
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: 3 }}
+                      className={`w-11 h-11 rounded-xl bg-gradient-to-br ${info.gradient} flex items-center justify-center text-xl shadow-lg`}
                     >
-                      {result.review?.passed ? "✓ 审核通过" : "⚠ 有问题"}
-                    </motion.span>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  {result.success && (
-                    <>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setPreviewPlatform(previewPlatform === result.platform ? null : result.platform)}
-                        className="text-sm px-4 py-1.5 rounded-lg font-medium transition-all"
-                        style={{
-                          backgroundColor: previewPlatform === result.platform ? info.color : "#F3F4F6",
-                          color: previewPlatform === result.platform ? "white" : "#374151",
-                        }}
+                      {info.icon}
+                    </motion.div>
+
+                    {/* Platform Name */}
+                    <div>
+                      <h3
+                        className="font-display text-lg font-bold"
+                        style={{ color: info.color }}
                       >
-                        {previewPlatform === result.platform ? "📝 返回编辑" : "👁️ 预览"}
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() =>
-                          handleCopy(result.platform, `${result.title || ""}\n\n${result.content || ""}`)
-                        }
-                        className="text-sm px-4 py-1.5 rounded-lg font-medium transition-all"
-                        style={{
-                          backgroundColor: copiedPlatform === result.platform ? info.color : "#F3F4F6",
-                          color: copiedPlatform === result.platform ? "white" : "#374151",
-                        }}
+                        {info.name}
+                      </h3>
+                      <p className="text-xs text-neutral-500">内容已生成</p>
+                    </div>
+
+                    {/* Review Badge */}
+                    {result.success && result.review && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", delay: 0.2 }}
+                        className={`
+                          ml-2 px-3 py-1 rounded-full text-xs font-semibold
+                          flex items-center gap-1
+                          ${result.review.passed
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-amber-100 text-amber-700"
+                          }
+                        `}
                       >
-                        {copiedPlatform === result.platform ? "✓ 已复制" : "📋 复制文案"}
-                      </motion.button>
-                    </>
-                  )}
+                        {result.review.passed ? (
+                          <>
+                            <ThumbsUp className="w-3 h-3" />
+                            审核通过
+                          </>
+                        ) : (
+                          <>
+                            <AlertTriangle className="w-3 h-3" />
+                            需修改
+                          </>
+                        )}
+                      </motion.span>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2">
+                    {result.success && (
+                      <>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() =>
+                            setPreviewPlatform(
+                              previewPlatform === result.platform ? null : result.platform
+                            )
+                          }
+                          className={`
+                            btn btn-sm flex items-center gap-1.5
+                            ${previewPlatform === result.platform
+                              ? "gradient-brand text-white"
+                              : "bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                            }
+                          `}
+                        >
+                          {previewPlatform === result.platform ? (
+                            <>
+                              <EyeOff className="w-4 h-4" />
+                              隐藏
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="w-4 h-4" />
+                              预览
+                            </>
+                          )}
+                        </motion.button>
+
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() =>
+                            handleCopy(
+                              result.platform,
+                              `${result.title || ""}\n\n${result.content || ""}`
+                            )
+                          }
+                          className={`
+                            btn btn-sm flex items-center gap-1.5
+                            ${copiedPlatform === result.platform
+                              ? `${info.gradient} text-white`
+                              : "bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                            }
+                          `}
+                        >
+                          {copiedPlatform === result.platform ? (
+                            <>
+                              <Check className="w-4 h-4" />
+                              已复制
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-4 h-4" />
+                              复制
+                            </>
+                          )}
+                        </motion.button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-
-              {/* Platform Preview */}
-              <AnimatePresence>
-                {previewPlatform === result.platform && result.success && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="border-t border-gray-200 bg-gray-50 p-6 overflow-hidden"
-                  >
-                    <h4 className="text-sm font-medium text-gray-500 mb-4 flex items-center gap-2">
-                      <span>👁️</span> {info.name} 预览效果
-                    </h4>
-                    <div className="flex justify-center">{renderPreview(result)}</div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
               {/* Content */}
               <div className="p-6">
                 {!result.success ? (
-                  <div className="text-red-500 flex items-center gap-2">
-                    <span>✕</span>
-                    <span>生成失败: {result.error || "未知错误"}</span>
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200">
+                    <AlertTriangle className="w-5 h-5 text-red-500" />
+                    <span className="text-red-700 font-medium">
+                      生成失败: {result.error || "未知错误"}
+                    </span>
                   </div>
                 ) : (
                   <>
@@ -300,18 +325,17 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.2 }}
-                        className="mb-4"
+                        className="mb-5"
                       >
-                        <h4 className="text-sm font-medium text-gray-500 mb-1">标题</h4>
-                        <motion.p
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.3 }}
-                          className="text-xl font-bold"
+                        <label className="text-label text-neutral-400 mb-2 block">
+                          标题
+                        </label>
+                        <p
+                          className="text-xl font-bold leading-snug"
                           style={{ color: info.color }}
                         >
                           {result.title}
-                        </motion.p>
+                        </p>
                       </motion.div>
                     )}
 
@@ -320,13 +344,16 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 0.3 }}
-                        className="mb-4"
+                        transition={{ delay: 0.25 }}
+                        className="mb-5"
                       >
-                        <h4 className="text-sm font-medium text-gray-500 mb-1 flex items-center gap-1">
-                          <span>🎤</span> 口播脚本
-                        </h4>
-                        <div className="bg-gray-50 p-4 rounded-lg whitespace-pre-wrap text-sm border border-gray-200">
+                        <label className="text-label text-neutral-400 mb-2 flex items-center gap-1.5">
+                          <span className="w-5 h-5 rounded bg-pink-100 flex items-center justify-center">
+                            <span className="text-pink-600 text-xs">🎤</span>
+                          </span>
+                          口播脚本
+                        </label>
+                        <div className="p-4 rounded-xl bg-neutral-900 text-neutral-100 font-mono text-sm leading-relaxed whitespace-pre-wrap">
                           {result.script}
                         </div>
                       </motion.div>
@@ -337,20 +364,20 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 0.35 }}
-                        className="mb-4"
+                        transition={{ delay: 0.3 }}
+                        className="mb-5"
                       >
-                        <h4 className="text-sm font-medium text-gray-500 mb-1 flex items-center gap-1">
-                          <span>📢</span> 行动号召
-                        </h4>
+                        <label className="text-label text-neutral-400 mb-2 flex items-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-orange-500" />
+                          行动号召
+                        </label>
                         <div
-                          className="p-4 rounded-lg border-2 border-dashed"
-                          style={{
-                            backgroundColor: `${info.color}10`,
-                            borderColor: info.color,
-                          }}
+                          className={`p-4 rounded-xl border-2 border-dashed ${info.tagBg}`}
+                          style={{ borderColor: info.color }}
                         >
-                          <p className="text-gray-800 font-medium">{result.cta}</p>
+                          <p className="font-semibold text-neutral-800">
+                            {result.cta}
+                          </p>
                         </div>
                       </motion.div>
                     )}
@@ -360,18 +387,15 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                        className="mb-4"
+                        transition={{ delay: 0.35 }}
+                        className="mb-5"
                       >
-                        <h4 className="text-sm font-medium text-gray-500 mb-1">正文</h4>
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.5 }}
-                          className="prose prose-sm max-w-none whitespace-pre-wrap text-gray-700"
-                        >
+                        <label className="text-label text-neutral-400 mb-2 block">
+                          正文内容
+                        </label>
+                        <div className="prose prose-neutral max-w-none text-neutral-700 leading-relaxed whitespace-pre-wrap">
                           {result.content}
-                        </motion.div>
+                        </div>
                       </motion.div>
                     )}
 
@@ -380,25 +404,26 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 0.5 }}
-                        className="mb-4"
+                        transition={{ delay: 0.4 }}
+                        className="mb-5"
                       >
-                        <h4 className="text-sm font-medium text-gray-500 mb-2">标签</h4>
+                        <label className="text-label text-neutral-400 mb-3 block flex items-center gap-1.5">
+                          <span className="text-neutral-400">#</span> 标签
+                        </label>
                         <div className="flex flex-wrap gap-2">
                           {result.tags.map((tag, idx) => (
                             <motion.span
                               key={idx}
                               initial={{ opacity: 0, scale: 0.8 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: 0.6 + idx * 0.05 }}
+                              transition={{ delay: 0.45 + idx * 0.05 }}
                               whileHover={{ scale: 1.05, y: -2 }}
-                              className="px-3 py-1 rounded-full text-sm font-medium cursor-default"
-                              style={{
-                                backgroundColor: `${info.color}15`,
-                                color: info.color,
-                              }}
+                              className={`
+                                px-3 py-1.5 rounded-full text-sm font-medium
+                                ${info.tagBg} ${info.tagText}
+                              `}
                             >
-                              {tag}
+                              #{tag.replace("#", "")}
                             </motion.span>
                           ))}
                         </div>
@@ -410,63 +435,73 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 0.6 }}
-                        className="border-t border-gray-200 pt-4 mt-4"
+                        transition={{ delay: 0.5 }}
+                        className="border-t border-neutral-200 pt-5 mt-5"
                       >
-                        <h4 className="text-sm font-medium text-gray-500 mb-3 flex items-center gap-1">
-                          <span>🔍</span> 审核结果
-                        </h4>
+                        <label className="text-label text-neutral-400 mb-3 block flex items-center gap-1.5">
+                          <Lightbulb className="w-4 h-4 text-amber-500" />
+                          审核结果
+                        </label>
+
                         <div
-                          className="rounded-lg p-4 space-y-3"
-                          style={{ backgroundColor: `${info.color}08` }}
+                          className={`rounded-xl p-5 space-y-4 ${
+                            info.bgLight
+                          }`}
                         >
                           {/* Quality Score */}
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">质量评分</span>
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              transition={{ delay: 0.7, type: "spring" }}
-                              className="flex items-center gap-2"
-                            >
-                              <div
-                                className="w-24 h-2 rounded-full overflow-hidden"
-                                style={{ backgroundColor: "#E5E7EB" }}
-                              >
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-neutral-600">
+                              质量评分
+                            </span>
+                            <div className="flex items-center gap-3">
+                              <div className="w-32 h-2 rounded-full bg-white overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
-                                  animate={{ width: `${(result.review?.qualityScore || 0) * 10}%` }}
-                                  transition={{ delay: 0.8, duration: 0.5 }}
+                                  animate={{
+                                    width: `${(result.review?.qualityScore || 0) * 10}%`,
+                                  }}
+                                  transition={{ delay: 0.6, duration: 0.5 }}
                                   className="h-full rounded-full"
-                                  style={{ backgroundColor: getScoreColor(result.review?.qualityScore || 0) }}
+                                  style={{
+                                    backgroundColor: getScoreColor(result.review?.qualityScore || 0),
+                                  }}
                                 />
                               </div>
                               <span
-                                className="font-bold text-sm"
-                                style={{ color: getScoreColor(result.review?.qualityScore || 0) }}
+                                className="font-bold text-sm w-12 text-right"
+                                style={{
+                                  color: getScoreColor(result.review?.qualityScore || 0),
+                                }}
                               >
                                 {(result.review?.qualityScore || 0).toFixed(1)}/10
                               </span>
-                            </motion.div>
+                            </div>
                           </div>
 
                           {/* Violations */}
                           {result.review?.violations &&
                             result.review.violations.length > 0 && (
-                              <div className="pt-2 border-t border-gray-200">
-                                <div className="text-sm font-medium text-red-600 mb-2 flex items-center gap-1">
-                                  <span>⚠️</span> 违规词 ({result.review.violations.length})
+                              <div className="pt-4 border-t border-red-200/50">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <AlertTriangle className="w-4 h-4 text-red-500" />
+                                  <span className="text-sm font-semibold text-red-700">
+                                    违规词 ({result.review.violations.length})
+                                  </span>
                                 </div>
-                                <ul className="space-y-1">
+                                <ul className="space-y-2">
                                   {result.review.violations.map((v, idx) => (
                                     <li
                                       key={idx}
-                                      className="text-sm text-red-600 flex items-center gap-2"
+                                      className="flex items-center gap-2 text-sm"
                                     >
-                                      <span className="text-red-400">•</span>
-                                      <span className="font-medium">{v.word}</span>
-                                      <span className="text-gray-400">→</span>
-                                      <span className="text-gray-600">{v.suggestion}</span>
+                                      <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                      <span className="font-semibold text-red-600">
+                                        {v.word}
+                                      </span>
+                                      <span className="text-neutral-400">→</span>
+                                      <span className="text-neutral-600">
+                                        {v.suggestion}
+                                      </span>
                                     </li>
                                   ))}
                                 </ul>
@@ -476,17 +511,20 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                           {/* Suggestions */}
                           {result.review?.suggestions &&
                             result.review.suggestions.length > 0 && (
-                              <div className="pt-2 border-t border-gray-200">
-                                <div className="text-sm font-medium text-blue-600 mb-2 flex items-center gap-1">
-                                  <span>💡</span> 改进建议
+                              <div className="pt-4 border-t border-blue-200/50">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Lightbulb className="w-4 h-4 text-blue-500" />
+                                  <span className="text-sm font-semibold text-blue-700">
+                                    改进建议
+                                  </span>
                                 </div>
-                                <ul className="space-y-1">
+                                <ul className="space-y-2">
                                   {result.review.suggestions.slice(0, 3).map((s, idx) => (
                                     <li
                                       key={idx}
-                                      className="text-sm text-gray-600 flex items-start gap-2"
+                                      className="flex items-start gap-2 text-sm text-neutral-600"
                                     >
-                                      <span className="text-blue-400">•</span>
+                                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5" />
                                       {s}
                                     </li>
                                   ))}
@@ -503,23 +541,26 @@ export default function CopyOutput({ results }: CopyOutputProps) {
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
-                          transition={{ delay: 0.7 }}
-                          className="border-t border-gray-200 pt-4 mt-4"
+                          transition={{ delay: 0.55 }}
+                          className="border-t border-neutral-200 pt-5 mt-5"
                         >
-                          <h4 className="text-sm font-medium text-gray-500 mb-2 flex items-center gap-1">
-                            <span>🖼️</span> 配图建议
-                          </h4>
+                          <label className="text-label text-neutral-400 mb-3 block flex items-center gap-1.5">
+                            <Image className="w-4 h-4 text-violet-500" />
+                            配图建议
+                          </label>
                           <ul className="space-y-2">
                             {result.imageSuggestions.map((img, idx) => (
                               <motion.li
                                 key={idx}
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.8 + idx * 0.05 }}
-                                className="text-sm text-gray-700 flex items-start gap-2 bg-gray-50 p-2 rounded"
+                                transition={{ delay: 0.6 + idx * 0.05 }}
+                                className="flex items-start gap-2 p-3 rounded-lg bg-neutral-50 border border-neutral-200/50"
                               >
-                                <span style={{ color: info.color }}>•</span>
-                                <span>{img}</span>
+                                <span className="w-5 h-5 rounded bg-violet-100 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-violet-600 text-xs">{idx + 1}</span>
+                                </span>
+                                <span className="text-sm text-neutral-700">{img}</span>
                               </motion.li>
                             ))}
                           </ul>

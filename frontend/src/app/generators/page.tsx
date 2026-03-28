@@ -3,18 +3,26 @@
 import React from "react";
 import GeneratorExplorer from "@/components/GeneratorExplorer";
 import SidebarNav from "@/components/SidebarNav";
-import Toast from "@/components/Toast";
+import { ToastProvider } from "@/components/Toast";
 
-export default function GeneratorsPage() {
+function GeneratorsContent() {
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <SidebarNav />
-      <main className="flex-1 p-8">
-        <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-neutral-50">
+      <main className="lg:ml-72 pt-16 lg:pt-0 pb-20 lg:pb-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
           <GeneratorExplorer />
         </div>
       </main>
-      <Toast />
     </div>
+  );
+}
+
+export default function GeneratorsPage() {
+  return (
+    <SidebarNav>
+      <ToastProvider>
+        <GeneratorsContent />
+      </ToastProvider>
+    </SidebarNav>
   );
 }

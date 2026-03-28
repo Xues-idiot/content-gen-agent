@@ -12,8 +12,10 @@ interface HashtagRecommenderProps {
   productInfo?: {
     name?: string;
     description?: string;
-    selling_points?: string[];
+    sellingPoints?: string[];
+    targetUsers?: string[];
     category?: string;
+    priceRange?: string;
   };
   onSelectHashtags?: (hashtags: string[]) => void;
 }
@@ -50,7 +52,14 @@ export default function HashtagRecommender({
         content,
         platform,
         amount: 12,
-        product_info: productInfo,
+        product_info: productInfo ? {
+          name: productInfo.name,
+          description: productInfo.description,
+          selling_points: productInfo.sellingPoints,
+          target_users: productInfo.targetUsers,
+          category: productInfo.category,
+          price_range: productInfo.priceRange,
+        } : undefined,
       });
 
       if (!isMountedRef.current) return;
@@ -120,7 +129,7 @@ export default function HashtagRecommender({
   const copyHashtags = async () => {
     const tags = Array.from(selectedHashtags).join(" ");
     await navigator.clipboard.writeText(tags);
-    setCopiedHashtags("all");
+    setCopiedHashtag("all");
     showToast("已复制选中的 Hashtag", "success");
     setTimeout(() => setCopiedHashtag(null), 2000);
   };

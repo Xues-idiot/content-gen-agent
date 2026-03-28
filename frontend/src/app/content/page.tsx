@@ -15,6 +15,7 @@ import SidebarNav from "@/components/SidebarNav";
 import { useContentStore } from "@/store/content-store";
 import { ToastProvider, useToast } from "@/components/Toast";
 import { API_BASE_URL } from "@/lib/api";
+import { AlertCircle, Zap } from "lucide-react";
 
 function ContentPageContent() {
   const {
@@ -38,12 +39,9 @@ function ContentPageContent() {
 
   const { showToast } = useToast();
 
-  // Track mounted state to prevent setInterval updates after unmount
   const isMountedRef = React.useRef(true);
-  // Store timeout IDs for cleanup
   const progressResetTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch health status on mount
   const [backendStatus, setBackendStatus] = React.useState<{
     api: boolean;
     tavily: boolean;
@@ -53,7 +51,6 @@ function ContentPageContent() {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      // Clear any pending timeouts on unmount
       if (progressResetTimeoutRef.current) {
         clearTimeout(progressResetTimeoutRef.current);
         progressResetTimeoutRef.current = null;
@@ -61,7 +58,6 @@ function ContentPageContent() {
     };
   }, []);
 
-  // Loading steps for detailed progress
   const loadingSteps = [
     "正在分析产品信息",
     "正在获取市场洞察",
@@ -96,13 +92,12 @@ function ContentPageContent() {
     setIsLoading(true);
     setError(null);
     setCurrentLoadingStep(0);
-    setMarketResearch({ insights: [], trends: [], competitors: [] }); // Clear previous research
+    setMarketResearch({ insights: [], trends: [], competitors: [] });
     setProgress(5);
 
     setProgress(10);
     setCurrentLoadingStep(0);
 
-    // Simulate progress for better UX
     const progressInterval = setInterval(() => {
       if (isMountedRef.current) {
         setProgress((prev) => Math.min(prev + 5, 90));
@@ -158,7 +153,6 @@ function ContentPageContent() {
         });
         setImageSuggestions(suggestions);
 
-        // Store market research data
         if (data.market_insights || data.trend_topics || data.competitor_content) {
           setMarketResearch({
             insights: data.market_insights || [],
@@ -179,7 +173,6 @@ function ContentPageContent() {
       showToast("网络错误，请检查后端服务是否运行", "error");
     } finally {
       setIsLoading(false);
-      // Clear any previous pending timeout
       if (progressResetTimeoutRef.current) {
         clearTimeout(progressResetTimeoutRef.current);
       }
@@ -192,7 +185,6 @@ function ContentPageContent() {
     }
   };
 
-  // 构建导出内容
   const exportContent: Record<string, any> = {
     product: product
       ? {
@@ -218,7 +210,6 @@ function ContentPageContent() {
     };
   });
 
-  // Get script for video generation (prefer TikTok script)
   const videoScript = React.useMemo(() => {
     const tiktokResult = copyResults.find((r) => r.platform === "tiktok");
     if (tiktokResult?.script) return tiktokResult.script;
@@ -234,7 +225,7 @@ function ContentPageContent() {
   }, [copyResults, product]);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#FFF8F0" }}>
+    <div className="min-h-screen bg-neutral-50">
       {/* Progress Bar */}
       <AnimatePresence>
         {isLoading && progress > 0 && (
@@ -244,10 +235,9 @@ function ContentPageContent() {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="h-1 bg-gray-200">
+            <div className="h-1 bg-neutral-200">
               <motion.div
-                className="h-full"
-                style={{ backgroundColor: "#FF6B35" }}
+                className="h-full gradient-brand"
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.3 }}
@@ -258,17 +248,23 @@ function ContentPageContent() {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Error Message */}
         <AnimatePresence>
           {error && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
+              initial={{ opacity: 0, height: 0, y: -10 }}
+              animate={{ opacity: 1, height: "auto", y: 0 }}
               exit={{ opacity: 0, height: 0 }}
-              className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 text-red-700"
+              className="mb-6"
             >
-              <strong>错误:</strong> {error}
+              <div className="card card-bordered p-4 bg-red-50 border-red-200 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <div>
+                  <strong className="text-red-700">错误:</strong>
+                  <span className="text-red-600 ml-2">{error}</span>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -280,14 +276,16 @@ function ContentPageContent() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="mb-6 flex items-center justify-center gap-3 py-8"
+              className="mb-6"
             >
-              <LoadingSpinner
-                size="lg"
-                text="AI 正在生成内容..."
-                steps={loadingSteps}
-                currentStep={currentLoadingStep}
-              />
+              <div className="card card-bordered p-6 bg-gradient-to-r from-violet-50 to-purple-50">
+                <LoadingSpinner
+                  size="lg"
+                  text="AI 正在生成内容..."
+                  steps={loadingSteps}
+                  currentStep={currentLoadingStep}
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -307,6 +305,35 @@ function ContentPageContent() {
               onChange={setSelectedPlatforms}
               disabled={isLoading}
             />
+
+            {/* Backend Status */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="card card-bordered p-4"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <Zap className="w-4 h-4 text-violet-600" />
+                <span className="text-sm font-semibold text-neutral-700">服务状态</span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-neutral-500">API 服务</span>
+                  <span className={`flex items-center gap-1.5 ${backendStatus.api ? "text-emerald-600" : "text-red-500"}`}>
+                    <span className={`w-2 h-2 rounded-full ${backendStatus.api ? "bg-emerald-500" : "bg-red-500"}`} />
+                    {backendStatus.api ? "已配置" : "未配置"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-neutral-500">Tavily API</span>
+                  <span className={`flex items-center gap-1.5 ${backendStatus.tavily ? "text-emerald-600" : "text-amber-500"}`}>
+                    <span className={`w-2 h-2 rounded-full ${backendStatus.tavily ? "bg-emerald-500" : "bg-amber-500"}`} />
+                    {backendStatus.tavily ? "已配置" : "未配置"}
+                  </span>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
 
           {/* Right Column - Output */}
@@ -337,7 +364,6 @@ function ContentPageContent() {
                   platform={selectedPlatforms[0] || "xiaohongshu"}
                   productInfo={product}
                   onSelectHashtags={(hashtags) => {
-                    // TODO: Integrate selected hashtags into content
                     console.log("Selected hashtags:", hashtags);
                   }}
                 />

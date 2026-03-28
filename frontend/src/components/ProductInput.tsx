@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import { validateProductName, validateProductDescription, colors } from "@/lib/utils";
+import { Sparkles, Package, Target, Tag, DollarSign, ArrowRight } from "lucide-react";
 
 interface ProductInputProps {
   onGenerate: (product: ProductData) => void;
@@ -18,6 +18,19 @@ export interface ProductData {
   priceRange: string;
 }
 
+const CATEGORIES = [
+  { value: "美妆", label: "💄 美妆", color: "#EC4899" },
+  { value: "数码", label: "📱 数码", color: "#3B82F6" },
+  { value: "食品", label: "🍜 食品", color: "#F97316" },
+  { value: "家居", label: "🏠 家居", color: "#10B981" },
+  { value: "服装", label: "👗 服装", color: "#8B5CF6" },
+  { value: "健康", label: "💊 健康", color: "#EF4444" },
+  { value: "教育", label: "📚 教育", color: "#6366F1" },
+  { value: "旅游", label: "✈️ 旅游", color: "#0EA5E9" },
+  { value: "母婴", label: "👶 母婴", color: "#F43F5E" },
+  { value: "其他", label: "📦 其他", color: "#78716C" },
+];
+
 export default function ProductInput({ onGenerate, isLoading }: ProductInputProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -30,10 +43,23 @@ export default function ProductInput({ onGenerate, isLoading }: ProductInputProp
   const [nameError, setNameError] = useState<string | null>(null);
   const [descError, setDescError] = useState<string | null>(null);
 
+  const validateProductName = (value: string): string | null => {
+    if (!value.trim()) return "请输入产品名称";
+    if (value.length < 2) return "产品名称至少2个字符";
+    if (value.length > 50) return "产品名称不超过50个字符";
+    return null;
+  };
+
+  const validateProductDescription = (value: string): string | null => {
+    if (!value.trim()) return "请输入产品描述";
+    if (value.length < 10) return "产品描述至少10个字符";
+    if (value.length > 2000) return "产品描述不超过2000个字符";
+    return null;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate
     const nameErr = validateProductName(name);
     const descErr = validateProductDescription(description);
 
@@ -61,212 +87,256 @@ export default function ProductInput({ onGenerate, isLoading }: ProductInputProp
     onGenerate(product);
   };
 
-  const categories = [
-    { value: "", label: "选择类别" },
-    { value: "美妆", label: "💄 美妆" },
-    { value: "数码", label: "📱 数码" },
-    { value: "食品", label: "🍜 食品" },
-    { value: "家居", label: "🏠 家居" },
-    { value: "服装", label: "👗 服装" },
-    { value: "健康", label: "💊 健康" },
-    { value: "教育", label: "📚 教育" },
-    { value: "旅游", label: "✈️ 旅游" },
-    { value: "其他", label: "📦 其他" },
-  ];
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="bg-white rounded-xl shadow-md p-6"
+      className="card card-elevated overflow-hidden"
     >
-      <motion.h2
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.1 }}
-        className="text-xl font-bold mb-4"
-        style={{ color: colors.primary }}
-      >
-        产品信息
-      </motion.h2>
+      {/* Header */}
+      <div className="px-6 py-5 border-b border-neutral-200/50 bg-gradient-to-r from-neutral-50 to-white">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-md shadow-violet-500/20">
+            <Package className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="font-display text-lg font-bold text-neutral-900">
+              产品信息
+            </h2>
+            <p className="text-xs text-neutral-500">输入产品核心信息</p>
+          </div>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        {/* Product Name */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.1 }}
         >
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            产品名称 *
+          <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
+            <span className="w-5 h-5 rounded-md bg-violet-100 flex items-center justify-center">
+              <span className="text-violet-600 text-xs font-bold">1</span>
+            </span>
+            产品名称 <span className="text-red-500">*</span>
           </label>
-          <motion.input
-            type="text"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setNameError(null);
-            }}
-            className={`w-full px-3 py-2 border-2 rounded-lg focus:outline-none transition-colors ${
-              nameError ? "border-red-300 focus:border-red-500" : "border-gray-200 focus:border-orange-400"
-            }`}
-            placeholder="例如：智能睡眠枕"
-            required
-            whileFocus={{ scale: 1.01 }}
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setNameError(null);
+              }}
+              className={`
+                input input-lg w-full
+                ${nameError ? "input-error" : name.length > 0 ? "input-success" : ""}
+              `}
+              placeholder="例如：智能睡眠枕 Pro"
+              required
+            />
+            {name.length > 0 && !nameError && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center"
+              >
+                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              </motion.div>
+            )}
+          </div>
           {nameError && (
             <motion.p
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-red-500 text-xs mt-1"
+              className="text-red-500 text-xs mt-1.5 flex items-center gap-1"
             >
+              <span className="w-1 h-1 rounded-full bg-red-500" />
               {nameError}
             </motion.p>
           )}
         </motion.div>
 
+        {/* Product Description */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.25 }}
+          transition={{ delay: 0.15 }}
         >
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            产品描述 *
+          <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
+            <span className="w-5 h-5 rounded-md bg-violet-100 flex items-center justify-center">
+              <span className="text-violet-600 text-xs font-bold">2</span>
+            </span>
+            产品描述 <span className="text-red-500">*</span>
           </label>
-          <motion.textarea
-            value={description}
-            onChange={(e) => {
-              setDescription(e.target.value);
-              setDescError(null);
-            }}
-            className={`w-full px-3 py-2 border-2 rounded-lg focus:outline-none transition-colors ${
-              descError ? "border-red-300 focus:border-red-500" : "border-gray-200 focus:border-orange-400"
-            }`}
-            placeholder="描述产品的核心功能和特点"
-            rows={3}
-            required
-            whileFocus={{ scale: 1.01 }}
-          />
-          <div className="flex justify-between items-center mt-1">
+          <div className="relative">
+            <textarea
+              value={description}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                setDescError(null);
+              }}
+              className={`
+                input textarea w-full min-h-[100px]
+                ${descError ? "input-error" : description.length > 0 ? "input-success" : ""}
+              `}
+              placeholder="详细描述产品的核心功能、特点和优势..."
+              rows={4}
+              required
+            />
+            {description.length > 0 && !descError && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute right-3 top-3 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center"
+              >
+                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              </motion.div>
+            )}
+          </div>
+          <div className="flex justify-between items-center mt-1.5">
             {descError ? (
               <motion.p
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-red-500 text-xs"
+                className="text-red-500 text-xs flex items-center gap-1"
               >
+                <span className="w-1 h-1 rounded-full bg-red-500" />
                 {descError}
               </motion.p>
-            ) : (
-              <span />
-            )}
-            <span className="text-xs text-gray-400">{description.length}/2000</span>
+            ) : <span />}
+            <span className={`text-xs ${description.length > 1800 ? "text-red-500" : "text-neutral-400"}`}>
+              {description.length}/2000
+            </span>
           </div>
         </motion.div>
 
+        {/* Selling Points & Target Users */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            核心卖点
-          </label>
-          <motion.input
-            type="text"
-            value={sellingPoints}
-            onChange={(e) => setSellingPoints(e.target.value)}
-            className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-orange-400 transition-colors"
-            placeholder="用逗号分隔，例如：改善睡眠,AI监测,个性化调节"
-            whileFocus={{ scale: 1.01, borderColor: colors.primary }}
-          />
-          <p className="text-xs text-gray-500 mt-1">多个卖点用逗号分隔</p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.35 }}
-        >
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            目标用户
-          </label>
-          <motion.input
-            type="text"
-            value={targetUsers}
-            onChange={(e) => setTargetUsers(e.target.value)}
-            className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-orange-400 transition-colors"
-            placeholder="用逗号分隔，例如：加班族,失眠人群"
-            whileFocus={{ scale: 1.01, borderColor: colors.primary }}
-          />
-          <p className="text-xs text-gray-500 mt-1">多个用户群体用逗号分隔</p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="grid grid-cols-2 gap-4"
+          transition={{ delay: 0.2 }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
+              <Tag className="w-4 h-4 text-violet-500" />
+              核心卖点
+            </label>
+            <input
+              type="text"
+              value={sellingPoints}
+              onChange={(e) => setSellingPoints(e.target.value)}
+              className="input input-md w-full"
+              placeholder="改善睡眠,AI监测..."
+            />
+            <p className="text-xs text-neutral-400 mt-1.5">多个卖点用逗号分隔</p>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
+              <Target className="w-4 h-4 text-violet-500" />
+              目标用户
+            </label>
+            <input
+              type="text"
+              value={targetUsers}
+              onChange={(e) => setTargetUsers(e.target.value)}
+              className="input input-md w-full"
+              placeholder="加班族,失眠人群..."
+            />
+            <p className="text-xs text-neutral-400 mt-1.5">多个用户群体用逗号分隔</p>
+          </div>
+        </motion.div>
+
+        {/* Category & Price */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.25 }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+        >
+          <div>
+            <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
+              <span className="w-5 h-5 rounded-md bg-violet-100 flex items-center justify-center">
+                <span className="text-violet-600 text-xs font-bold">3</span>
+              </span>
               产品类别
             </label>
-            <motion.select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-orange-400 transition-colors"
-              whileFocus={{ scale: 1.01, borderColor: colors.primary }}
-            >
-              {categories.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
-                </option>
-              ))}
-            </motion.select>
+            <div className="relative">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="input input-md w-full select"
+              >
+                <option value="">选择类别</option>
+                {CATEGORIES.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
+              <DollarSign className="w-4 h-4 text-violet-500" />
               价格区间
             </label>
-            <motion.input
+            <input
               type="text"
               value={priceRange}
               onChange={(e) => setPriceRange(e.target.value)}
-              className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-orange-400 transition-colors"
-              placeholder="例如：100-500元"
-              whileFocus={{ scale: 1.01, borderColor: colors.primary }}
+              className="input input-md w-full"
+              placeholder="100-500元"
             />
           </div>
         </motion.div>
 
+        {/* Submit Button */}
         <motion.button
           type="submit"
           disabled={isLoading || !name.trim()}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45 }}
-          whileHover={!isLoading && name.trim() ? { scale: 1.02 } : {}}
-          whileTap={!isLoading && name.trim() ? { scale: 0.98 } : {}}
-          className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all shadow-md ${
-            isLoading || !name.trim()
-              ? "bg-gray-400 cursor-not-allowed"
-              : ""
-          }`}
-          style={{
-            backgroundColor: isLoading || !name.trim() ? undefined : colors.primary,
-          }}
+          transition={{ delay: 0.3 }}
+          whileHover={!isLoading && name.trim() ? { scale: 1.01, y: -2 } : {}}
+          whileTap={!isLoading && name.trim() ? { scale: 0.99 } : {}}
+          className={`
+            w-full py-4 rounded-xl font-semibold text-base
+            transition-all duration-300 shadow-lg
+            flex items-center justify-center gap-2
+            ${isLoading || !name.trim()
+              ? "bg-neutral-200 text-neutral-500 cursor-not-allowed shadow-none"
+              : "gradient-brand text-white hover:shadow-xl hover:shadow-violet-500/25"
+            }
+          `}
         >
           {isLoading ? (
             <motion.span
               animate={{ opacity: [1, 0.5, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="flex items-center gap-2"
             >
-              生成中...
+              <svg className="w-5 h-5 spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              AI 正在生成中...
             </motion.span>
           ) : (
-            <span className="flex items-center justify-center gap-2">
-              <span>✨</span> 生成内容
+            <span className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5" />
+              开始生成内容
+              <ArrowRight className="w-4 h-4" />
             </span>
           )}
         </motion.button>
