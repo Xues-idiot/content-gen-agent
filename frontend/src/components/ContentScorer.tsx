@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { Star, ThumbsUp, AlertTriangle, Lightbulb, Loader2, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { API_BASE_URL } from "@/lib/api";

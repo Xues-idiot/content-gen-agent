@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { Clock, TrendingUp, Calendar, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { API_BASE_URL } from "@/lib/api";

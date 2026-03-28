@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import SidebarNav from "@/components/SidebarNav";
 import { ToastProvider, useToast } from "@/components/Toast";
 import {

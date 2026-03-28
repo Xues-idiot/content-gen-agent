@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { BarChart3, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { API_BASE_URL } from "@/lib/api";

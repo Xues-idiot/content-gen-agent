@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Calendar, Clock, Trash2, CheckCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { API_BASE_URL } from "@/lib/api";

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { Hash, TrendingUp, Sparkles, Copy, Check, Info } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { recommendHashtags, getTrendingHashtags, HashtagInfo, HashtagCombination } from "@/lib/api";

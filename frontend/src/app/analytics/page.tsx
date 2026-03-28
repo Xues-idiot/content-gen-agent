@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import SidebarNav from "@/components/SidebarNav";
 import { ToastProvider } from "@/components/Toast";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
