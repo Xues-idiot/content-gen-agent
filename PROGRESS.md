@@ -1975,3 +1975,30 @@ content-gen-agent/
 - 完成Rounds 481-500迭代目标
 - 系统状态: 375服务, 22组件, 9页面
 - 所有改动已提交并推送
+
+---
+
+## CRIS 循环 #501-600 (2026-03-28)
+
+### 完成
+- Round 511: 生成器API修复
+  - 发现并修复 `removesuffix` 替代 `replace` 来正确处理含多个下划线的文件名
+  - 如 `about_us_page_generator.py` 正确解析为服务名 `about_us_page`
+
+### Bug修复
+- generators.py: 修复文件名解析逻辑，使用 `removesuffix` 替代 `replace`
+
+### 代码质量检查
+- 后端 API (content.py): 200+ 端点，结构完整
+- 后端 API (llm_settings.py): LLM Provider 配置管理正常
+- 前端组件: 所有22个组件均有 isMountedRef 保护
+- 前端页面: 所有9个页面均有正确 unmount cleanup
+- 代理模块: copywriter, planner, reviewer, exporter 均正常
+- 工具模块: web_search, image_gen, video_generator 均正常
+
+### 提交
+- fix(generators): use removesuffix instead of replace (79addb8)
+
+### 结论
+- 代码质量检查通过
+- 继续下一轮迭代
