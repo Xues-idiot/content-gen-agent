@@ -83,9 +83,10 @@ def get_service_instance(service_name: str):
     module_path = SERVICE_REGISTRY[service_name]
     try:
         module = importlib.import_module(module_path)
-        # 查找 module-level 的服务实例 (xxx_generator_service)
+        # 查找 module-level 的服务实例
+        # 支持 xxx_generator_service, xxx_analyzer_service, xxx_service 等命名
         for attr_name in dir(module):
-            if attr_name.endswith('_generator_service'):
+            if attr_name.endswith('_service') and not attr_name.startswith('_'):
                 return getattr(module, attr_name)
         raise ValueError(f"Service instance not found in {module_path}")
     except ImportError as e:
