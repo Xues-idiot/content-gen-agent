@@ -86,7 +86,7 @@ export default function HomePage() {
               <span className="text-stone-800 block">营销内容</span>
             </motion.h1>
 
-            <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-xl text-stone-600 mb-20 leading-relaxed">
+            <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-xl text-stone-600 mb-20 leading-relaxed max-w-3xl mx-auto">
               输入产品信息，AI 自动为你生成适配
               <strong className="text-stone-800"> 小红书 · 抖音 · 公众号 · 朋友圈 </strong>
               的高转化率营销文案
@@ -101,9 +101,9 @@ export default function HomePage() {
               </Link>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="flex justify-center gap-64 pt-12 border-t border-amber-200">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="flex justify-around items-center w-full pt-12 border-t border-amber-200">
               {[{ v: "50+", l: "设计系统" }, { v: "4", l: "主流平台" }, { v: "10+", l: "营销工具" }].map((s, i) => (
-                <div key={i} className="text-center">
+                <div key={i} className="flex flex-col items-center px-8">
                   <div className="text-5xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{s.v}</div>
                   <div className="text-base text-stone-500 mt-4">{s.l}</div>
                 </div>
@@ -113,15 +113,15 @@ export default function HomePage() {
         </section>
 
         {/* Platforms */}
-        <Section className="min-h-screen flex items-center justify-center px-16 bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100/50">
-          <div className="w-full max-w-7xl text-center">
-            <h2 className="text-5xl lg:text-6xl font-bold text-stone-800 mb-20">支持主流社交平台</h2>
-            <p className="text-xl text-stone-600 mb-24">覆盖国内主流社交媒体，一站式内容适配</p>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-14">
+        <Section className="min-h-screen flex items-center justify-center px-16 py-32 bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100/50">
+          <div className="w-full max-w-6xl text-center">
+            <h2 className="text-5xl lg:text-6xl font-bold text-stone-800 mb-24">支持主流社交平台</h2>
+            <p className="text-xl text-stone-600 mb-32">覆盖国内主流社交媒体，一站式内容适配</p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-16">
               {PLATFORMS.map((p, i) => (
-                <motion.div key={p.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.12 }} className="bg-white/90 backdrop-blur rounded-3xl p-10 border border-white shadow-xl">
-                  <div className="mb-6 flex justify-center">{p.icon}</div>
-                  <h3 className="font-semibold text-stone-800 text-lg mb-3">{p.name}</h3>
+                <motion.div key={p.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.12 }} className="bg-white/90 backdrop-blur rounded-3xl p-12 border border-white shadow-xl flex flex-col items-center">
+                  <div className="mb-8 flex justify-center">{p.icon}</div>
+                  <h3 className="font-semibold text-stone-800 text-lg mb-4 h-8 flex items-center justify-center">{p.name}</h3>
                   <p className="text-sm text-stone-500 leading-relaxed">{p.desc}</p>
                 </motion.div>
               ))}
@@ -130,15 +130,15 @@ export default function HomePage() {
         </Section>
 
         {/* Features */}
-        <Section className="min-h-screen flex items-center justify-center px-16 bg-gradient-to-b from-stone-100 to-amber-50/50">
-          <div className="w-full max-w-7xl text-center">
-            <h2 className="text-5xl lg:text-6xl font-bold text-stone-800 mb-20">AI 驱动的内容创作体验</h2>
-            <p className="text-xl text-stone-600 mb-24">强大的 AI 能力，让内容创作更高效</p>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-14">
+        <Section className="min-h-screen flex items-center justify-center px-16 py-32 bg-gradient-to-b from-stone-100 to-amber-50/50">
+          <div className="w-full max-w-6xl text-center">
+            <h2 className="text-5xl lg:text-6xl font-bold text-stone-800 mb-24">AI 驱动的内容创作体验</h2>
+            <p className="text-xl text-stone-600 mb-32">强大的 AI 能力，让内容创作更高效</p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-16">
               {FEATURES.map((f, i) => (
-                <motion.div key={f.title} initial={{ opacity: 0, y: 25 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.1 }} className="bg-white rounded-3xl p-10 border border-amber-100 hover:border-amber-300 transition-all shadow-lg">
-                  <div className="mb-6 flex justify-center">{f.icon}</div>
-                  <h3 className="font-semibold text-stone-800 text-lg mb-3">{f.title}</h3>
+                <motion.div key={f.title} initial={{ opacity: 0, y: 25 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.1 }} className="bg-white rounded-3xl p-12 border border-amber-100 hover:border-amber-300 transition-all shadow-lg flex flex-col items-center">
+                  <div className="mb-8 flex justify-center">{f.icon}</div>
+                  <h3 className="font-semibold text-stone-800 text-lg mb-4 h-8 flex items-center justify-center">{f.title}</h3>
                   <p className="text-sm text-stone-600 leading-relaxed">{f.desc}</p>
                 </motion.div>
               ))}
