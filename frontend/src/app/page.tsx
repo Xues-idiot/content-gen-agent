@@ -111,9 +111,9 @@ export default function HomePage() {
           <p className="text-body-lg mb-40 tracking-wide" style={{ color: 'var(--color-text-secondary)' }}>覆盖国内主流社交媒体，一站式内容适配</p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-20">
             {PLATFORMS.map((p, i) => (
-              <motion.div key={p.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.12 }} className="card card-elevated p-14 flex flex-col items-center">
-                <div className="mb-10 flex justify-center">{p.icon}</div>
-                <h3 className="font-semibold text-lg mb-6 h-10 flex items-center justify-center tracking-wide" style={{ color: 'var(--color-neutral-900)' }}>{p.name}</h3>
+              <motion.div key={p.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.12 }} className="card card-elevated p-14 flex flex-col items-center text-center">
+                <div className="mb-12 flex justify-center">{p.icon}</div>
+                <h3 className="font-semibold text-lg mb-8 tracking-wide" style={{ color: 'var(--color-neutral-900)' }}>{p.name}</h3>
                 <p className="text-body-md leading-relaxed tracking-wide" style={{ color: 'var(--color-neutral-500)' }}>{p.desc}</p>
               </motion.div>
             ))}
@@ -128,9 +128,9 @@ export default function HomePage() {
           <p className="text-body-lg mb-40 tracking-wide" style={{ color: 'var(--color-text-secondary)' }}>强大的 AI 能力，让内容创作更高效</p>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-20">
             {FEATURES.map((f, i) => (
-              <motion.div key={f.title} initial={{ opacity: 0, y: 25 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.1 }} className="card card-elevated p-14 flex flex-col items-center">
-                <div className="mb-10 flex justify-center">{f.icon}</div>
-                <h3 className="font-semibold text-lg mb-6 h-10 flex items-center justify-center tracking-wide" style={{ color: 'var(--color-neutral-900)' }}>{f.title}</h3>
+              <motion.div key={f.title} initial={{ opacity: 0, y: 25 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.1 }} className="card card-elevated p-14 flex flex-col items-center text-center">
+                <div className="mb-12 flex justify-center">{f.icon}</div>
+                <h3 className="font-semibold text-lg mb-8 tracking-wide" style={{ color: 'var(--color-neutral-900)' }}>{f.title}</h3>
                 <p className="text-body-md leading-relaxed tracking-wide" style={{ color: 'var(--color-text-secondary)' }}>{f.desc}</p>
               </motion.div>
             ))}
