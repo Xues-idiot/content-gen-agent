@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { copyToClipboard } from "@/lib/utils";
+import { FileText, MessageSquare, BarChart2, Users, Image } from "lucide-react";
 
 interface ImageSuggestion {
   type: string;
@@ -14,11 +15,11 @@ interface ImagePreviewProps {
   suggestions: Record<string, ImageSuggestion[]>;
 }
 
-const PLATFORM_INFO: Record<string, { name: string; icon: string; color: string }> = {
-  xiaohongshu: { name: "小红书", icon: "📕", color: "#EF4444" },
-  tiktok: { name: "抖音", icon: "📺", color: "#EC4899" },
-  official: { name: "公众号", icon: "📰", color: "#3B82F6" },
-  friend_circle: { name: "朋友圈", icon: "👥", color: "#10B981" },
+const PLATFORM_INFO: Record<string, { name: string; icon: React.ReactNode; color: string }> = {
+  xiaohongshu: { name: "小红书", icon: <FileText className="w-4 h-4" />, color: "#EF4444" },
+  tiktok: { name: "抖音", icon: <MessageSquare className="w-4 h-4" />, color: "#EC4899" },
+  official: { name: "公众号", icon: <BarChart2 className="w-4 h-4" />, color: "#3B82F6" },
+  friend_circle: { name: "朋友圈", icon: <Users className="w-4 h-4" />, color: "#10B981" },
 };
 
 export default function ImagePreview({ suggestions }: ImagePreviewProps) {
@@ -52,17 +53,18 @@ export default function ImagePreview({ suggestions }: ImagePreviewProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="bg-white rounded-xl shadow-md p-8 text-center"
+        className="card card-elevated p-8 text-center"
       >
         <motion.div
           animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="text-4xl mb-4"
+          className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
+          style={{ background: 'linear-gradient(135deg, var(--color-secondary-100), var(--color-secondary-50))' }}
         >
-          🖼️
+          <Image className="w-8 h-8" style={{ color: 'var(--color-secondary-500)' }} />
         </motion.div>
-        <p className="text-gray-500">生成内容后，AI将提供配图建议</p>
-        <p className="text-gray-400 text-sm mt-2">支持 DALL-E、Midjourney 等工具</p>
+        <p className="text-neutral-500">生成内容后，AI将提供配图建议</p>
+        <p className="text-neutral-400 text-sm mt-2">支持 DALL-E、Midjourney 等工具</p>
       </motion.div>
     );
   }
@@ -72,14 +74,14 @@ export default function ImagePreview({ suggestions }: ImagePreviewProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="bg-white rounded-xl shadow-md p-6"
+      className="card card-elevated p-6"
     >
       <motion.h2
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1 }}
         className="text-xl font-bold mb-4 flex items-center gap-2"
-        style={{ color: "#FF6B35" }}
+        style={{ color: 'var(--color-secondary-500)' }}
       >
         <span>🖼️</span> 配图建议
       </motion.h2>
@@ -100,7 +102,7 @@ export default function ImagePreview({ suggestions }: ImagePreviewProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ delay: platformIndex * 0.1 }}
-                className="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0"
+                className="border-b border-neutral-200 pb-4 last:border-b-0 last:pb-0"
               >
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
@@ -138,7 +140,8 @@ export default function ImagePreview({ suggestions }: ImagePreviewProps) {
                         exit={{ opacity: 0, scale: 0.9 }}
                         transition={{ delay: platformIndex * 0.1 + idx * 0.05 }}
                         whileHover={{ scale: 1.02, y: -2 }}
-                        className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-default"
+                        className="rounded-lg p-4 transition-colors cursor-default"
+                        style={{ background: 'var(--color-neutral-50)' }}
                       >
                         <div className="flex items-start gap-3">
                           <motion.div
@@ -187,10 +190,10 @@ export default function ImagePreview({ suggestions }: ImagePreviewProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
         className="mt-4 p-4 rounded-lg flex items-start gap-2"
-        style={{ backgroundColor: "#FFF8F0" }}
+        style={{ backgroundColor: 'var(--color-secondary-50)' }}
       >
         <span className="text-lg">💡</span>
-        <p className="text-sm" style={{ color: "#FF6B35" }}>
+        <p className="text-sm" style={{ color: 'var(--color-secondary-600)' }}>
           提示：这些是AI生成的配图建议，您可以使用 DALL-E、Midjourney
           等工具根据提示词生成实际图片
         </p>

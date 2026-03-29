@@ -48,10 +48,10 @@ const platformLabels: Record<string, string> = {
 };
 
 const platformColors: Record<string, string> = {
-  xiaohongshu: "bg-pink-100 text-pink-700 border-pink-200",
-  tiktok: "bg-gray-900 text-white border-gray-800",
+  xiaohongshu: "bg-accent-rose-100 text-accent-rose-700 border-accent-rose-200",
+  tiktok: "bg-neutral-900 text-white border-neutral-800",
   official: "bg-blue-100 text-blue-700 border-blue-200",
-  friend_circle: "bg-green-100 text-green-700 border-green-200",
+  friend_circle: "bg-emerald-100 text-emerald-700 border-emerald-200",
 };
 
 function TemplatesPageContent() {
@@ -167,12 +167,12 @@ function TemplatesPageContent() {
         className="mb-8"
       >
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--color-secondary-500), var(--color-secondary-600))', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.25)' }}>
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">模板库</h1>
-            <p className="text-gray-500 text-sm">浏览和使用平台最佳实践模板</p>
+            <h1 className="text-2xl font-bold text-neutral-900">模板库</h1>
+            <p className="text-neutral-500 text-sm">浏览和使用平台最佳实践模板</p>
           </div>
         </div>
       </motion.div>
@@ -186,9 +186,9 @@ function TemplatesPageContent() {
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${
               activeTab === key
                 ? "text-white shadow-md"
-                : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+                : "bg-white text-neutral-600 hover:bg-neutral-50 border border-neutral-200"
             }`}
-            style={activeTab === key ? { backgroundColor: "#FF6B35" } : undefined}
+            style={activeTab === key ? { background: 'linear-gradient(135deg, var(--color-secondary-500), var(--color-secondary-600))' } : undefined}
           >
             {platformIcons[key]}
             {label}
@@ -198,13 +198,13 @@ function TemplatesPageContent() {
 
       {/* Search */}
       <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
         <input
           type="text"
           placeholder="搜索模板..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 outline-none transition-all"
+          className="input input-lg w-full pl-10 pr-4"
         />
       </div>
 
@@ -215,7 +215,7 @@ function TemplatesPageContent() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">我的模板</h2>
+          <h2 className="text-lg font-semibold text-neutral-900 mb-4">我的模板</h2>
           <motion.div
             variants={container}
             initial="hidden"
@@ -226,12 +226,12 @@ function TemplatesPageContent() {
               <motion.div
                 key={template.id}
                 variants={item}
-                className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+                className="card card-elevated p-5"
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 truncate">{template.name}</h3>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <h3 className="font-semibold text-neutral-900 truncate">{template.name}</h3>
+                    <p className="text-xs text-neutral-400 mt-1">
                       使用 {template.usage_count} 次 |{" "}
                       {new Date(template.created_at).toLocaleDateString("zh-CN")}
                     </p>
@@ -239,7 +239,7 @@ function TemplatesPageContent() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => copyToClipboard(template.content, template.id)}
-                      className="p-2 text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors"
+                      className="p-2 text-neutral-500 hover:text-secondary-500 hover:bg-secondary-50 rounded-lg transition-colors"
                       title="复制"
                     >
                       {copiedId === template.id ? (
@@ -250,20 +250,20 @@ function TemplatesPageContent() {
                     </button>
                     <button
                       onClick={() => deleteTemplate(template.id)}
-                      className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-2 text-neutral-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       title="删除"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 line-clamp-3">{template.content}</p>
+                <p className="text-sm text-neutral-600 line-clamp-3">{template.content}</p>
                 {template.tags.length > 0 && (
                   <div className="flex gap-1.5 mt-3 flex-wrap">
                     {template.tags.map((tag, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs"
+                        className="tag"
                       >
                         {tag}
                       </span>
@@ -282,16 +282,16 @@ function TemplatesPageContent() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">平台模板库</h2>
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">平台模板库</h2>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-8 h-8 border-2 border-secondary-500 border-t-transparent rounded-full" />
           </div>
         ) : Object.keys(libraryTemplates).length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-xl">
-            <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">暂无模板</p>
+          <div className="text-center py-12 rounded-xl" style={{ background: 'var(--color-neutral-50)' }}>
+            <Sparkles className="w-12 h-12 text-neutral-300 mx-auto mb-3" />
+            <p className="text-neutral-500">暂无模板</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -300,16 +300,17 @@ function TemplatesPageContent() {
                 key={key}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm"
+                className="card card-elevated p-5"
               >
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
-                    <h3 className="font-semibold text-gray-900">{template.name}</h3>
-                    <p className="text-sm text-orange-500 mt-1">{template.example_title}</p>
+                    <h3 className="font-semibold text-neutral-900">{template.name}</h3>
+                    <p className="text-sm mt-1" style={{ color: 'var(--color-secondary-500)' }}>{template.example_title}</p>
                   </div>
                   <button
                     onClick={() => copyToClipboard(template.structure.join("\n"), key)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-500 hover:bg-orange-50 rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
+                    style={{ color: 'var(--color-secondary-600)', background: 'var(--color-secondary-50)' }}
                   >
                     <Copy className="w-4 h-4" />
                     复制结构
@@ -318,17 +319,18 @@ function TemplatesPageContent() {
 
                 {/* Structure Steps */}
                 <div className="mb-4">
-                  <p className="text-xs text-gray-500 mb-2">内容结构：</p>
+                  <p className="text-xs text-neutral-500 mb-2">内容结构：</p>
                   <div className="flex flex-wrap gap-2">
                     {template.structure.map((step, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg text-sm"
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm"
+                        style={{ background: 'var(--color-neutral-50)' }}
                       >
-                        <span className="w-5 h-5 rounded-full bg-orange-100 text-orange-600 text-xs font-bold flex items-center justify-center">
+                        <span className="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center" style={{ background: 'var(--color-secondary-100)', color: 'var(--color-secondary-600)' }}>
                           {idx + 1}
                         </span>
-                        <span className="text-gray-700">{step}</span>
+                        <span className="text-neutral-700">{step}</span>
                       </div>
                     ))}
                   </div>

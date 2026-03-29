@@ -118,21 +118,21 @@ export default function GeneratorExplorer({ onGenerate }: GeneratorExplorerProps
 
   const getCategoryColor = (category: string): string => {
     const colors: Record<string, string> = {
-      marketing: "bg-pink-100 text-pink-800",
-      sales: "bg-blue-100 text-blue-800",
-      business: "bg-purple-100 text-purple-800",
-      product: "bg-green-100 text-green-800",
-      operation: "bg-orange-100 text-orange-800",
-      other: "bg-gray-100 text-gray-800",
+      marketing: "bg-accent-rose-100 text-accent-rose-700",
+      sales: "bg-blue-100 text-blue-700",
+      business: "bg-primary-100 text-primary-700",
+      product: "bg-emerald-100 text-emerald-700",
+      operation: "bg-secondary-100 text-secondary-700",
+      other: "bg-neutral-100 text-neutral-700",
     };
     return colors[category] || colors.other;
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="card card-elevated p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">内容生成器</h2>
-        <p className="text-gray-600">
+        <h2 className="text-2xl font-bold text-neutral-900 mb-2">内容生成器</h2>
+        <p className="text-neutral-600">
           浏览并使用 {services.length > 0 ? services.length : "300+"} 个内容生成服务
           {services.length > 0 && searchQuery && ` (筛选结果)`}
         </p>
@@ -145,14 +145,14 @@ export default function GeneratorExplorer({ onGenerate }: GeneratorExplorerProps
           placeholder="搜索服务..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          className="input input-md w-full"
         />
       </div>
 
       {/* 服务列表 */}
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary-500"></div>
         </div>
       ) : (
         <div className="space-y-6 max-h-[600px] overflow-y-auto">
@@ -171,11 +171,11 @@ export default function GeneratorExplorer({ onGenerate }: GeneratorExplorerProps
                     disabled={isGenerating}
                     className={`p-3 text-left rounded-lg border transition-colors ${
                       selectedService === service.name
-                        ? "border-orange-500 bg-orange-50"
-                        : "border-gray-200 hover:border-orange-300 hover:bg-gray-50"
+                        ? "border-secondary-500 bg-secondary-50"
+                        : "border-neutral-200 hover:border-secondary-300 hover:bg-neutral-50"
                     }`}
                   >
-                    <div className="text-sm font-medium text-gray-900 truncate">
+                    <div className="text-sm font-medium text-neutral-900 truncate">
                       {service.name.replace(/_/g, " ")}
                     </div>
                   </motion.button>
@@ -193,11 +193,12 @@ export default function GeneratorExplorer({ onGenerate }: GeneratorExplorerProps
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="mt-6 p-4 bg-gray-50 rounded-lg"
+            className="mt-6 p-4 rounded-lg"
+            style={{ background: 'var(--color-neutral-50)' }}
           >
             <div className="flex items-center gap-3">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-500"></div>
-              <span className="text-gray-600">正在生成...</span>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-secondary-500"></div>
+              <span className="text-neutral-600">正在生成...</span>
             </div>
           </motion.div>
         )}
@@ -209,7 +210,8 @@ export default function GeneratorExplorer({ onGenerate }: GeneratorExplorerProps
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700"
+            className="mt-6 p-4 rounded-lg text-red-700"
+            style={{ background: 'var(--color-error)', border: '1px solid rgba(220, 38, 38, 0.2)' }}
           >
             {error}
           </motion.div>
@@ -224,8 +226,8 @@ export default function GeneratorExplorer({ onGenerate }: GeneratorExplorerProps
             exit={{ opacity: 0 }}
             className="mt-6"
           >
-            <h3 className="text-lg font-medium text-gray-900 mb-3">生成结果</h3>
-            <pre className="p-4 bg-gray-900 text-gray-100 rounded-lg overflow-auto max-h-96 text-sm">
+            <h3 className="text-lg font-medium text-neutral-900 mb-3">生成结果</h3>
+            <pre className="p-4 rounded-lg overflow-auto max-h-96 text-sm" style={{ background: 'var(--color-neutral-900)', color: 'var(--color-neutral-100)' }}>
               {JSON.stringify(result, null, 2)}
             </pre>
           </motion.div>
