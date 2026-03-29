@@ -73,26 +73,26 @@ export default function HomePage() {
         </nav>
 
         {/* Hero */}
-        <section ref={heroRef} className="min-h-screen flex items-center justify-center px-16 pt-8">
-          <motion.div style={{ y }} className="w-full max-w-7xl text-center">
+        <section ref={heroRef} className="min-h-screen flex flex-col justify-between px-16 py-20">
+          <motion.div style={{ y }} className="w-full max-w-7xl mx-auto text-center pt-8">
 
-            <motion.span initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="inline-block text-sm font-semibold tracking-[0.2em] text-amber-600 uppercase mb-24 px-8 py-3 bg-amber-100 rounded-full">
+            <motion.span initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="inline-block text-sm font-semibold tracking-[0.2em] text-amber-600 uppercase mb-16 px-8 py-3 bg-amber-100 rounded-full">
               AI 内容平台
             </motion.span>
 
-            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="font-bold text-6xl lg:text-8xl leading-[1.3] tracking-tight mb-32" style={{ fontFamily: "'Sora', sans-serif" }}>
-              <span className="text-stone-800 block mb-16">一键生成</span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 block mb-16">多平台</span>
+            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="font-bold text-6xl lg:text-8xl leading-[1.3] tracking-tight mb-12" style={{ fontFamily: "'Sora', sans-serif" }}>
+              <span className="text-stone-800 block mb-12">一键生成</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 block mb-12">多平台</span>
               <span className="text-stone-800 block">营销内容</span>
             </motion.h1>
 
-            <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-xl text-stone-600 mb-20 leading-relaxed">
+            <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-xl text-stone-600 mb-16 leading-relaxed">
               输入产品信息，AI 自动为你生成适配
               <strong className="text-stone-800"> 小红书 · 抖音 · 公众号 · 朋友圈 </strong>
               的高转化率营销文案
             </motion.p>
 
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="flex flex-wrap justify-center gap-10 mb-32">
+            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="flex flex-wrap justify-center gap-10">
               <Link href="/content" className="px-[3.5rem] py-[1.2rem] bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-semibold text-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-xl shadow-amber-300/50 inline-flex items-center gap-3">
                 开始创作 {Icons.arrow}
               </Link>
@@ -100,24 +100,25 @@ export default function HomePage() {
                 浏览工具集
               </Link>
             </motion.div>
+          </motion.div>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="flex justify-center gap-64 pt-16 border-t border-amber-200">
-              {[{ v: "50+", l: "设计系统" }, { v: "4", l: "主流平台" }, { v: "10+", l: "营销工具" }].map((s, i) => (
-                <div key={i} className="text-center">
-                  <div className="text-5xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{s.v}</div>
-                  <div className="text-base text-stone-500 mt-4">{s.l}</div>
-                </div>
-              ))}
-            </motion.div>
+          {/* 底部数据 */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="w-full max-w-7xl mx-auto flex justify-center gap-64 pt-12 border-t border-amber-200">
+            {[{ v: "50+", l: "设计系统" }, { v: "4", l: "主流平台" }, { v: "10+", l: "营销工具" }].map((s, i) => (
+              <div key={i} className="text-center">
+                <div className="text-5xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{s.v}</div>
+                <div className="text-base text-stone-500 mt-4">{s.l}</div>
+              </div>
+            ))}
           </motion.div>
         </section>
 
         {/* Platforms */}
-        <Section className="min-h-screen flex items-center justify-center px-16 bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100/50">
-          <div className="w-full max-w-7xl text-center">
+        <Section className="min-h-screen flex flex-col justify-start px-16 py-20 bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100/50">
+          <div className="w-full max-w-7xl mx-auto text-center pt-8">
             <h2 className="text-5xl lg:text-6xl font-bold text-stone-800 mb-20">支持主流社交平台</h2>
             <p className="text-xl text-stone-600 mb-36">覆盖国内主流社交媒体，一站式内容适配</p>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-14">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-14 mt-auto">
               {PLATFORMS.map((p, i) => (
                 <motion.div key={p.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.12 }} className="bg-white/90 backdrop-blur rounded-3xl p-12 border border-white shadow-xl">
                   <div className="mb-10 flex justify-center">{p.icon}</div>
@@ -130,11 +131,11 @@ export default function HomePage() {
         </Section>
 
         {/* Features */}
-        <Section className="min-h-screen flex items-center justify-center px-16 bg-gradient-to-b from-stone-100 to-amber-50/50">
-          <div className="w-full max-w-7xl text-center">
+        <Section className="min-h-screen flex flex-col justify-start px-16 py-20 bg-gradient-to-b from-stone-100 to-amber-50/50">
+          <div className="w-full max-w-7xl mx-auto text-center pt-8">
             <h2 className="text-5xl lg:text-6xl font-bold text-stone-800 mb-20">AI 驱动的内容创作体验</h2>
             <p className="text-xl text-stone-600 mb-36">强大的 AI 能力，让内容创作更高效</p>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-14">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-14 mt-auto">
               {FEATURES.map((f, i) => (
                 <motion.div key={f.title} initial={{ opacity: 0, y: 25 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.1 }} className="bg-white rounded-3xl p-12 border border-amber-100 hover:border-amber-300 transition-all shadow-lg">
                   <div className="mb-10 flex justify-center">{f.icon}</div>
@@ -147,12 +148,12 @@ export default function HomePage() {
         </Section>
 
         {/* CTA */}
-        <Section className="min-h-screen flex items-center justify-center px-16 bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400/80 relative overflow-hidden">
+        <Section className="min-h-screen flex flex-col justify-start px-16 py-20 bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400/80 relative overflow-hidden">
           <div className="absolute inset-0 opacity-15">
             <div className="absolute top-20 left-[10%] w-64 h-64 bg-white rounded-full blur-3xl"></div>
             <div className="absolute bottom-20 right-[10%] w-80 h-80 bg-rose-300 rounded-full blur-3xl"></div>
           </div>
-          <div className="w-full max-w-6xl text-center relative z-10">
+          <div className="w-full max-w-6xl mx-auto text-center relative z-10 pt-12">
             <h2 className="text-5xl lg:text-6xl font-bold text-white mb-20 leading-tight">准备好提升你的<br /><span className="text-amber-100">内容创作效率</span><br />了吗？</h2>
             <p className="text-xl text-amber-100/90 mb-36">告别繁琐的内容创作流程，让 AI 为你代劳</p>
             <Link href="/content" className="inline-flex items-center gap-4 px-[4rem] py-[1.3rem] bg-white text-amber-600 rounded-full font-bold text-xl hover:bg-amber-50 transition-all shadow-2xl hover:shadow-3xl hover:scale-105">
