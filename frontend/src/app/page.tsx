@@ -73,29 +73,29 @@ export default function HomePage() {
         </nav>
 
         {/* Hero */}
-        <section ref={heroRef} className="min-h-screen flex items-center justify-center px-16">
-          <motion.div style={{ y }} className="w-full max-w-7xl text-center">
+        <section ref={heroRef} className="min-h-screen flex flex-col justify-start px-16 pt-32">
+          <motion.div style={{ y }} className="w-full max-w-7xl mx-auto text-center flex flex-col items-center">
             {/* AI 内容平台 tag */}
             <motion.span initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="inline-block text-sm font-semibold tracking-[0.2em] text-amber-600 uppercase mb-20 px-8 py-3 bg-amber-100 rounded-full">
               AI 内容平台
             </motion.span>
 
-            {/* 主标题 - 大字间距拉开 */}
-            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="font-bold text-6xl lg:text-8xl leading-[1.2] tracking-tight mb-32" style={{ fontFamily: "'Sora', sans-serif" }}>
-              <span className="text-stone-800 block mb-14">一键生成</span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 block mb-14">多平台</span>
+            {/* 主标题 */}
+            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="font-bold text-6xl lg:text-8xl leading-[1.2] tracking-tight" style={{ fontFamily: "'Sora', sans-serif" }}>
+              <span className="text-stone-800 block mb-16">一键生成</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 block mb-16">多平台</span>
               <span className="text-stone-800 block">营销内容</span>
             </motion.h1>
 
-            {/* 副标题文字 - 与标题间距拉开 */}
-            <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-xl text-stone-600 mb-40 leading-relaxed">
+            {/* 副标题文字 */}
+            <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-xl text-stone-600 mt-32 mb-20 leading-relaxed">
               输入产品信息，AI 自动为你生成适配
               <strong className="text-stone-800"> 小红书 · 抖音 · 公众号 · 朋友圈 </strong>
               的高转化率营销文案
             </motion.p>
 
-            {/* 按钮 - 与文字间距拉开，左右留足空白 */}
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="flex flex-wrap justify-center gap-10 mb-48">
+            {/* 按钮 */}
+            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="flex flex-wrap justify-center gap-10 mb-40">
               <Link href="/content" className="px-[3.5rem] py-[1.2rem] bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-semibold text-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-xl shadow-amber-300/50 inline-flex items-center gap-3">
                 开始创作 {Icons.arrow}
               </Link>
@@ -104,8 +104,11 @@ export default function HomePage() {
               </Link>
             </motion.div>
 
-            {/* 底部数据 - 与按钮间距拉开 */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="flex justify-center gap-64 pt-24 border-t border-amber-200">
+            {/* 分隔线 */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="w-full border-t border-amber-200 mt-auto mb-12"></motion.div>
+
+            {/* 底部数据 */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="flex justify-center gap-64 pb-16">
               {[{ v: "50+", l: "设计系统" }, { v: "4", l: "主流平台" }, { v: "10+", l: "营销工具" }].map((s, i) => (
                 <div key={i} className="text-center">
                   <div className="text-5xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{s.v}</div>
