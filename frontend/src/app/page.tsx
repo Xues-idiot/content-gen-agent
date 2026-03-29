@@ -119,7 +119,7 @@ export default function HomePage() {
         {/* Platforms */}
         <Section className="min-h-screen flex items-center justify-center px-16 bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100/50">
           <div className="w-full max-w-5xl text-center">
-            <h2 className="text-5xl lg:text-6xl font-bold text-stone-800 mb-12">支持主流社交平台</h2>
+            <h2 className="text-5xl lg:text-6xl font-bold text-stone-800 mb-20">支持主流社交平台</h2>
             <p className="text-xl text-stone-600 mb-28">覆盖国内主流社交媒体，一站式内容适配</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-12">
               {PLATFORMS.map((p, i) => (
@@ -136,7 +136,7 @@ export default function HomePage() {
         {/* Features */}
         <Section className="min-h-screen flex items-center justify-center px-16 bg-gradient-to-b from-stone-100 to-amber-50/50">
           <div className="w-full max-w-5xl text-center">
-            <h2 className="text-5xl lg:text-6xl font-bold text-stone-800 mb-12">AI 驱动的内容创作体验</h2>
+            <h2 className="text-5xl lg:text-6xl font-bold text-stone-800 mb-20">AI 驱动的内容创作体验</h2>
             <p className="text-xl text-stone-600 mb-28">强大的 AI 能力，让内容创作更高效</p>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
               {FEATURES.map((f, i) => (
@@ -157,7 +157,7 @@ export default function HomePage() {
             <div className="absolute bottom-20 right-[10%] w-80 h-80 bg-rose-300 rounded-full blur-3xl"></div>
           </div>
           <div className="w-full max-w-4xl text-center relative z-10">
-            <h2 className="text-5xl lg:text-6xl font-bold text-white mb-12 leading-tight">准备好提升你的<br /><span className="text-amber-100">内容创作效率</span><br />了吗？</h2>
+            <h2 className="text-5xl lg:text-6xl font-bold text-white mb-20 leading-tight">准备好提升你的<br /><span className="text-amber-100">内容创作效率</span><br />了吗？</h2>
             <p className="text-xl text-amber-100/90 mb-28">告别繁琐的内容创作流程，让 AI 为你代劳</p>
             <Link href="/content" className="inline-flex items-center gap-4 px-[3.5rem] py-[1.2rem] bg-white text-amber-600 rounded-full font-bold text-xl hover:bg-amber-50 transition-all shadow-2xl hover:shadow-3xl hover:scale-105">
               立即开始体验 {Icons.arrow}
