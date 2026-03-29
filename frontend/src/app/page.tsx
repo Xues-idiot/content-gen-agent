@@ -35,10 +35,10 @@ const FEATURES = [
   { title: "营销工具集", desc: "标签推荐、发布时间、AB测试等实用工具", icon: Icons.tools },
 ];
 
-function Section({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Section({ children, className = "", style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
-  return <motion.section ref={ref} initial={{ opacity: 0 }} animate={isInView ? { opacity: 1 } : {}} transition={{ duration: 0.7 }} className={className}>{children}</motion.section>;
+  return <motion.section ref={ref} initial={{ opacity: 0 }} animate={isInView ? { opacity: 1 } : {}} transition={{ duration: 0.7 }} className={className} style={style}>{children}</motion.section>;
 }
 
 export default function HomePage() {
@@ -47,141 +47,132 @@ export default function HomePage() {
   const y = useTransform(scrollYProgress, [0, 1], [0, -60]);
 
   return (
-    <>
-      <style>{`
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: #FEF3C7; }
-        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #F59E0B, #EA580C); border-radius: 5px; border: 2px solid #FEF3C7; }
-        ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #D97706, #C2410C); }
-      `}</style>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-secondary-50) 0%, var(--color-secondary-100) 50%, var(--color-neutral-100) 100%)' }}>
 
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50 to-stone-100">
-
-        {/* Nav */}
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-transparent">
-          <div className="w-full px-16 h-20 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-3 pl-12">
-              {Icons.logo}
-              <span className="font-bold text-2xl bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">Vox</span>
+      {/* Nav */}
+      <nav className="fixed top-0 left-0 right-0 z-50" style={{ background: 'transparent' }}>
+        <div className="w-full px-16 h-20 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 pl-12">
+            {Icons.logo}
+            <span className="font-display font-bold text-2xl" style={{ background: 'linear-gradient(135deg, var(--color-secondary-600), var(--color-secondary-500))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Vox</span>
+          </Link>
+          <div className="pr-12">
+            <Link href="/content" className="btn btn-secondary btn-lg">
+              开始创作
             </Link>
-            <div className="pr-12">
-              <Link href="/content" className="px-12 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-semibold text-base hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-300/50">
-                开始创作
-              </Link>
-            </div>
           </div>
-        </nav>
+        </div>
+      </nav>
 
-        {/* Hero */}
-        <section ref={heroRef} className="min-h-screen flex items-center justify-center px-16">
-          <motion.div style={{ y }} className="w-full max-w-7xl text-center">
+      {/* Hero */}
+      <section ref={heroRef} className="min-h-screen flex items-center justify-center px-16">
+        <motion.div style={{ y }} className="w-full max-w-7xl text-center">
 
-            <motion.span initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="inline-block text-sm font-semibold tracking-[0.3em] text-amber-600 uppercase mb-20 px-10 py-4 bg-amber-100 rounded-full">
-              AI 内容平台
-            </motion.span>
+          <motion.span initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="badge badge-secondary text-label inline-block mb-20 px-10 py-4">
+            AI 内容平台
+          </motion.span>
 
-            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="font-bold text-6xl lg:text-8xl leading-[1.4] tracking-wide" style={{ fontFamily: "'Sora', sans-serif" }}>
-              <span className="text-stone-800 block mb-24">一键生成</span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 block mb-24">多平台</span>
-              <span className="text-stone-800 block">营销内容</span>
-            </motion.h1>
+          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="font-display font-bold text-display-xl leading-relaxed tracking-wide mb-24">
+            <span className="block" style={{ color: 'var(--color-neutral-900)' }}>一键生成</span>
+            <span className="block" style={{ background: 'linear-gradient(135deg, var(--color-secondary-500), var(--color-secondary-600), var(--color-accent-rose-500))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>多平台</span>
+            <span className="block" style={{ color: 'var(--color-neutral-900)' }}>营销内容</span>
+          </motion.h1>
 
-            <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-xl text-stone-600 mb-24 leading-loose tracking-wide max-w-3xl mx-auto px-8">
-              输入产品信息，AI 自动为你生成适配
-              <strong className="text-stone-800"> 小红书 · 抖音 · 公众号 · 朋友圈 </strong>
-              的高转化率营销文案
-            </motion.p>
+          <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-body-lg mb-24 tracking-wide max-w-3xl mx-auto px-8" style={{ color: 'var(--color-text-secondary)', lineHeight: '1.8' }}>
+            输入产品信息，AI 自动为你生成适配
+            <strong style={{ color: 'var(--color-neutral-900)' }}> 小红书 · 抖音 · 公众号 · 朋友圈 </strong>
+            的高转化率营销文案
+          </motion.p>
 
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="flex flex-wrap justify-center gap-12 mb-40">
-              <Link href="/content" className="px-[3.5rem] py-[1.2rem] bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-semibold text-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-xl shadow-amber-300/50 inline-flex items-center gap-3">
-                开始创作 {Icons.arrow}
-              </Link>
-              <Link href="/generators" className="px-[3.5rem] py-[1.2rem] bg-white border-2 border-amber-300 text-stone-700 rounded-full font-semibold text-lg hover:border-amber-500 hover:text-amber-700 hover:bg-amber-50 transition-all shadow-lg inline-flex items-center gap-3">
-                浏览工具集
-              </Link>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="flex justify-around items-center w-full pt-16 border-t border-amber-200">
-              {[{ v: "50+", l: "设计系统" }, { v: "4", l: "主流平台" }, { v: "10+", l: "营销工具" }].map((s, i) => (
-                <div key={i} className="flex flex-col items-center px-12">
-                  <div className="text-5xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent tracking-wide">{s.v}</div>
-                  <div className="text-base text-stone-500 mt-6 tracking-wide">{s.l}</div>
-                </div>
-              ))}
-            </motion.div>
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="flex flex-wrap justify-center gap-12 mb-40">
+            <Link href="/content" className="btn btn-secondary btn-xl btn-pill inline-flex items-center gap-3">
+              开始创作 {Icons.arrow}
+            </Link>
+            <Link href="/generators" className="btn btn-outline-secondary btn-xl btn-pill inline-flex items-center gap-3">
+              浏览工具集
+            </Link>
           </motion.div>
-        </section>
 
-        {/* Platforms */}
-        <Section className="min-h-screen flex items-center justify-center px-16 py-40 bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100/50">
-          <div className="w-full max-w-6xl text-center">
-            <h2 className="text-5xl lg:text-6xl font-bold text-stone-800 mb-32 tracking-wide">支持主流社交平台</h2>
-            <p className="text-xl text-stone-600 mb-40 tracking-wide">覆盖国内主流社交媒体，一站式内容适配</p>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-20">
-              {PLATFORMS.map((p, i) => (
-                <motion.div key={p.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.12 }} className="bg-white/90 backdrop-blur rounded-3xl p-14 border border-white shadow-xl flex flex-col items-center">
-                  <div className="mb-10 flex justify-center">{p.icon}</div>
-                  <h3 className="font-semibold text-stone-800 text-lg mb-6 h-10 flex items-center justify-center tracking-wide">{p.name}</h3>
-                  <p className="text-base text-stone-500 leading-relaxed tracking-wide">{p.desc}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </Section>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="flex justify-around items-center w-full pt-16" style={{ borderTop: '1px solid var(--color-secondary-200)' }}>
+            {[{ v: "50+", l: "设计系统" }, { v: "4", l: "主流平台" }, { v: "10+", l: "营销工具" }].map((s, i) => (
+              <div key={i} className="flex flex-col items-center px-12">
+                <div className="text-display-md font-bold tracking-wide" style={{ background: 'linear-gradient(135deg, var(--color-secondary-600), var(--color-secondary-500))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{s.v}</div>
+                <div className="text-body-md mt-6 tracking-wide" style={{ color: 'var(--color-neutral-500)' }}>{s.l}</div>
+              </div>
+            ))}
+          </motion.div>
+        </motion.div>
+      </section>
 
-        {/* Features */}
-        <Section className="min-h-screen flex items-center justify-center px-16 py-40 bg-gradient-to-b from-stone-100 to-amber-50/50">
-          <div className="w-full max-w-6xl text-center">
-            <h2 className="text-5xl lg:text-6xl font-bold text-stone-800 mb-32 tracking-wide">AI 驱动的内容创作体验</h2>
-            <p className="text-xl text-stone-600 mb-40 tracking-wide">强大的 AI 能力，让内容创作更高效</p>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-20">
-              {FEATURES.map((f, i) => (
-                <motion.div key={f.title} initial={{ opacity: 0, y: 25 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.1 }} className="bg-white rounded-3xl p-14 border border-amber-100 hover:border-amber-300 transition-all shadow-lg flex flex-col items-center">
-                  <div className="mb-10 flex justify-center">{f.icon}</div>
-                  <h3 className="font-semibold text-stone-800 text-lg mb-6 h-10 flex items-center justify-center tracking-wide">{f.title}</h3>
-                  <p className="text-base text-stone-600 leading-relaxed tracking-wide">{f.desc}</p>
-                </motion.div>
-              ))}
-            </div>
+      {/* Platforms */}
+      <Section className="min-h-screen flex items-center justify-center px-16 py-40" style={{ background: 'linear-gradient(135deg, var(--color-secondary-100), var(--color-secondary-50), var(--color-accent-rose-50))' }}>
+        <div className="w-full max-w-6xl text-center">
+          <h2 className="font-display text-display-lg font-bold mb-32 tracking-wide" style={{ color: 'var(--color-neutral-900)' }}>支持主流社交平台</h2>
+          <p className="text-body-lg mb-40 tracking-wide" style={{ color: 'var(--color-text-secondary)' }}>覆盖国内主流社交媒体，一站式内容适配</p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-20">
+            {PLATFORMS.map((p, i) => (
+              <motion.div key={p.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.12 }} className="card card-elevated p-14 flex flex-col items-center">
+                <div className="mb-10 flex justify-center">{p.icon}</div>
+                <h3 className="font-semibold text-lg mb-6 h-10 flex items-center justify-center tracking-wide" style={{ color: 'var(--color-neutral-900)' }}>{p.name}</h3>
+                <p className="text-body-md leading-relaxed tracking-wide" style={{ color: 'var(--color-neutral-500)' }}>{p.desc}</p>
+              </motion.div>
+            ))}
           </div>
-        </Section>
+        </div>
+      </Section>
 
-        {/* CTA */}
-        <Section className="min-h-screen flex items-center justify-center px-16 bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400/80 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-15">
-            <div className="absolute top-20 left-[10%] w-64 h-64 bg-white rounded-full blur-3xl"></div>
-            <div className="absolute bottom-20 right-[10%] w-80 h-80 bg-rose-300 rounded-full blur-3xl"></div>
+      {/* Features */}
+      <Section className="min-h-screen flex items-center justify-center px-16 py-40" style={{ background: 'linear-gradient(180deg, var(--color-neutral-100), var(--color-secondary-50))' }}>
+        <div className="w-full max-w-6xl text-center">
+          <h2 className="font-display text-display-lg font-bold mb-32 tracking-wide" style={{ color: 'var(--color-neutral-900)' }}>AI 驱动的内容创作体验</h2>
+          <p className="text-body-lg mb-40 tracking-wide" style={{ color: 'var(--color-text-secondary)' }}>强大的 AI 能力，让内容创作更高效</p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-20">
+            {FEATURES.map((f, i) => (
+              <motion.div key={f.title} initial={{ opacity: 0, y: 25 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.1 }} className="card card-elevated p-14 flex flex-col items-center">
+                <div className="mb-10 flex justify-center">{f.icon}</div>
+                <h3 className="font-semibold text-lg mb-6 h-10 flex items-center justify-center tracking-wide" style={{ color: 'var(--color-neutral-900)' }}>{f.title}</h3>
+                <p className="text-body-md leading-relaxed tracking-wide" style={{ color: 'var(--color-text-secondary)' }}>{f.desc}</p>
+              </motion.div>
+            ))}
           </div>
-          <div className="w-full max-w-6xl text-center relative z-10">
-            <h2 className="text-5xl lg:text-6xl font-bold text-white mb-24 leading-relaxed tracking-wide">准备好提升你的<br /><span className="text-amber-100">内容创作效率</span><br />了吗？</h2>
-            <p className="text-xl text-amber-100/90 mb-40 tracking-wide">告别繁琐的内容创作流程，让 AI 为你代劳</p>
-            <Link href="/content" className="inline-flex items-center gap-4 px-[4rem] py-[1.3rem] bg-white text-amber-600 rounded-full font-bold text-xl hover:bg-amber-50 transition-all shadow-2xl hover:shadow-3xl hover:scale-105">
-              立即开始体验 {Icons.arrow}
-            </Link>
-          </div>
-        </Section>
+        </div>
+      </Section>
 
-        {/* Footer */}
-        <footer className="py-16 px-24 bg-stone-900">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="flex items-center gap-3 pl-8">
-              {Icons.logo}
-              <span className="font-bold text-xl text-white">Vox</span>
-              <span className="text-stone-400 text-sm ml-4">v0.1.0</span>
-            </div>
-            <div className="flex gap-14 text-base text-stone-400 pr-8">
-              <Link href="/content" className="hover:text-amber-400 transition-colors">内容生成</Link>
-              <Link href="/generators" className="hover:text-amber-400 transition-colors">工具集</Link>
-              <Link href="/settings" className="hover:text-amber-400 transition-colors">设置</Link>
-            </div>
-          </div>
-        </footer>
+      {/* CTA */}
+      <Section className="min-h-hscreen flex items-center justify-center px-16 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--color-secondary-400), var(--color-secondary-500), var(--color-accent-rose-500))', minHeight: '100vh' }}>
+        <div className="absolute inset-0 opacity-15">
+          <div className="absolute top-20 left-[10%] w-64 h-64 rounded-full" style={{ background: 'white', filter: 'blur(64px)' }}></div>
+          <div className="absolute bottom-20 right-[10%] w-80 h-80 rounded-full" style={{ background: 'var(--color-accent-rose-300)', filter: 'blur(64px)' }}></div>
+        </div>
+        <div className="w-full max-w-6xl text-center relative z-10">
+          <h2 className="font-display text-display-lg font-bold mb-24 leading-relaxed tracking-wide" style={{ color: 'white' }}>准备好提升你的<br /><span style={{ color: 'var(--color-secondary-100)' }}>内容创作效率</span><br />了吗？</h2>
+          <p className="text-body-lg mb-40 tracking-wide" style={{ color: 'rgba(255,255,255,0.9)' }}>告别繁琐的内容创作流程，让 AI 为你代劳</p>
+          <Link href="/content" className="btn btn-lg btn-pill inline-flex items-center gap-4 px-[4rem] py-[1.3rem] bg-white" style={{ color: 'var(--color-secondary-600)', boxShadow: 'var(--shadow-2xl)' }}>
+            立即开始体验 {Icons.arrow}
+          </Link>
+        </div>
+      </Section>
 
-        {/* Branding */}
-        <a href="https://deerflow.tech" target="_blank" rel="noopener noreferrer" className="fixed bottom-8 left-12 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg hover:shadow-xl">
-          Created by Deerflow
-        </a>
-      </div>
-    </>
+      {/* Footer */}
+      <footer className="py-16 px-24" style={{ background: 'var(--color-neutral-900)' }}>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex items-center gap-3 pl-8">
+            {Icons.logo}
+            <span className="font-display font-bold text-xl text-white">Vox</span>
+            <span className="text-sm ml-4" style={{ color: 'var(--color-neutral-400)' }}>v0.1.0</span>
+          </div>
+          <div className="flex gap-14 text-body-md pr-8" style={{ color: 'var(--color-neutral-400)' }}>
+            <Link href="/content" className="transition-colors" style={{ color: 'inherit' }}>内容生成</Link>
+            <Link href="/generators" className="transition-colors" style={{ color: 'inherit' }}>工具集</Link>
+            <Link href="/settings" className="transition-colors" style={{ color: 'inherit' }}>设置</Link>
+          </div>
+        </div>
+      </footer>
+
+      {/* Branding */}
+      <a href="https://deerflow.tech" target="_blank" rel="noopener noreferrer" className="deerflow-badge fixed bottom-8 left-12">
+        Created by Deerflow
+      </a>
+    </div>
   );
 }
