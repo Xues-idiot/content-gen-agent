@@ -81,18 +81,18 @@ export default function HomePage() {
             </motion.span>
 
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="font-bold text-6xl lg:text-8xl leading-[1.3] tracking-tight" style={{ fontFamily: "'Sora', sans-serif" }}>
-              <span className="text-stone-800 block mb-12">一键生成</span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 block mb-12">多平台</span>
+              <span className="text-stone-800 block mb-20">一键生成</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 block mb-20">多平台</span>
               <span className="text-stone-800 block">营销内容</span>
             </motion.h1>
 
-            <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-xl text-stone-600 mb-16 leading-relaxed">
+            <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-xl text-stone-600 mb-20 leading-relaxed">
               输入产品信息，AI 自动为你生成适配
               <strong className="text-stone-800"> 小红书 · 抖音 · 公众号 · 朋友圈 </strong>
               的高转化率营销文案
             </motion.p>
 
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="flex flex-wrap justify-center gap-10 mb-24">
+            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="flex flex-wrap justify-center gap-10 mb-32">
               <Link href="/content" className="px-[3.5rem] py-[1.2rem] bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-semibold text-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-xl shadow-amber-300/50 inline-flex items-center gap-3">
                 开始创作 {Icons.arrow}
               </Link>
@@ -119,10 +119,10 @@ export default function HomePage() {
             <p className="text-xl text-stone-600 mb-24">覆盖国内主流社交媒体，一站式内容适配</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-14">
               {PLATFORMS.map((p, i) => (
-                <motion.div key={p.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.12 }} className="bg-white/90 backdrop-blur rounded-3xl p-12 border border-white shadow-xl">
-                  <div className="mb-10 flex justify-center">{p.icon}</div>
-                  <h3 className="font-semibold text-stone-800 text-xl mb-4">{p.name}</h3>
-                  <p className="text-base text-stone-500">{p.desc}</p>
+                <motion.div key={p.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.12 }} className="bg-white/90 backdrop-blur rounded-3xl p-10 border border-white shadow-xl">
+                  <div className="mb-6 flex justify-center">{p.icon}</div>
+                  <h3 className="font-semibold text-stone-800 text-lg mb-3">{p.name}</h3>
+                  <p className="text-sm text-stone-500 leading-relaxed">{p.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -136,10 +136,10 @@ export default function HomePage() {
             <p className="text-xl text-stone-600 mb-24">强大的 AI 能力，让内容创作更高效</p>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-14">
               {FEATURES.map((f, i) => (
-                <motion.div key={f.title} initial={{ opacity: 0, y: 25 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.1 }} className="bg-white rounded-3xl p-12 border border-amber-100 hover:border-amber-300 transition-all shadow-lg">
-                  <div className="mb-10 flex justify-center">{f.icon}</div>
-                  <h3 className="font-semibold text-stone-800 text-xl mb-5">{f.title}</h3>
-                  <p className="text-base text-stone-600 leading-relaxed">{f.desc}</p>
+                <motion.div key={f.title} initial={{ opacity: 0, y: 25 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.1 }} className="bg-white rounded-3xl p-10 border border-amber-100 hover:border-amber-300 transition-all shadow-lg">
+                  <div className="mb-6 flex justify-center">{f.icon}</div>
+                  <h3 className="font-semibold text-stone-800 text-lg mb-3">{f.title}</h3>
+                  <p className="text-sm text-stone-600 leading-relaxed">{f.desc}</p>
                 </motion.div>
               ))}
             </div>
