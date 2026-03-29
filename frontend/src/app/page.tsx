@@ -113,10 +113,14 @@ export default function HomePage() {
         </section>
 
         {/* Platforms */}
-        <Section className="min-h-screen flex items-center justify-center px-16 bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100/50">
-          <div className="w-full max-w-7xl text-center">
+        <Section className="min-h-screen flex flex-col justify-between px-16 py-20 bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100/50">
+          {/* 文字部分 - 靠上 */}
+          <div className="w-full max-w-7xl mx-auto text-center pt-8">
             <h2 className="text-5xl lg:text-6xl font-bold text-stone-800 mb-20">支持主流社交平台</h2>
-            <p className="text-xl text-stone-600 mb-24">覆盖国内主流社交媒体，一站式内容适配</p>
+            <p className="text-xl text-stone-600">覆盖国内主流社交媒体，一站式内容适配</p>
+          </div>
+          {/* 卡片部分 - 靠下 */}
+          <div className="w-full max-w-7xl mx-auto mt-auto">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-14">
               {PLATFORMS.map((p, i) => (
                 <motion.div key={p.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.12 }} className="bg-white/90 backdrop-blur rounded-3xl p-12 border border-white shadow-xl">
@@ -130,10 +134,14 @@ export default function HomePage() {
         </Section>
 
         {/* Features */}
-        <Section className="min-h-screen flex items-center justify-center px-16 bg-gradient-to-b from-stone-100 to-amber-50/50">
-          <div className="w-full max-w-7xl text-center">
+        <Section className="min-h-screen flex flex-col justify-between px-16 py-20 bg-gradient-to-b from-stone-100 to-amber-50/50">
+          {/* 文字部分 - 靠上 */}
+          <div className="w-full max-w-7xl mx-auto text-center pt-8">
             <h2 className="text-5xl lg:text-6xl font-bold text-stone-800 mb-20">AI 驱动的内容创作体验</h2>
-            <p className="text-xl text-stone-600 mb-24">强大的 AI 能力，让内容创作更高效</p>
+            <p className="text-xl text-stone-600">强大的 AI 能力，让内容创作更高效</p>
+          </div>
+          {/* 卡片部分 - 靠下 */}
+          <div className="w-full max-w-7xl mx-auto mt-auto">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-14">
               {FEATURES.map((f, i) => (
                 <motion.div key={f.title} initial={{ opacity: 0, y: 25 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} whileHover={{ y: -8 }} transition={{ delay: i * 0.1 }} className="bg-white rounded-3xl p-12 border border-amber-100 hover:border-amber-300 transition-all shadow-lg">
