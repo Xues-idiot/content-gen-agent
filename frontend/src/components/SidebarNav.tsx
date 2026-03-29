@@ -83,7 +83,7 @@ export default function SidebarNav({ children }: SidebarNavProps) {
               <motion.div
                 className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-xl
-                  transition-all duration-200
+                  transition-all duration-150
                   ${isActive
                     ? "bg-white/90 shadow-md"
                     : "hover:bg-white/50"
@@ -95,6 +95,7 @@ export default function SidebarNav({ children }: SidebarNavProps) {
                   <motion.div
                     layoutId="activeIndicator"
                     className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.gradient} opacity-10`}
+                    transition={{ duration: 0.15 }}
                   />
                 )}
 
@@ -102,7 +103,7 @@ export default function SidebarNav({ children }: SidebarNavProps) {
                 <div
                   className={`
                     relative z-10 w-9 h-9 rounded-lg flex items-center justify-center
-                    transition-all duration-200
+                    transition-all duration-150
                     ${isActive
                       ? "bg-gradient-to-br from-neutral-900 to-neutral-800 text-white shadow-lg"
                       : "bg-neutral-100 text-neutral-600 group-hover:bg-neutral-200"
@@ -212,6 +213,7 @@ export default function SidebarNav({ children }: SidebarNavProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
               className="lg:hidden fixed inset-0 z-40 bg-neutral-900/50 backdrop-blur-sm"
               onClick={() => setMobileOpen(false)}
             />
@@ -219,7 +221,7 @@ export default function SidebarNav({ children }: SidebarNavProps) {
               initial={{ x: -300, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -300, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               className="lg:hidden fixed left-0 top-0 bottom-0 w-72 z-50"
             >
               <div className="absolute inset-0 bg-gradient-to-b from-neutral-50 via-neutral-100/50 to-neutral-50" />
@@ -233,7 +235,7 @@ export default function SidebarNav({ children }: SidebarNavProps) {
       </AnimatePresence>
 
       {/* Mobile Bottom Nav */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30">
         <div className="bg-white/95 backdrop-blur-xl border-t border-neutral-200/50">
           <div className="flex items-center justify-around px-2 py-2">
             {NAV_ITEMS.slice(0, 5).map((item) => {
