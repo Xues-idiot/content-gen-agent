@@ -19,16 +19,16 @@ export interface ProductData {
 }
 
 const CATEGORIES = [
-  { value: "美妆", label: "💄 美妆", color: "#EC4899" },
-  { value: "数码", label: "📱 数码", color: "#3B82F6" },
-  { value: "食品", label: "🍜 食品", color: "#F97316" },
-  { value: "家居", label: "🏠 家居", color: "#10B981" },
-  { value: "服装", label: "👗 服装", color: "#8B5CF6" },
-  { value: "健康", label: "💊 健康", color: "#EF4444" },
-  { value: "教育", label: "📚 教育", color: "#6366F1" },
-  { value: "旅游", label: "✈️ 旅游", color: "#0EA5E9" },
-  { value: "母婴", label: "👶 母婴", color: "#F43F5E" },
-  { value: "其他", label: "📦 其他", color: "#78716C" },
+  { value: "美妆", label: "美妆", color: "#EC4899" },
+  { value: "数码", label: "数码", color: "#3B82F6" },
+  { value: "食品", label: "食品", color: "#F97316" },
+  { value: "家居", label: "家居", color: "#10B981" },
+  { value: "服装", label: "服装", color: "#8B5CF6" },
+  { value: "健康", label: "健康", color: "#EF4444" },
+  { value: "教育", label: "教育", color: "#6366F1" },
+  { value: "旅游", label: "旅游", color: "#0EA5E9" },
+  { value: "母婴", label: "母婴", color: "#F43F5E" },
+  { value: "其他", label: "其他", color: "#78716C" },
 ];
 
 export default function ProductInput({ onGenerate, isLoading }: ProductInputProps) {
@@ -95,9 +95,9 @@ export default function ProductInput({ onGenerate, isLoading }: ProductInputProp
       className="card card-elevated overflow-hidden"
     >
       {/* Header */}
-      <div className="px-6 py-5 border-b border-neutral-200/50 bg-gradient-to-r from-neutral-50 to-white">
+      <div className="px-6 py-5 border-b border-neutral-200/50" style={{ background: 'linear-gradient(135deg, var(--color-secondary-50), white)' }}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-md shadow-violet-500/20">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md" style={{ background: 'linear-gradient(135deg, var(--color-secondary-500), var(--color-secondary-600))', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.25)' }}>
             <Package className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -117,9 +117,9 @@ export default function ProductInput({ onGenerate, isLoading }: ProductInputProp
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
         >
-          <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
-            <span className="w-5 h-5 rounded-md bg-violet-100 flex items-center justify-center">
-              <span className="text-violet-600 text-xs font-bold">1</span>
+          <label className="flex items-center gap-3 text-sm font-semibold text-neutral-700 mb-2.5">
+            <span className="w-6 h-6 rounded-lg bg-secondary-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-secondary-600 text-xs font-bold">1</span>
             </span>
             产品名称 <span className="text-red-500">*</span>
           </label>
@@ -168,9 +168,9 @@ export default function ProductInput({ onGenerate, isLoading }: ProductInputProp
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
         >
-          <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
-            <span className="w-5 h-5 rounded-md bg-violet-100 flex items-center justify-center">
-              <span className="text-violet-600 text-xs font-bold">2</span>
+          <label className="flex items-center gap-3 text-sm font-semibold text-neutral-700 mb-2.5">
+            <span className="w-6 h-6 rounded-lg bg-secondary-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-secondary-600 text-xs font-bold">2</span>
             </span>
             产品描述 <span className="text-red-500">*</span>
           </label>
@@ -226,8 +226,10 @@ export default function ProductInput({ onGenerate, isLoading }: ProductInputProp
           className="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
           <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
-              <Tag className="w-4 h-4 text-violet-500" />
+            <label className="flex items-center gap-3 text-sm font-semibold text-neutral-700 mb-2.5">
+              <span className="w-6 h-6 rounded-lg bg-secondary-100 flex items-center justify-center flex-shrink-0">
+                <Tag className="w-3.5 h-3.5 text-secondary-500" />
+              </span>
               核心卖点
             </label>
             <input
@@ -241,8 +243,10 @@ export default function ProductInput({ onGenerate, isLoading }: ProductInputProp
           </div>
 
           <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
-              <Target className="w-4 h-4 text-violet-500" />
+            <label className="flex items-center gap-3 text-sm font-semibold text-neutral-700 mb-2.5">
+              <span className="w-6 h-6 rounded-lg bg-secondary-100 flex items-center justify-center flex-shrink-0">
+                <Target className="w-3.5 h-3.5 text-secondary-500" />
+              </span>
               目标用户
             </label>
             <input
@@ -264,9 +268,9 @@ export default function ProductInput({ onGenerate, isLoading }: ProductInputProp
           className="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
           <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
-              <span className="w-5 h-5 rounded-md bg-violet-100 flex items-center justify-center">
-                <span className="text-violet-600 text-xs font-bold">3</span>
+            <label className="flex items-center gap-3 text-sm font-semibold text-neutral-700 mb-2.5">
+              <span className="w-6 h-6 rounded-lg bg-secondary-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-secondary-600 text-xs font-bold">3</span>
               </span>
               产品类别
             </label>
@@ -287,8 +291,10 @@ export default function ProductInput({ onGenerate, isLoading }: ProductInputProp
           </div>
 
           <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
-              <DollarSign className="w-4 h-4 text-violet-500" />
+            <label className="flex items-center gap-3 text-sm font-semibold text-neutral-700 mb-2.5">
+              <span className="w-6 h-6 rounded-lg bg-secondary-100 flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-3.5 h-3.5 text-secondary-500" />
+              </span>
               价格区间
             </label>
             <input
@@ -316,7 +322,7 @@ export default function ProductInput({ onGenerate, isLoading }: ProductInputProp
             flex items-center justify-center gap-2
             ${isLoading || !name.trim()
               ? "bg-neutral-200 text-neutral-500 cursor-not-allowed shadow-none"
-              : "gradient-brand text-white hover:shadow-xl hover:shadow-violet-500/25"
+              : "btn-secondary text-white hover:shadow-xl"
             }
           `}
         >

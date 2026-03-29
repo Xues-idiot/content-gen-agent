@@ -25,7 +25,7 @@ interface SidebarNavProps {
 }
 
 const NAV_ITEMS = [
-  { href: "/", icon: Home, label: "首页", color: "#5B21B6", gradient: "from-violet-500 to-purple-600" },
+  { href: "/", icon: Home, label: "首页", color: "#F97316", gradient: "from-secondary-500 to-secondary-600" },
   { href: "/content", icon: FileText, label: "内容生成", color: "#7C3AED", gradient: "from-purple-500 to-violet-600" },
   { href: "/generators", icon: Sparkles, label: "工具集", color: "#F97316", gradient: "from-orange-500 to-amber-600" },
   { href: "/templates", icon: Layers, label: "模板库", color: "#0D9488", gradient: "from-teal-500 to-cyan-600" },
@@ -47,8 +47,8 @@ export default function SidebarNav({ children }: SidebarNavProps) {
       <div className="p-5 border-b border-neutral-200/50">
         <Link href="/" className="flex items-center gap-3 group">
           <div className="relative">
-            <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center text-xl shadow-lg shadow-violet-500/20 group-hover:shadow-xl group-hover:scale-105 transition-all">
-              📢
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all" style={{ background: 'linear-gradient(135deg, var(--color-secondary-500), var(--color-secondary-600))', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.25)' }}>
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
           </div>
           <div>
@@ -184,8 +184,8 @@ export default function SidebarNav({ children }: SidebarNavProps) {
         <div className="bg-white/90 backdrop-blur-xl border-b border-neutral-200/50">
           <div className="flex items-center justify-between px-4 py-3">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center text-lg shadow-md">
-                📢
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center shadow-md" style={{ background: 'linear-gradient(135deg, var(--color-secondary-500), var(--color-secondary-600))', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.25)' }}>
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
               <span className="font-display font-bold text-neutral-900">
                 Vox
@@ -237,7 +237,7 @@ export default function SidebarNav({ children }: SidebarNavProps) {
       {/* Mobile Bottom Nav */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30">
         <div className="bg-white/95 backdrop-blur-xl border-t border-neutral-200/50">
-          <div className="flex items-center justify-around px-2 py-2">
+          <div className="flex items-center justify-around px-1 py-2">
             {NAV_ITEMS.slice(0, 5).map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
@@ -247,7 +247,7 @@ export default function SidebarNav({ children }: SidebarNavProps) {
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
                   className={`
-                    flex flex-col items-center gap-1 px-3 py-2 rounded-xl min-w-[60px]
+                    flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl min-w-[56px]
                     transition-all duration-200
                     ${isActive
                       ? "text-neutral-900"
@@ -257,7 +257,7 @@ export default function SidebarNav({ children }: SidebarNavProps) {
                 >
                   <div
                     className={`
-                      w-8 h-8 rounded-lg flex items-center justify-center
+                      w-7 h-7 rounded-lg flex items-center justify-center
                       transition-all duration-200
                       ${isActive
                         ? `bg-gradient-to-br ${item.gradient} text-white shadow-md`
@@ -265,9 +265,9 @@ export default function SidebarNav({ children }: SidebarNavProps) {
                       }
                     `}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="w-3.5 h-3.5" />
                   </div>
-                  <span className="text-[10px] font-medium">{item.label}</span>
+                  <span className="text-[9px] font-medium leading-tight">{item.label}</span>
                 </Link>
               );
             })}

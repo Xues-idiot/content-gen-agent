@@ -278,7 +278,7 @@ function ContentPageContent() {
               exit={{ opacity: 0 }}
               className="mb-6"
             >
-              <div className="card card-bordered p-6 bg-gradient-to-r from-violet-50 to-purple-50">
+              <div className="card card-bordered p-6" style={{ background: 'linear-gradient(135deg, var(--color-secondary-50), var(--color-secondary-100))' }}>
                 <LoadingSpinner
                   size="lg"
                   text="AI 正在生成内容..."
@@ -314,7 +314,7 @@ function ContentPageContent() {
               className="card card-bordered p-4"
             >
               <div className="flex items-center gap-2 mb-3">
-                <Zap className="w-4 h-4 text-violet-600" />
+                <Zap className="w-4 h-4 text-secondary-500" />
                 <span className="text-sm font-semibold text-neutral-700">服务状态</span>
               </div>
               <div className="space-y-2">
