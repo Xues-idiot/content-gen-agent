@@ -80,9 +80,9 @@ export default function HomePage() {
               AI 内容平台
             </motion.span>
 
-            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="font-bold text-6xl lg:text-8xl leading-[1.3] tracking-tight mb-16" style={{ fontFamily: "'Sora', sans-serif" }}>
-              <span className="text-stone-800 block mb-16">一键生成</span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 block mb-16">多平台</span>
+            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="font-bold text-6xl lg:text-8xl leading-[1.3] tracking-tight" style={{ fontFamily: "'Sora', sans-serif" }}>
+              <span className="text-stone-800 block mb-12">一键生成</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 block mb-12">多平台</span>
               <span className="text-stone-800 block">营销内容</span>
             </motion.h1>
 
