@@ -4,31 +4,171 @@ import React, { useRef } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform, useInView } from "motion/react";
 
+// SVG Icons - more distinctive and unique
+const Icons = {
+  spark: (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 4L28.5 17.5L42 24L28.5 30.5L24 44L19.5 30.5L6 24L19.5 17.5L24 4Z" fill="url(#spark)" />
+      <defs>
+        <linearGradient id="spark" x1="6" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F59E0B"/>
+          <stop offset="1" stopColor="#EA580C"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  ),
+  generate: (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="24" cy="24" r="20" stroke="url(#gen)" strokeWidth="3"/>
+      <path d="M24 14V24L30 30" stroke="url(#gen)" strokeWidth="3" strokeLinecap="round"/>
+      <defs>
+        <linearGradient id="gen" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F59E0B"/>
+          <stop offset="1" stopColor="#EA580C"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  ),
+  shield: (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 4L40 10V22C40 32.5 33 40.5 24 44C15 40.5 8 32.5 8 22V10L24 4Z" stroke="url(#shield)" strokeWidth="3" fill="none"/>
+      <path d="M17 24L22 29L31 20" stroke="url(#shield)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+      <defs>
+        <linearGradient id="shield" x1="8" y1="4" x2="40" y2="44" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F59E0B"/>
+          <stop offset="1" stopColor="#EA580C"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  ),
+  image: (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="6" y="10" width="36" height="28" rx="3" stroke="url(#img)" strokeWidth="3"/>
+      <circle cx="16" cy="20" r="4" stroke="url(#img)" strokeWidth="2.5"/>
+      <path d="M6 32L16 24L26 32L36 22" stroke="url(#img)" strokeWidth="2.5" strokeLinecap="round"/>
+      <defs>
+        <linearGradient id="img" x1="6" y1="10" x2="42" y2="38" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F59E0B"/>
+          <stop offset="1" stopColor="#EA580C"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  ),
+  chart: (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 38V18" stroke="url(#chart)" strokeWidth="3" strokeLinecap="round"/>
+      <path d="M18 38V12" stroke="url(#chart)" strokeWidth="3" strokeLinecap="round"/>
+      <path d="M28 38V20" stroke="url(#chart)" strokeWidth="3" strokeLinecap="round"/>
+      <path d="M38 38V8" stroke="url(#chart)" strokeWidth="3" strokeLinecap="round"/>
+      <defs>
+        <linearGradient id="chart" x1="8" y1="8" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F59E0B"/>
+          <stop offset="1" stopColor="#EA580C"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  ),
+  sync: (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 24C40 32.8366 32.8366 40 24 40C18 40 12.5 36.5 9 31" stroke="url(#sync)" strokeWidth="3" strokeLinecap="round"/>
+      <path d="M8 24C8 15.1634 15.1634 8 24 8C30 8 35.5 11.5 39 17" stroke="url(#sync)" strokeWidth="3" strokeLinecap="round"/>
+      <path d="M36 17L40 24L33 28" stroke="url(#sync)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M12 31L8 24L15 20" stroke="url(#sync)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+      <defs>
+        <linearGradient id="sync" x1="8" y1="8" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F59E0B"/>
+          <stop offset="1" stopColor="#EA580C"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  ),
+  tools: (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="24" cy="24" r="10" stroke="url(#tools)" strokeWidth="3"/>
+      <path d="M24 4V14M24 34V44M4 24H14M34 24H44" stroke="url(#tools)" strokeWidth="3" strokeLinecap="round"/>
+      <path d="M9 9L15 15M33 33L39 39M9 39L15 33M33 15L39 9" stroke="url(#tools)" strokeWidth="3" strokeLinecap="round"/>
+      <defs>
+        <linearGradient id="tools" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F59E0B"/>
+          <stop offset="1" stopColor="#EA580C"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  ),
+  xiaohongshu: (
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8" y="8" width="48" height="48" rx="12" fill="#FE2C55"/>
+      <path d="M32 18C26 18 22 24 22 30C22 38 32 46 32 46C32 46 42 38 42 30C42 24 38 18 32 18Z" fill="white"/>
+      <circle cx="32" cy="28" r="4" fill="#FE2C55"/>
+    </svg>
+  ),
+  tiktok: (
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8" y="8" width="48" height="48" rx="12" fill="black"/>
+      <path d="M40 20C36 20 32 24 32 28C32 28 32 36 24 36V42C28 42 40 38 40 28V20Z" stroke="#69FF96" strokeWidth="3" fill="none"/>
+      <path d="M24 36V28" stroke="#69FF96" strokeWidth="3"/>
+    </svg>
+  ),
+  official: (
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8" y="8" width="48" height="48" rx="12" fill="#07AFEE"/>
+      <rect x="16" y="18" width="32" height="28" rx="2" fill="white"/>
+      <path d="M24 26H40M24 32H36M24 38H32" stroke="#07AFEE" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  ),
+  friends: (
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8" y="8" width="48" height="48" rx="12" fill="#07C160"/>
+      <circle cx="24" cy="26" r="6" fill="white"/>
+      <circle cx="40" cy="26" r="6" fill="white"/>
+      <path d="M16 40C16 34 20 30 24 30C28 30 32 34 32 40V44H16V40Z" fill="white"/>
+      <path d="M32 40C32 34 36 30 40 30C44 30 48 34 48 40V44H32V40Z" fill="white"/>
+    </svg>
+  ),
+  arrow: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  logo: (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="16" cy="16" r="14" fill="url(#logoGrad)"/>
+      <path d="M16 6L20 13H26L21 18L23 26L16 21L9 26L11 18L6 13H12L16 6Z" fill="white"/>
+      <defs>
+        <linearGradient id="logoGrad" x1="2" y1="2" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F59E0B"/>
+          <stop offset="1" stopColor="#EA580C"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  ),
+};
+
 const PLATFORMS = [
-  { id: "xiaohongshu", name: "小红书", emoji: "📕", description: "种草笔记 · 长文案", gradient: "from-pink-500 to-rose-500" },
-  { id: "tiktok", name: "抖音", emoji: "📺", description: "短视频口播脚本", gradient: "from-purple-500 to-pink-500" },
-  { id: "official", name: "公众号", emoji: "📰", description: "深度长文 · 排版", gradient: "from-blue-500 to-cyan-500" },
-  { id: "friend_circle", name: "朋友圈", emoji: "👥", description: "简短分享 · 互动", gradient: "from-emerald-500 to-teal-500" },
+  { id: "xiaohongshu", name: "小红书", description: "种草笔记 · 长文案", icon: Icons.xiaohongshu },
+  { id: "tiktok", name: "抖音", description: "短视频口播脚本", icon: Icons.tiktok },
+  { id: "official", name: "公众号", description: "深度长文 · 排版", icon: Icons.official },
+  { id: "friend_circle", name: "朋友圈", description: "简短分享 · 互动", icon: Icons.friends },
 ];
 
 const FEATURES = [
-  { title: "智能生成", desc: "基于大语言模型，理解平台特性与用户心理，生成高转化率内容", icon: "💡" },
-  { title: "合规检测", desc: "内置广告法违规词库，自动检测并提供修改建议", icon: "🛡️" },
-  { title: "配图建议", desc: "AI 生成配套图片提示词，支持多种图片生成工具", icon: "🖼️" },
-  { title: "质量评分", desc: "多维度评分体系，量化文案质量，指明优化方向", icon: "📊" },
-  { title: "多平台适配", desc: "一次输入，多平台内容一键生成，保持风格一致性", icon: "🔄" },
-  { title: "营销工具集", desc: "标签推荐、发布时间、AB测试等实用工具", icon: "🎨" },
+  { title: "智能生成", desc: "基于大语言模型，理解平台特性与用户心理，生成高转化率内容", icon: Icons.spark },
+  { title: "合规检测", desc: "内置广告法违规词库，自动检测并提供修改建议", icon: Icons.shield },
+  { title: "配图建议", desc: "AI 生成配套图片提示词，支持多种图片生成工具", icon: Icons.image },
+  { title: "质量评分", desc: "多维度评分体系，量化文案质量，指明优化方向", icon: Icons.chart },
+  { title: "多平台适配", desc: "一次输入，多平台内容一键生成，保持风格一致性", icon: Icons.sync },
+  { title: "营销工具集", desc: "标签推荐、发布时间、AB测试等实用工具", icon: Icons.tools },
 ];
 
 function Section({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
   return (
     <motion.section
       ref={ref}
-      initial={{ opacity: 0, y: 40 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+      initial={{ opacity: 0 }}
+      animate={isInView ? { opacity: 1 } : {}}
+      transition={{ duration: 0.8 }}
       className={className}
     >
       {children}
@@ -39,193 +179,235 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
 export default function HomePage() {
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef });
-  const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
+  const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50 to-stone-100 overflow-x-hidden">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-amber-200/50 shadow-sm">
-        <div className="w-full px-8 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl">📢</span>
-            <span className="font-bold text-lg bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">Vox</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/content"
-              className="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full text-base font-semibold hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-300/40"
-            >
-              开始创作
-            </Link>
-          </div>
-        </div>
-      </nav>
+    <>
+      {/* Custom Scrollbar */}
+      <style>{`
+        ::-webkit-scrollbar {
+          width: 12px;
+        }
+        ::-webkit-scrollbar-track {
+          background: #FEF3C7;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #F59E0B, #EA580C);
+          border-radius: 6px;
+          border: 2px solid #FEF3C7;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, #D97706, #C2410C);
+        }
+      `}</style>
 
-      {/* Hero - Full Width */}
-      <section ref={heroRef} className="relative pt-36 pb-24 px-8">
-        <div className="w-full text-center">
-          <motion.div style={{ y }} className="w-full">
-            <span className="inline-block text-sm font-semibold tracking-[0.3em] text-amber-600 uppercase mb-10 px-6 py-2.5 bg-amber-100 rounded-full">
-              AI 内容平台
-            </span>
-            <h1 className="w-full font-bold text-7xl lg:text-[10rem] leading-none tracking-tight mb-12 text-center" style={{ fontFamily: "'Sora', sans-serif" }}>
-              <span className="text-stone-800 block">一键生成</span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 block">多平台</span>
-              <span className="text-stone-800 block">营销内容</span>
-            </h1>
-            <p className="w-full text-2xl text-stone-600 mb-16 leading-relaxed text-center">
-              输入产品信息，AI 自动为你生成适配
-              <strong className="text-stone-700"> 小红书 · 抖音 · 公众号 · 朋友圈 </strong>
-              的高转化率营销文案
-            </p>
-            <div className="w-full flex flex-wrap justify-center gap-8">
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50 to-stone-100 overflow-x-hidden">
+        {/* Navigation - Absolute positioned */}
+        <nav className="absolute top-0 left-0 right-0 z-50 bg-transparent">
+          <div className="w-full px-16 h-20 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-3 pl-8">
+              {Icons.logo}
+              <span className="font-bold text-2xl bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">Vox</span>
+            </Link>
+            <div className="flex items-center gap-6 pr-8">
               <Link
                 href="/content"
-                className="px-16 py-6 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-bold text-xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-2xl shadow-amber-300/50 inline-flex items-center gap-4"
+                className="px-12 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-semibold text-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-xl shadow-amber-300/50"
               >
                 开始创作
-                <span className="text-2xl">→</span>
+              </Link>
+            </div>
+          </div>
+        </nav>
+
+        {/* Hero - Full Screen */}
+        <section ref={heroRef} className="min-h-screen flex items-center justify-center px-16 relative">
+          <motion.div style={{ y }} className="w-full max-w-6xl text-center">
+            <motion.span
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="inline-block text-sm font-semibold tracking-[0.3em] text-amber-600 uppercase mb-12 px-8 py-3 bg-amber-100 rounded-full"
+            >
+              AI 内容平台
+            </motion.span>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="font-bold text-8xl lg:text-[10rem] leading-none tracking-tight mb-16 text-center"
+              style={{ fontFamily: "'Sora', sans-serif" }}
+            >
+              <span className="text-stone-800 block">一键生成</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 block my-4">多平台</span>
+              <span className="text-stone-800 block">营销内容</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="text-2xl text-stone-600 mb-20 leading-relaxed text-center max-w-3xl mx-auto"
+            >
+              输入产品信息，AI 自动为你生成适配
+              <strong className="text-stone-800"> 小红书 · 抖音 · 公众号 · 朋友圈 </strong>
+              的高转化率营销文案
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="flex flex-wrap justify-center gap-10"
+            >
+              <Link
+                href="/content"
+                className="px-20 py-6 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-bold text-xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-2xl shadow-amber-300/50 inline-flex items-center gap-4"
+              >
+                开始创作
+                {Icons.arrow}
               </Link>
               <Link
                 href="/generators"
-                className="px-16 py-6 bg-white border-3 border-amber-300 text-stone-700 rounded-full font-bold text-xl hover:border-amber-500 hover:text-amber-700 hover:bg-amber-50 transition-all shadow-xl inline-flex items-center gap-4"
+                className="px-20 py-6 bg-white border-3 border-amber-300 text-stone-700 rounded-full font-bold text-xl hover:border-amber-500 hover:text-amber-700 hover:bg-amber-50 transition-all shadow-xl inline-flex items-center gap-4"
               >
                 浏览工具集
               </Link>
-            </div>
+            </motion.div>
+
+            {/* Stats */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2 }}
+              className="flex justify-center gap-40 mt-40 pt-16 border-t-2 border-amber-200"
+            >
+              {[
+                { value: "50+", label: "设计系统" },
+                { value: "4", label: "主流平台" },
+                { value: "10+", label: "营销工具" },
+              ].map((stat, i) => (
+                <div key={i} className="text-center">
+                  <div className="text-7xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{stat.value}</div>
+                  <div className="text-xl text-stone-500 mt-4">{stat.label}</div>
+                </div>
+              ))}
+            </motion.div>
           </motion.div>
+        </section>
 
-          {/* Stats */}
-          <div className="w-full flex justify-center gap-32 mt-28 pt-12 border-t-2 border-amber-200">
-            {[
-              { value: "50+", label: "设计系统" },
-              { value: "4", label: "主流平台" },
-              { value: "10+", label: "营销工具" },
-            ].map((stat, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
-                className="text-center"
-              >
-                <div className="text-6xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{stat.value}</div>
-                <div className="text-lg text-stone-500 mt-3">{stat.label}</div>
-              </motion.div>
-            ))}
+        {/* Platforms - Full Screen */}
+        <Section className="min-h-screen flex items-center justify-center px-16 bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100/50">
+          <div className="w-full max-w-6xl text-center">
+            <h2 className="text-6xl lg:text-8xl font-bold text-center mb-8 text-stone-800">
+              支持主流社交平台
+            </h2>
+            <p className="text-2xl text-stone-600 mb-24 text-center">
+              覆盖国内主流社交媒体，一站式内容适配
+            </p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-12">
+              {PLATFORMS.map((platform, i) => (
+                <motion.div
+                  key={platform.id}
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  whileHover={{ scale: 1.05, y: -10 }}
+                  transition={{ delay: i * 0.15, duration: 0.5 }}
+                  className="bg-white/90 backdrop-blur rounded-3xl p-12 text-center border border-white shadow-2xl"
+                >
+                  <div className="mb-8 flex justify-center">{platform.icon}</div>
+                  <h3 className="font-semibold text-stone-800 text-2xl mb-4">{platform.name}</h3>
+                  <p className="text-lg text-stone-500">{platform.description}</p>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </Section>
 
-      {/* Platforms - Full Width */}
-      <Section className="py-32 px-8 bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100/50">
-        <div className="w-full">
-          <h2 className="w-full text-5xl lg:text-7xl font-bold text-center mb-6 text-stone-800">
-            支持主流社交平台
-          </h2>
-          <p className="w-full text-center text-stone-600 mb-20 text-xl">
-            覆盖国内主流社交媒体，一站式内容适配
-          </p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 px-8">
-            {PLATFORMS.map((platform, i) => (
-              <motion.div
-                key={platform.id}
-                initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true }}
-                whileHover={{ scale: 1.05, y: -8 }}
-                transition={{ delay: i * 0.1, duration: 0.4 }}
-                className="bg-white/90 backdrop-blur rounded-3xl p-10 text-center border border-white shadow-2xl shadow-amber-200/30 hover:shadow-amber-300/50"
-              >
-                <div className="text-6xl mb-6">{platform.emoji}</div>
-                <h3 className="font-semibold text-stone-800 text-2xl mb-3">{platform.name}</h3>
-                <p className="text-base text-stone-500">{platform.description}</p>
-              </motion.div>
-            ))}
+        {/* Features - Full Screen */}
+        <Section className="min-h-screen flex items-center justify-center px-16 bg-gradient-to-b from-stone-100 to-amber-50/50">
+          <div className="w-full max-w-6xl text-center">
+            <h2 className="text-6xl lg:text-8xl font-bold text-stone-800 mb-8 text-center">
+              AI 驱动的内容创作体验
+            </h2>
+            <p className="text-2xl text-stone-600 mb-24 text-center">
+              强大的 AI 能力，让内容创作更高效
+            </p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
+              {FEATURES.map((feature, i) => (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  whileHover={{ y: -10, boxShadow: "0 30px 60px -15px rgba(245, 158, 11, 0.3)" }}
+                  transition={{ delay: i * 0.1, duration: 0.4 }}
+                  className="bg-white rounded-3xl p-12 border border-amber-100 hover:border-amber-300 transition-all shadow-xl"
+                >
+                  <div className="mb-8 flex justify-center">{feature.icon}</div>
+                  <h3 className="font-semibold text-stone-800 mb-4 text-2xl">{feature.title}</h3>
+                  <p className="text-lg text-stone-600 leading-relaxed">{feature.desc}</p>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      </Section>
+        </Section>
 
-      {/* Features - Full Width */}
-      <Section className="py-32 px-8 bg-gradient-to-b from-stone-100 to-amber-50/50">
-        <div className="w-full">
-          <h2 className="w-full text-5xl lg:text-7xl font-bold text-stone-800 mb-6 text-center">
-            AI 驱动的内容创作体验
-          </h2>
-          <p className="w-full text-center text-stone-600 mb-20 text-xl">
-            强大的 AI 能力，让内容创作更高效
-          </p>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10 px-8">
-            {FEATURES.map((feature, i) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -8, boxShadow: "0 30px 60px -15px rgba(245, 158, 11, 0.3)" }}
-                transition={{ delay: i * 0.08, duration: 0.4 }}
-                className="bg-white rounded-3xl p-10 border border-amber-100 hover:border-amber-300 transition-all shadow-xl hover:shadow-2xl"
-              >
-                <div className="text-5xl mb-6">{feature.icon}</div>
-                <h3 className="font-semibold text-stone-800 mb-4 text-2xl">{feature.title}</h3>
-                <p className="text-base text-stone-600 leading-relaxed">{feature.desc}</p>
-              </motion.div>
-            ))}
+        {/* CTA - Full Screen */}
+        <Section className="min-h-screen flex items-center justify-center px-16 bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400/80 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-32 left-[15%] w-72 h-72 bg-white rounded-full blur-3xl"></div>
+            <div className="absolute bottom-32 right-[15%] w-96 h-96 bg-rose-300 rounded-full blur-3xl"></div>
           </div>
-        </div>
-      </Section>
-
-      {/* CTA - Full Width */}
-      <Section className="py-36 px-8 bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400/80 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-20 left-[10%] w-60 h-60 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-[10%] w-80 h-80 bg-rose-300 rounded-full blur-3xl"></div>
-        </div>
-        <div className="w-full text-center relative z-10">
-          <h2 className="w-full text-5xl lg:text-8xl font-bold text-white mb-8 leading-tight text-center">
-            准备好提升你的<br />
-            <span className="text-amber-100">内容创作效率</span><br />
-            了吗？
-          </h2>
-          <p className="w-full text-2xl text-amber-100/90 mb-16 text-center">
-            告别繁琐的内容创作流程，让 AI 为你代劳
-          </p>
-          <Link
-            href="/content"
-            className="inline-flex items-center gap-4 px-20 py-8 bg-white text-amber-600 rounded-full font-bold text-2xl hover:bg-amber-50 transition-all shadow-3xl hover:shadow-4xl hover:scale-105"
-          >
-            立即开始体验
-            <span className="text-3xl">→</span>
-          </Link>
-        </div>
-      </Section>
-
-      {/* Footer */}
-      <footer className="py-14 px-8 bg-stone-900">
-        <div className="w-full flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">📢</span>
-            <span className="font-bold text-white text-lg">Vox</span>
-            <span className="text-stone-400 text-sm ml-3">v0.1.0</span>
+          <div className="w-full max-w-5xl text-center relative z-10">
+            <h2 className="text-6xl lg:text-9xl font-bold text-white mb-12 leading-tight">
+              准备好提升<br />
+              <span className="text-amber-100">内容创作效率</span><br />
+              了吗？
+            </h2>
+            <p className="text-2xl text-amber-100/90 mb-20">
+              告别繁琐的内容创作流程，让 AI 为你代劳
+            </p>
+            <Link
+              href="/content"
+              className="inline-flex items-center gap-5 px-24 py-8 bg-white text-amber-600 rounded-full font-bold text-2xl hover:bg-amber-50 transition-all shadow-3xl hover:shadow-4xl hover:scale-105"
+            >
+              立即开始体验
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </Link>
           </div>
-          <div className="flex gap-12 text-base text-stone-400">
-            <Link href="/content" className="hover:text-amber-400 transition-colors">内容生成</Link>
-            <Link href="/generators" className="hover:text-amber-400 transition-colors">工具集</Link>
-            <Link href="/settings" className="hover:text-amber-400 transition-colors">设置</Link>
-          </div>
-        </div>
-      </footer>
+        </Section>
 
-      {/* Branding */}
-      <a
-        href="https://deerflow.tech"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg hover:shadow-xl"
-      >
-        Created by Deerflow
-      </a>
-    </div>
+        {/* Footer */}
+        <footer className="py-16 px-24 bg-stone-900">
+          <div className="w-full flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-3 pl-8">
+              {Icons.logo}
+              <span className="font-bold text-xl text-white">Vox</span>
+              <span className="text-stone-400 text-sm ml-4">v0.1.0</span>
+            </div>
+            <div className="flex gap-16 text-lg text-stone-400 pr-8">
+              <Link href="/content" className="hover:text-amber-400 transition-colors">内容生成</Link>
+              <Link href="/generators" className="hover:text-amber-400 transition-colors">工具集</Link>
+              <Link href="/settings" className="hover:text-amber-400 transition-colors">设置</Link>
+            </div>
+          </div>
+        </footer>
+
+        {/* Branding - Bottom Left with margin */}
+        <a
+          href="https://deerflow.tech"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-8 left-12 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-full text-sm font-medium hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg hover:shadow-xl"
+        >
+          Created by Deerflow
+        </a>
+      </div>
+    </>
   );
 }
