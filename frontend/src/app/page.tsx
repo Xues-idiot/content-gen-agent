@@ -169,10 +169,6 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Branding */}
-      <a href="https://deerflow.tech" target="_blank" rel="noopener noreferrer" className="deerflow-badge fixed bottom-8 left-12">
-        Created by Deerflow
-      </a>
-    </div>
+          </div>
   );
 }
